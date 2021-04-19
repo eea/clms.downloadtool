@@ -41,5 +41,9 @@
       />
 
   <!-- -*- extra stuff goes here -*- -->
+  <utility
+    provides=".utility.IDownloadToolUtility"
+    factory=".utility.DownloadToolUtilty"
+    />
 
 </configure>
