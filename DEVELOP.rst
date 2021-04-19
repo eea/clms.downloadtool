@@ -1,42 +1,29 @@
-Using the development buildout
-==============================
+# Docker Orchestration for Copernicus Land Monitoring/In Situ
 
-Create a virtualenv in the package::
+## Installation
 
-    $ virtualenv --clear .
+1. Install [Docker](https://www.docker.com/).
 
-Install requirements with pip::
-
-    $ ./bin/pip install -r requirements.txt
-
-Run buildout::
-
-    $ ./bin/buildout
-
-Start Plone in foreground:
-
-    $ ./bin/instance fg
+2. Install [Docker Compose](https://docs.docker.com/compose/).
 
 
-Running tests
--------------
+## Usage
 
-    $ tox
+### Development
 
-list all tox environments:
+In order to be able to edit source-code on your machine using your favorite editor, without having to do it inside a Docker container, you'll have to create a new user on your laptop with `uid=500` and use this user for development:
 
-    $ tox -l
-    py27-Plone43
-    py27-Plone51
-    py27-Plone52
-    py37-Plone52
-    build_instance
-    code-analysis
-    lint-py27
-    lint-py37
-    coverage-report
+    $ useradd -u 500 zope-www
+    $ usermod -a -G docker zope-www
+    $ sudo su - zope-www
 
-run a specific tox env:
 
-    $ tox -e py37-Plone52
+Now you need to edit and run de application with that zope-www user.
 
+
+Start the application:
+
+    $ docker-compose up
+
+Within your favorite browser head to http://localhost:8080, add a Plone site, go to Admin -> Site Setup -> Addons and install the following add-ons:
+* clms.downloadtool
