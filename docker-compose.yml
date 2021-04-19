@@ -1,0 +1,24 @@
+version: "3"
+
+services:
+  ploneapi:
+    build: .
+    ports:
+      - "${BACKEND:-8080}:8080"
+    environment:
+      CORS_ALLOW_ORIGIN: "http://localhost:3000,http://127.0.0.1:3000,http://localhost:${FRONTEND:-8000},http://127.0.0.1:${FRONTEND:-8000}"
+    depends_on:
+      - memcached
+    volumes:
+      - data:/data
+      - .:/plone/instance/src/clms.downloadtool/
+
+  memcached:
+    image: memcached
+    command:
+      - "-m"
+      - "512"
+
+volumes:
+  data:
+    driver: local
