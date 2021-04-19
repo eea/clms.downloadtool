@@ -6,6 +6,7 @@
 
   -*- extra stuff goes here -*-
 <include package=".register_item" />
+<include package=".get_item" />
 
 
 </configure>

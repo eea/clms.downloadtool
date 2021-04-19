@@ -45,7 +45,7 @@
   <include package=".api" />
   <utility
     provides=".utility.IDownloadToolUtility"
-    factory=".utility.DownloadToolUtilty"
+    factory=".utility.DownloadToolUtility"
     />
 
 </configure>

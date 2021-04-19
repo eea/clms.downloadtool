@@ -3,10 +3,10 @@
   xmlns:plone="http://namespaces.plone.org/plone">
 
   <plone:service
-    method="POST"
+    method="GET"
     for="Products.CMFPlone.interfaces.IPloneSiteRoot"
-    factory=".post.RegisterItemPost"
-    name="@register_item"
+    factory=".get.GetItem"
+    name="@get_item"
     permission="zope2.View"
     />
 
