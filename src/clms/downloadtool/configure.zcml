@@ -41,6 +41,8 @@
       />
 
   <!-- -*- extra stuff goes here -*- -->
+
+  <include package=".api" />
   <utility
     provides=".utility.IDownloadToolUtility"
     factory=".utility.DownloadToolUtilty"

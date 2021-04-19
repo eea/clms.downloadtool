@@ -1,0 +1,15 @@
+<configure
+  xmlns="http://namespaces.zope.org/zope"
+  xmlns:plone="http://namespaces.plone.org/plone">
+
+  <adapter factory=".get.RegisterItem" name="register_item"/>
+
+  <plone:service
+    method="GET"
+    for="zope.interface.Interface"
+    factory=".get.RegisterItemGet"
+    name="@register_item"
+    permission="zope2.View"
+    />
+
+</configure>

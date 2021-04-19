@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-from zope.interface import Interface
-from zope.annotations.interfaces import IAnnotations
-from zope.site.hooks import getSite
 from persistent import PersistentDict
+from zope.annotations.interfaces import IAnnotations
+from zope.interface import Interface
+from zope.site.hooks import getSite
+
 
 ANNOTATION_KEY = "clms.downloadtool"
 
