@@ -1,0 +1,6 @@
+[report]
+include =
+    src/clms/*
+omit =
+    */test*
+    */upgrades/*
