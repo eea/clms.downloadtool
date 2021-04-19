@@ -1,0 +1,125 @@
+{
+	"info": {
+		"_postman_id": "3387ac31-eb93-4541-817e-ac78784b0324",
+		"name": "Copernicus - Download Tool Registry",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Register an item",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"accept": true,
+					"accept-encoding": true,
+					"connection": true
+				}
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"key\": \"this-is-my-key\",\n    \"value\": \"this-is-my-value\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/Plone/@register_item",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"Plone",
+						"@register_item"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get an existing item",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"accept": true
+				}
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/Plone/@get_item?key=this-is-my-key",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"Plone",
+						"@get_item"
+					],
+					"query": [
+						{
+							"key": "key",
+							"value": "this-is-my-key"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get an unexisting key",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"accept": true
+				}
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/Plone/@get_item?key=this-is-an-unexisting-key",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"Plone",
+						"@get_item"
+					],
+					"query": [
+						{
+							"key": "key",
+							"value": "this-is-an-unexisting-key"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
