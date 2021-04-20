@@ -5,7 +5,9 @@
 
   <configure zcml:condition="installed AccessControl.security">
   <!-- -*- extra stuff goes here -*- -->
-
+    <permission
+      id="clms.downloadtool.usedownloadtool"
+      title="clms.downloadtool: Use Download Tool" />
 
   </configure>
 

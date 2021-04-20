@@ -2,6 +2,8 @@
 <rolemap>
   <permissions>
   <!-- -*- extra stuff goes here -*- -->
-
+    <permission name="clms.downloadtool: Use Download Tool" acquire="True">
+      <role name="Authenticated"/>
+    </permission>
   </permissions>
 </rolemap>
