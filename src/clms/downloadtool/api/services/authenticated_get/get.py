@@ -15,13 +15,13 @@ from logging import getLogger
 log = getLogger(__name__)
 
 
-class GetItem(Service):
+class AuthenticatedGet(Service):
     def reply(self):
 
         key = self.request.get("key")
-        log.info('HOLA')
+        user = api.user.get_current()
         utility = getUtility(IDownloadToolUtility)
         value = utility.get_item(key)
 
         self.request.response.setStatus(200)
-        return {key: value}
+        return {key: value, 'user': user.getId()}
