@@ -43,3 +43,55 @@ class DownloadToolUtility(object):
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         return registry.get(key)
+    
+    def datarequest_post(self, key, value):
+        site = getSite()
+        annotations = IAnnotations(site)
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        registry[key] = value
+        annotations[ANNOTATION_KEY] = registry
+
+    def datarequest_delete(self, key, value):
+        site = getSite()
+        annotations = IAnnotations(site)
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        registry[key] = value
+        annotations[ANNOTATION_KEY] = registry
+
+    def datarequest_search(self, key, value):
+        site = getSite()
+        annotations = IAnnotations(site)
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        return registry.get(key)
+
+    def datarequest_search(self, key):
+        site = getSite()
+        annotations = IAnnotations(site)
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        return registry.get(key)
+
+
+    def datarequest_search(self, key):
+        site = getSite()
+        annotations = IAnnotations(site)
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        return registry.get(key)
+
+    def dataset_get(self, key):
+        site = getSite()
+        annotations = IAnnotations(site)
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        return registry.get(key)
+
+    def datarequest_status_get(self, key):
+        site = getSite()
+        annotations = IAnnotations(site)
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        return registry.get(key)
+
+    def datarequest_status_patch(self, key, value):
+        site = getSite()
+        annotations = IAnnotations(site)
+        registry = annotations.patch(ANNOTATION_KEY, PersistentMapping())
+        registry[key] = value
+        annotations[ANNOTATION_KEY] = registry

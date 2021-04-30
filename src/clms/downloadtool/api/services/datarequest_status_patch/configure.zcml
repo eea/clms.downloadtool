@@ -1,0 +1,13 @@
+<configure
+  xmlns="http://namespaces.zope.org/zope"
+  xmlns:plone="http://namespaces.plone.org/plone">
+
+  <plone:service
+    method="PATCH"
+    for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+    factory=".patch.datarequest_status_patch"
+    name="@datarequest_status_patch"
+    permission="zope2.View"
+    />
+
+</configure>
