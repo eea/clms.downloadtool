@@ -23,10 +23,24 @@ class datarequest_delete(Service):
         user_id = body.get("user_id")
         task_id = body.get("task_id")
         log.info('DATAREQUEST_DELETE')
+        log.info('user_id')
+        log.info('DATAREQUEST_DELETE')
         utility = getUtility(IDownloadToolUtility)
         #value = utility.datarequest_delete(key)
 
+        try:
+            if user_id and task_id:
+                user_id = int(user_id)
+                task_id = int(task_id)
+                response_json = {"user_id":user_id, "task_id":task_id}
+                self.request.response.setStatus(200)
+            else:
+                response_json="BAD REQUEST"
+                self.request.response.setStatus(400)
+        except:
+            log.info("BAD REQUEST")
+            response_json="BAD REQUEST"
+            self.request.response.setStatus(400)
 
-        responseJson = {"user_id":user_id, "task_id":task_id}
-        self.request.response.setStatus(200)
-        return responseJson
+        
+        return response_json

@@ -14,6 +14,8 @@ from logging import getLogger
 
 log = getLogger(__name__)
 
+#devuelve una lista de IDs que cumplen con los requisitos
+
 
 class datarequest_search(Service):
     def reply(self):
@@ -22,9 +24,29 @@ class datarequest_search(Service):
         log.info('DATAREQUEST_SEARCH')
         utility = getUtility(IDownloadToolUtility)
         #value = utility.datarequest_search(key)
-        task_id = self.request.get("task_id")
+        status = self.request.get("status")
         user_id = self.request.get("user_id")
-        self.request.response.setStatus(200)
-        responseJson = {"task_id": task_id, "user_id":user_id}
+
+        '''
+        if status:
+            response_json = {"user_id": user_id, "status":status}
+        else:
+            response_json = {"user_id": user_id}
+        '''
         
-        return responseJson
+        bad = False
+
+        try:
+            user_id = int(user_id)
+        except:
+            log.info("BAD REQUEST INCOMING")
+            bad = True
+
+        if not bad and status:
+            self.request.response.setStatus(200)
+            response_json = [user_id, "10285103", "5152112"]
+        else:
+            self.request.response.setStatus(400)
+            response_json = "BAD REQUEST"
+        return response_json
+

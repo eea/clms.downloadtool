@@ -22,10 +22,15 @@ class dataset_get(Service):
         log.info('DATASET_GET')
         log.info(self.request.get("dataset_title"))
         utility = getUtility(IDownloadToolUtility)
-        #value = utility.dataset_get(key)
 
-        key = "dataset_title"
+
         value = self.request.get("dataset_title")
 
-        self.request.response.setStatus(200)
-        return {key: value}
+        if not value:
+            self.request.response.setStatus(400)
+            log.info("BAD REQUEST")
+            response_json = "BAD REQUEST"
+        else:
+            self.request.response.setStatus(200)
+            response_json = {"dataset_title": value}
+        return response_json
