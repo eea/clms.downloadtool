@@ -20,6 +20,7 @@ log = getLogger(__name__)
 class datarequest_search(Service):
     def reply(self):
         #task_id, user_id
+        status_list = ["Rejected", "Queued", "In_progress", "Finished_ok", "Finished_nok", "Cancelled"]
 
         log.info('DATAREQUEST_SEARCH')
         utility = getUtility(IDownloadToolUtility)
@@ -38,11 +39,13 @@ class datarequest_search(Service):
 
         try:
             user_id = int(user_id)
+            if status and status not in status_list:
+                raise ValueError("Status not recognized")
         except:
             log.info("BAD REQUEST INCOMING")
             bad = True
 
-        if not bad and status:
+        if not bad:
             self.request.response.setStatus(200)
             response_json = [user_id, "10285103", "5152112"]
         else:
