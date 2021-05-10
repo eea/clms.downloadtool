@@ -31,7 +31,7 @@ class datarequest_status_get(Service):
             response_json = "BAD REQUEST"
         else:
             self.request.response.setStatus(200)
-            response_json = {"task_id":task_id, "creation_date":str(datetime.now()).split(".")[0], "start_date":str(datetime.now()).split(".")[0], "end_date":"RUNNING"}
+            response_json = {"task_id":task_id, "creation_date":str(datetime.now()).split(".")[0], "start_date":str(datetime.now()).split(".")[0], "end_date":str(datetime.now()).split(".")[0]}
             
 
 
