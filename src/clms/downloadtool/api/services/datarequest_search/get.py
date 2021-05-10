@@ -47,7 +47,7 @@ class datarequest_search(Service):
 
         if not bad:
             self.request.response.setStatus(200)
-            response_json = [user_id, status]
+            response_json = {"user_id": user_id,"status": status}
         else:
             self.request.response.setStatus(400)
             response_json = "BAD REQUEST"
