@@ -21,8 +21,12 @@ from zope.interface import implementer
 from zope.interface import Interface
 from zope.site.hooks import getSite
 
+import random
+from logging import getLogger
+log = getLogger(__name__)
 
 ANNOTATION_KEY = "clms.downloadtool"
+status_list = ["Rejected", "Queued", "In_progress", "Finished_ok", "Finished_nok", "Cancelled"]
 
 
 class IDownloadToolUtility(Interface):
@@ -31,51 +35,118 @@ class IDownloadToolUtility(Interface):
 
 @implementer(IDownloadToolUtility)
 class DownloadToolUtility(object):
-    def register_item(self, key, value):
+
+    def datarequest_post(self, data_request):
+        site = getSite()
+        annotations = IAnnotations(site)
+        task_id = random.randint(0,99999999999)
+        log.info("Number generated")
+
+        if annotations.get(ANNOTATION_KEY, None) is None:
+            log.info("IS NONE")
+            registry = {str(task_id): data_request}
+            annotations[ANNOTATION_KEY] = registry
+
+        else:
+            registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+            exists = True
+            while exists:
+                log.info("Generating number")
+                log.info("Registry")
+                #check = registry[task_id]
+                if task_id not in registry:
+                    exists = False
+            log.info("IS NOT NONE")
+            log.info(annotations.get(ANNOTATION_KEY, None))
+            registry[str(task_id)] = data_request
+
+        #data_request["task_id"] = task_id
+        
+        log.info(registry)
+        log.info(ANNOTATION_KEY)
+
+        return {task_id: data_request}
+
+    def datarequest_delete(self, task_id):
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        registry[key] = value
+
+        log.info("STATUS CANCEL")
+        
+        dataObject = registry[str(task_id)]
+        log.info("STATUS CANCEL 2 ")
+
+        dataObject["status"]=  "Cancelled"
+
+        log.info("VALUE CHANGED")
+        registry[str(task_id)] = dataObject
+
+        log.info("ASIGNED")
+        
+        log.info(registry)
+        log.info("RESPONSE")
+        
+        log.info(ANNOTATION_KEY)
+
         annotations[ANNOTATION_KEY] = registry
+        return dataObject
 
-    def get_item(self, key):
+
+    def datarequest_search(self, user_id, status):
+        #Controlar que no sea None 
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        return registry.get(key)
-    
-    def datarequest_post(self, key, value):
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        registry[key] = value
-        annotations[ANNOTATION_KEY] = registry
 
-    def datarequest_delete(self, key, value):
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        registry[key] = value
-        annotations[ANNOTATION_KEY] = registry
+        dataObject = {}
 
-    def datarequest_search(self, key, value):
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        return registry.get(key)
+        log.info("registry")
+        log.info(registry)
 
-    def datarequest_search(self, key):
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        return registry.get(key)
+        log.info("registry KEYS ")
+        log.info(registry)
+        
+        if status in status_list:
+            for key in registry.keys():
+                values = registry.get(key)
 
 
-    def datarequest_search(self, key):
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        return registry.get(key)
+                log.info("KEYS")
+                log.info(key)
+
+                log.info("VALUES TYPE")
+                log.info(type(values))
+                
+                log.info("VALUES")
+                log.info(values)
+
+                log.info("STATUS")
+                log.info(status)
+
+                if user_id == values['user_id'] and status == values['status']:
+                    dataObject[key] = values
+        else:
+            for key in registry.keys():
+                values = registry.get(key)
+
+
+                log.info("KEYS")
+                log.info(key)
+
+                log.info("VALUES TYPE")
+                log.info(type(values))
+                
+                log.info("VALUES")
+                log.info(values)
+
+                log.info("STATUS")
+                log.info(status)
+
+                if user_id == values['user_id']:
+                    dataObject[key] = values
+
+        return dataObject
 
     def dataset_get(self, key):
         site = getSite()
@@ -83,15 +154,77 @@ class DownloadToolUtility(object):
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         return registry.get(key)
 
-    def datarequest_status_get(self, key):
+    def datarequest_status_get(self, task_id):
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        return registry.get(key)
+        return registry.get(task_id)
 
-    def datarequest_status_patch(self, key, value):
+
+    def datarequest_status_patch(self, dataObject, task_id):
         site = getSite()
         annotations = IAnnotations(site)
-        registry = annotations.patch(ANNOTATION_KEY, PersistentMapping())
-        registry[key] = value
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+
+        
+        log.info("DATAOBJECT")
+        log.info(dataObject)
+        
+
+        log.info("VALUE CHANGED")
+
+        registry[str(task_id)] = dataObject
+
+        log.info("ASIGNED")
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+        log.info(registry)
+        log.info("RESPONSE")
+        
+        log.info(ANNOTATION_KEY)
+
         annotations[ANNOTATION_KEY] = registry
+        return dataObject
+
+
+
+
+
+        ##-----------------------------------------------------------------------------------------------------------------------------------------
+
+'''
+
+    def register_item(self, status, task_id, user_id):
+        site = getSite()
+        annotations = IAnnotations(site)
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+
+        if annotations.get(ANNOTATION_KEY, None) is None:
+            log.info("IS NONE")
+            registry = annotations[ANNOTATION_KEY] = {"status":status, "user_id":user_id}
+
+        else:
+            log.info("IS NOT NONE")
+            log.info(annotations.get(ANNOTATION_KEY, None))
+            registry[task_id] = {"status":status, "user_id":user_id}
+        
+        if registry is None:
+           log.info("IF SENTENCE")
+           #{"status":status, "user_id":user_id}
+        else:
+           log.info("ELSE SENTENCE")
+
+           #registry = annotations[ANNOTATION_KEY] = Item(user_id, status)
+        
+        log.info(registry)
+        #annotations[ANNOTATION_KEY] = registry
+        log.info(ANNOTATION_KEY)
+
+    def get_item(self, task_id):
+        
+        site = getSite()
+        annotations = IAnnotations(site)
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        log.info('GET VALUE')
+        log.info(registry)
+        return registry.get(task_id)
+'''

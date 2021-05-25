@@ -43,11 +43,12 @@ class DataRequestPost(Service):
 
                 if validateSpatialExtent(spatial_extent) and temporal_extent_validate1 or temporal_extent_validate2:
                     response_json = {"user_id": user_id, "download_format": download_format,
-                    "dataset_id": dataset_id, "temporal_extent": {"start_date":temporal_extent.get("start_date"), "end_date":temporal_extent.get("end_date")}}
+                    "dataset_id": dataset_id, "temporal_extent": {"start_date":temporal_extent.get("start_date"), "end_date":temporal_extent.get("end_date")}} 
 
                 else: 
                     response_json = {"user_id": user_id, "download_format": download_format, "dataset_id": dataset_id,
                     "spatial_extent": [spatial_extent[0],spatial_extent[1],spatial_extent[2],spatial_extent[3]],"temporal_extent": {"start_date":temporal_extent.get("start_date"), "end_date":temporal_extent.get("end_date")}}
+
 
             elif validateSpatialExtent(spatial_extent):
                 if spatial_extent_validate:
@@ -56,6 +57,13 @@ class DataRequestPost(Service):
 
             else:
                 response_json = {"user_id": user_id, "download_format": download_format, "dataset_id": dataset_id}
+            
+            response_json["status"] = "In_progress"
+            response_json = utility.datarequest_post(response_json)
+
+            log.info('BEFORE CALLING INSERTION METHOD')
+            log.info(response_json)
+
 
             self.request.response.setStatus(201)
             return response_json

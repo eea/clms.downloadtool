@@ -8,10 +8,31 @@
 		{
 			"name": "get_item",
 			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "admin",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "admin",
+							"type": "string"
+						}
+					]
+				},
 				"method": "GET",
-				"header": [],
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
 				"url": {
-					"raw": "http://localhost:8080/Plone2/@get_item",
+					"raw": "http://localhost:8080/Plone2/@get_item?task_id=8081",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -20,6 +41,62 @@
 					"path": [
 						"Plone2",
 						"@get_item"
+					],
+					"query": [
+						{
+							"key": "task_id",
+							"value": "8081"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "register_item",
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "admin",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "admin",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"task_id\": \"8081\",\n    \"user_id\":\"626\",\n    \"status\":\"Stopped\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/Plone2/@register_item",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"Plone2",
+						"@register_item"
 					]
 				}
 			},
@@ -63,7 +140,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://localhost:8080/Plone2/@datarequest_search?user_id=313&status=going",
+					"raw": "http://localhost:8080/Plone2/@datarequest_search?user_id=3&status=In_progress",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -76,11 +153,11 @@
 					"query": [
 						{
 							"key": "user_id",
-							"value": "313"
+							"value": "3"
 						},
 						{
 							"key": "status",
-							"value": "going"
+							"value": "In_progress"
 						}
 					]
 				}
@@ -115,7 +192,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"user_id\":\"3\",\n    \"download_format\":\"3\",\n    \"dataset_id\":\"52\",\n    \"spatial_extent\":[15.23560, -15.38584, 30.65845,-30.42458],\n    \"temporal_extent\":{\"start_date\":\"20-11-1952\", \"end_date\": \"4-13-2002\"}\n}"
+					"raw": "{\n    \"user_id\":3,\n    \"download_format\":\"3\",\n    \"dataset_id\":\"52\",\n    \"spatial_extent\":[15.23560, -15.38584, 30.65845,-30.42458],\n    \"temporal_extent\":{\"start_date\":\"20-11-1952\", \"end_date\": \"4-13-2002\"}\n}"
 				},
 				"url": {
 					"raw": "http://localhost:8080/Plone2/@datarequest_post",
@@ -160,7 +237,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"task_id\": 515151,\n    \"user_id\": 124\n}",
+					"raw": "{\n    \"task_id\": 62479036085,\n    \"user_id\": 3\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -268,7 +345,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://localhost:8080/Plone2/@datarequest_status_get?task_id=13",
+					"raw": "http://localhost:8080/Plone2/@datarequest_status_get?task_id=32628031400",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -281,7 +358,7 @@
 					"query": [
 						{
 							"key": "task_id",
-							"value": "13"
+							"value": "32628031400"
 						}
 					]
 				}
@@ -289,7 +366,7 @@
 			"response": []
 		},
 		{
-			"name": "@datarequest_status_patch",
+			"name": "@datarequest_status_patch DONE",
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -316,7 +393,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"task_id\":1354, \"status\":\"DONE\"}",
+					"raw": "{\n    \"dataset_id\": \"431411\",\n    \"download_format\": \"3\",\n    \"spatial_extent\": [\n        15.2356,\n        -15.38584,\n        30.65845,\n        -30.42458\n    ],\n    \"task_id\": 23235556259,\n    \"temporal_extent\": {\n        \"end_date\": \"4-13-2002\",\n        \"start_date\": \"20-11-1952\"\n    },\n    \"user_id\": \"3\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"

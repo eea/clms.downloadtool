@@ -23,7 +23,6 @@ class datarequest_status_get(Service):
         task_id = self.request.get("task_id")
         log.info('datarequest_status_get')
         utility = getUtility(IDownloadToolUtility)
-        #value = utility.datarequest_status_get(key)
 
         if not task_id:
             self.request.response.setStatus(400)
@@ -31,7 +30,8 @@ class datarequest_status_get(Service):
             response_json = "BAD REQUEST"
         else:
             self.request.response.setStatus(200)
-            response_json = {"task_id":task_id, "creation_date":str(datetime.now()).split(".")[0], "start_date":str(datetime.now()).split(".")[0], "end_date":str(datetime.now()).split(".")[0]}
+            response_json = utility.datarequest_status_get(task_id)
+            #response_json = {"task_id":task_id, "creation_date":str(datetime.now()).split(".")[0], "start_date":str(datetime.now()).split(".")[0], "end_date":str(datetime.now()).split(".")[0]}
             
 
 
