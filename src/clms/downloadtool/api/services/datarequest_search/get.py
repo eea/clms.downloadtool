@@ -16,7 +16,6 @@ log = getLogger(__name__)
 
 #devuelve una lista de IDs que cumplen con los requisitos
 
-
 class datarequest_search(Service):
     def reply(self):
         status_list = ["Rejected", "Queued", "In_progress", "Finished_ok", "Finished_nok", "Cancelled"]
