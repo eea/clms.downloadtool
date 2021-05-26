@@ -40,10 +40,8 @@ class DownloadToolUtility(object):
         site = getSite()
         annotations = IAnnotations(site)
         task_id = random.randint(0,99999999999)
-        log.info("Number generated")
 
         if annotations.get(ANNOTATION_KEY, None) is None:
-            log.info("IS NONE")
             registry = {str(task_id): data_request}
             annotations[ANNOTATION_KEY] = registry
 
@@ -51,44 +49,19 @@ class DownloadToolUtility(object):
             registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
             exists = True
             while exists:
-                log.info("Generating number")
-                log.info("Registry")
-                #check = registry[task_id]
                 if task_id not in registry:
                     exists = False
-            log.info("IS NOT NONE")
-            log.info(annotations.get(ANNOTATION_KEY, None))
             registry[str(task_id)] = data_request
-
-        #data_request["task_id"] = task_id
-        
-        log.info(registry)
-        log.info(ANNOTATION_KEY)
 
         return {task_id: data_request}
 
     def datarequest_delete(self, task_id):
         site = getSite()
         annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-
-        log.info("STATUS CANCEL")
-        
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())     
         dataObject = registry[str(task_id)]
-        log.info("STATUS CANCEL 2 ")
-
-        dataObject["status"]=  "Cancelled"
-
-        log.info("VALUE CHANGED")
+        dataObject["status"] =  "Cancelled"
         registry[str(task_id)] = dataObject
-
-        log.info("ASIGNED")
-        
-        log.info(registry)
-        log.info("RESPONSE")
-        
-        log.info(ANNOTATION_KEY)
-
         annotations[ANNOTATION_KEY] = registry
         return dataObject
 
@@ -101,47 +74,15 @@ class DownloadToolUtility(object):
 
         dataObject = {}
 
-        log.info("registry")
-        log.info(registry)
-
-        log.info("registry KEYS ")
-        log.info(registry)
-        
         if status in status_list:
             for key in registry.keys():
                 values = registry.get(key)
-
-
-                log.info("KEYS")
-                log.info(key)
-
-                log.info("VALUES TYPE")
-                log.info(type(values))
-                
-                log.info("VALUES")
-                log.info(values)
-
-                log.info("STATUS")
-                log.info(status)
 
                 if user_id == values['user_id'] and status == values['status']:
                     dataObject[key] = values
         else:
             for key in registry.keys():
                 values = registry.get(key)
-
-
-                log.info("KEYS")
-                log.info(key)
-
-                log.info("VALUES TYPE")
-                log.info(type(values))
-                
-                log.info("VALUES")
-                log.info(values)
-
-                log.info("STATUS")
-                log.info(status)
 
                 if user_id == values['user_id']:
                     dataObject[key] = values
@@ -165,29 +106,9 @@ class DownloadToolUtility(object):
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-
-        
-        log.info("DATAOBJECT")
-        log.info(dataObject)
-        
-
-        log.info("VALUE CHANGED")
-
         registry[str(task_id)] = dataObject
-
-        log.info("ASIGNED")
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
-        log.info(registry)
-        log.info("RESPONSE")
-        
-        log.info(ANNOTATION_KEY)
-
         annotations[ANNOTATION_KEY] = registry
         return dataObject
-
-
-
-
 
         ##-----------------------------------------------------------------------------------------------------------------------------------------
 

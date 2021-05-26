@@ -18,21 +18,6 @@ from logging import getLogger
 
 log = getLogger(__name__)
 
-
-'''
-
-Request status (PATCH)
-This method will be used by server tools to change the status of the requests
-Method: GET/datarequest/status
-
-Parameters:
-TaskID
-Status
-{result data}
-Result: task is changed to specified status, and the result data are set (request shall return TaskID and status)
-
-'''
-
 class datarequest_status_patch(Service):
 
 
@@ -51,8 +36,6 @@ class datarequest_status_patch(Service):
         response_json = {}
 
         utility = getUtility(IDownloadToolUtility)
-        #utility.datarequest_post(key, value)
-
         
         if user_id and download_format and dataset_id:
             

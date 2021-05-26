@@ -32,7 +32,6 @@ class DataRequestPost(Service):
         response_json = {}
 
         utility = getUtility(IDownloadToolUtility)
-        #utility.datarequest_post(key, value)
 
         
         if user_id and download_format and dataset_id:
