@@ -19,7 +19,6 @@ log = getLogger(__name__)
 
 class datarequest_search(Service):
     def reply(self):
-        #task_id, user_id
         status_list = ["Rejected", "Queued", "In_progress", "Finished_ok", "Finished_nok", "Cancelled"]
 
         log.info('DATAREQUEST_SEARCH')

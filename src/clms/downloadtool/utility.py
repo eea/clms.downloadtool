@@ -74,18 +74,25 @@ class DownloadToolUtility(object):
 
         dataObject = {}
 
-        if status in status_list:
-            for key in registry.keys():
-                values = registry.get(key)
+        if user_id:
+            if status in status_list:
+                for key in registry.keys():
+                    values = registry.get(key)
 
-                if user_id == values['user_id'] and status == values['status']:
-                    dataObject[key] = values
+                    if user_id == values['user_id'] and status == values['status']:
+                        dataObject[key] = values
+            elif status:
+                return "Error, bad request status not recognized"
+            else:
+                for key in registry.keys():
+                    values = registry.get(key)
+
+                    if user_id == values['user_id']:
+                        dataObject[key] = values
         else:
-            for key in registry.keys():
-                values = registry.get(key)
+            return "Error, bad request user_id not defined"
 
-                if user_id == values['user_id']:
-                    dataObject[key] = values
+        
 
         return dataObject
 
