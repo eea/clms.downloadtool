@@ -32,42 +32,54 @@ class datarequest_status_patch(Service):
         dataset_id = body.get("dataset_id")
         spatial_extent = body.get("spatial_extent")
         temporal_extent = body.get("temporal_extent")
+        status = body.get("status")
 
         response_json = {}
 
         utility = getUtility(IDownloadToolUtility)
-        
-        if user_id and download_format and dataset_id:
-            
-            if temporal_extent:
-                temporal_extent_validate1 = validateDate1(temporal_extent)
-                temporal_extent_validate2 = validateDate2(temporal_extent)
-
-                if validateSpatialExtent(spatial_extent) and temporal_extent_validate1 or temporal_extent_validate2:
-                    response_json = {"user_id": user_id, "download_format": download_format,
-                    "dataset_id": dataset_id, "temporal_extent": {"start_date":temporal_extent.get("start_date"), "end_date":temporal_extent.get("end_date")}} 
-
-                else: 
-                    response_json = {"user_id": user_id, "download_format": download_format, "dataset_id": dataset_id,
-                    "spatial_extent": [spatial_extent[0],spatial_extent[1],spatial_extent[2],spatial_extent[3]],"temporal_extent": {"start_date":temporal_extent.get("start_date"), "end_date":temporal_extent.get("end_date")}}
+        log.info(status)
+        log.info(task_id)
+        if task_id and status:
+            log.info("in")
+            response_json = {"status":status}
 
 
-            elif validateSpatialExtent(spatial_extent):
-                if spatial_extent_validate:
-                    response_json = {"user_id": user_id, "download_format": download_format, "dataset_id": dataset_id, "spatial_extent": [spatial_extent[0],spatial_extent[1],spatial_extent[2],spatial_extent[3]]}
+            if user_id and download_format and dataset_id:
+                log.info("in")
+                response_json = {"user_id": user_id, "status":status, "download_format": download_format, "dataset_id": dataset_id}
+                if temporal_extent:
+                    temporal_extent_validate1 = validateDate1(temporal_extent)
+                    temporal_extent_validate2 = validateDate2(temporal_extent)
+
+                    if validateSpatialExtent(spatial_extent) and temporal_extent_validate1 or temporal_extent_validate2:
+                        response_json = {"user_id": user_id, "status":status, "download_format": download_format,
+                        "dataset_id": dataset_id, "temporal_extent": {"start_date":temporal_extent.get("start_date"), "end_date":temporal_extent.get("end_date")}} 
+
+                    else: 
+                        response_json = {"user_id": user_id, "status":status, "download_format": download_format, "dataset_id": dataset_id,
+                        "spatial_extent": [spatial_extent[0],spatial_extent[1],spatial_extent[2],spatial_extent[3]],"temporal_extent": {"start_date":temporal_extent.get("start_date"), "end_date":temporal_extent.get("end_date")}}
+
+
+                elif validateSpatialExtent(spatial_extent):
+                    if spatial_extent_validate:
+                        response_json = {"user_id": user_id, "status":status, "download_format": download_format, "dataset_id": dataset_id, "spatial_extent": [spatial_extent[0],spatial_extent[1],spatial_extent[2],spatial_extent[3]]}
+                    
+
+                #else:
+                #    response_json = {"user_id": user_id, "status":status, "download_format": download_format, "dataset_id": dataset_id}
                 
 
-            else:
-                response_json = {"user_id": user_id, "download_format": download_format, "dataset_id": dataset_id}
-            
-            response_json = utility.datarequest_status_patch(response_json, task_id)
-
-            self.request.response.setStatus(201)
-            return response_json
-
+                self.request.response.setStatus(201)
+                return response_json            
         else:
             self.request.response.setStatus(400)
             return "Error, required fields not filled"
+        
+        
+        log.info("END")
+        response_json = utility.datarequest_status_patch(response_json, task_id)
+        return response_json
+
 
 
 def validateDate1(temporal_extent):
@@ -77,11 +89,13 @@ def validateDate1(temporal_extent):
 
     date_format = '%Y-%m-%d'
     try:
-        date_obj = datetime.datetime.strptime(start_date, date_format)
-        log.info(date_obj)
-        date_obj = datetime.datetime.strptime(end_date, date_format)
-        log.info(date_obj)
-        return True
+        if start_date and end_date:
+            date_obj = datetime.datetime.strptime(start_date, date_format)
+            log.info(date_obj)
+            date_obj = datetime.datetime.strptime(end_date, date_format)
+            log.info(date_obj)
+            return True
+        return False
     except ValueError:
         log.info("Incorrect data format, should be YYYY-MM-DD")
         return False
@@ -93,11 +107,13 @@ def validateDate2(temporal_extent):
 
     date_format = '%d-%m-%Y'
     try:
-        date_obj = datetime.datetime.strptime(start_date, date_format)
-        log.info(date_obj)
-        date_obj = datetime.datetime.strptime(end_date, date_format)
-        log.info(date_obj)
-        return True
+        if start_date and end_date:
+            date_obj = datetime.datetime.strptime(start_date, date_format)
+            log.info(date_obj)
+            date_obj = datetime.datetime.strptime(end_date, date_format)
+            log.info(date_obj)
+            return True
+        return False
     except ValueError:
         log.info("Incorrect data format, should be DD-MM-YYYY")
         return False
@@ -105,7 +121,7 @@ def validateDate2(temporal_extent):
 def validateSpatialExtent(spatial_extent):
     
     try:
-        if len(spatial_extent) == 4:
+        if spatial_extent and len(spatial_extent) == 4:
             spatial_extent1 = float(spatial_extent[0])
             spatial_extent2 = float(spatial_extent[1])
             spatial_extent3 = float(spatial_extent[2])

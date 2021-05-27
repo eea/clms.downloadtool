@@ -59,7 +59,8 @@ class DownloadToolUtility(object):
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())     
-        dataObject = registry[str(task_id)]
+
+        dataObject = registry.get(str(task_id))
         dataObject["status"] =  "Cancelled"
         registry[str(task_id)] = dataObject
         annotations[ANNOTATION_KEY] = registry
@@ -77,6 +78,7 @@ class DownloadToolUtility(object):
         if user_id:
             if status in status_list:
                 for key in registry.keys():
+
                     values = registry.get(key)
 
                     if user_id == values['user_id'] and status == values['status']:
@@ -115,7 +117,9 @@ class DownloadToolUtility(object):
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         registry[str(task_id)] = dataObject
         annotations[ANNOTATION_KEY] = registry
-        return dataObject
+        resp = {}
+        resp[task_id]  = dataObject
+        return resp
 
         ##-----------------------------------------------------------------------------------------------------------------------------------------
 

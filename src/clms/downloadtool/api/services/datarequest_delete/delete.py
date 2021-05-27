@@ -24,20 +24,18 @@ class datarequest_delete(Service):
         task_id = body.get("task_id")
         log.info('DATAREQUEST_DELETE')
         utility = getUtility(IDownloadToolUtility)
-
         try:
             if task_id:
                 log.info(task_id)
-                task_id = int(task_id)
                 response_json = utility.datarequest_delete(task_id)
                 self.request.response.setStatus(200)
             else:
                 response_json="BAD REQUEST ELSE"
                 self.request.response.setStatus(400)
-        except:
-            log.info("BAD REQUEST")
-            response_json="BAD REQUEST EXCEPTION"
+        except TypeError:
+            response_json="BAD REQUEST, THE ELEMENT DOES NOT EXIST"
             self.request.response.setStatus(400)
 
+   
         
         return response_json
