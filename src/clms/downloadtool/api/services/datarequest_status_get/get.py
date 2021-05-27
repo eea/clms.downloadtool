@@ -31,5 +31,7 @@ class datarequest_status_get(Service):
         else:
             self.request.response.setStatus(200)
             response_json = utility.datarequest_status_get(task_id)
+        if response_json is None:
+            response_json = "The task does not exist"
             
         return response_json

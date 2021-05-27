@@ -72,24 +72,20 @@ class DownloadToolUtility(object):
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-
         dataObject = {}
 
         if user_id:
             if status in status_list:
                 for key in registry.keys():
-
                     values = registry.get(key)
-
-                    if user_id == values['user_id'] and status == values['status']:
+                    if str(user_id) == values.get("user_id") and status == values.get("status"):
                         dataObject[key] = values
             elif status:
                 return "Error, bad request status not recognized"
             else:
                 for key in registry.keys():
                     values = registry.get(key)
-
-                    if user_id == values['user_id']:
+                    if str(user_id) == values.get("user_id"):
                         dataObject[key] = values
         else:
             return "Error, bad request user_id not defined"
