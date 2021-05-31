@@ -25,9 +25,9 @@ class datarequest_delete(Service):
         log.info('DATAREQUEST_DELETE')
         utility = getUtility(IDownloadToolUtility)
         try:
-            if task_id:
+            if task_id and user_id:
                 log.info(task_id)
-                response_json = utility.datarequest_delete(task_id)
+                response_json = utility.datarequest_delete(task_id, user_id)
                 self.request.response.setStatus(200)
             else:
                 response_json="BAD REQUEST ELSE"

@@ -55,13 +55,15 @@ class DownloadToolUtility(object):
 
         return {task_id: data_request}
 
-    def datarequest_delete(self, task_id):
+    def datarequest_delete(self, task_id, user_id):
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())     
 
         dataObject = registry.get(str(task_id))
-        dataObject["status"] =  "Cancelled"
+        if dataObject["user_id"] == user_id:
+            dataObject["status"] =  "Cancelled"
+        
         registry[str(task_id)] = dataObject
         annotations[ANNOTATION_KEY] = registry
         return dataObject

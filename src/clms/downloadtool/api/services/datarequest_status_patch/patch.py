@@ -39,7 +39,7 @@ class datarequest_status_patch(Service):
         utility = getUtility(IDownloadToolUtility)
         log.info(status)
         log.info(task_id)
-        if task_id and status:
+        if task_id and status in status_list:
             log.info("in")
             response_json = {"status":status}
 
@@ -64,10 +64,6 @@ class datarequest_status_patch(Service):
                     if spatial_extent_validate:
                         response_json = {"user_id": user_id, "status":status, "download_format": download_format, "dataset_id": dataset_id, "spatial_extent": [spatial_extent[0],spatial_extent[1],spatial_extent[2],spatial_extent[3]]}
                     
-
-                #else:
-                #    response_json = {"user_id": user_id, "status":status, "download_format": download_format, "dataset_id": dataset_id}
-                
 
                 self.request.response.setStatus(201)
                 return response_json            
