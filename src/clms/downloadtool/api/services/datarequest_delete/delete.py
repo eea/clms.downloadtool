@@ -31,9 +31,11 @@ class datarequest_delete(Service):
                 self.request.response.setStatus(200)
             else:
                 response_json="BAD REQUEST ELSE"
-                self.request.response.setStatus(400)
         except TypeError:
             response_json="BAD REQUEST, THE ELEMENT DOES NOT EXIST"
+            self.request.response.setStatus(400)
+
+        if type(response_json) is "String":
             self.request.response.setStatus(400)
 
    

@@ -64,9 +64,12 @@ class DownloadToolUtility(object):
         if dataObject["user_id"] == user_id:
             dataObject["status"] =  "Cancelled"
         
-        registry[str(task_id)] = dataObject
-        annotations[ANNOTATION_KEY] = registry
-        return dataObject
+            registry[str(task_id)] = dataObject
+            annotations[ANNOTATION_KEY] = registry
+            return dataObject
+        
+        else:
+            return "Error, bad request" 
 
 
     def datarequest_search(self, user_id, status):
