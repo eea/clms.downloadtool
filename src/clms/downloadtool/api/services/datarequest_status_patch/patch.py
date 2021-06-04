@@ -61,8 +61,7 @@ class datarequest_status_patch(Service):
 
 
                 elif validateSpatialExtent(spatial_extent):
-                    if spatial_extent_validate:
-                        response_json = {"user_id": user_id, "status":status, "download_format": download_format, "dataset_id": dataset_id, "spatial_extent": [spatial_extent[0],spatial_extent[1],spatial_extent[2],spatial_extent[3]]}
+                    response_json = {"user_id": user_id, "status":status, "download_format": download_format, "dataset_id": dataset_id, "spatial_extent": [spatial_extent[0],spatial_extent[1],spatial_extent[2],spatial_extent[3]]}
                     
 
                 self.request.response.setStatus(201)

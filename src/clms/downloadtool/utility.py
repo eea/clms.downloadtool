@@ -52,6 +52,8 @@ class DownloadToolUtility(object):
                 if task_id not in registry:
                     exists = False
             registry[str(task_id)] = data_request
+            annotations[ANNOTATION_KEY] = registry
+
 
         return {task_id: data_request}
 
@@ -60,10 +62,17 @@ class DownloadToolUtility(object):
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())     
 
+        log.info(task_id)
         dataObject = registry.get(str(task_id))
-        if dataObject["user_id"] == user_id:
+        log.info(registry.get(str(task_id)))
+        #log.info(registry[task_id])
+        log.info(registry[str(task_id)])
+        log.info("REGISTRY")
+        log.info(registry)
+
+        log.info(dataObject)
+        if user_id == dataObject["user_id"]:
             dataObject["status"] =  "Cancelled"
-        
             registry[str(task_id)] = dataObject
             annotations[ANNOTATION_KEY] = registry
             return dataObject
@@ -116,16 +125,19 @@ class DownloadToolUtility(object):
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        registry[str(task_id)] = dataObject
+        tempObject = registry[str(task_id)]
+        tempObject.update(dataObject)
+        registry[str(task_id)] = tempObject
+        log.info("DATA OBJ")
+        log.info(tempObject)
         annotations[ANNOTATION_KEY] = registry
         resp = {}
-        resp[task_id]  = dataObject
+        resp[task_id]  = tempObject
         return resp
 
         ##-----------------------------------------------------------------------------------------------------------------------------------------
 
 '''
-
     def register_item(self, status, task_id, user_id):
         site = getSite()
         annotations = IAnnotations(site)
