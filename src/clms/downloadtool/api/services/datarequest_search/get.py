@@ -23,7 +23,7 @@ class datarequest_search(Service):
         log.info('DATAREQUEST_SEARCH')
         utility = getUtility(IDownloadToolUtility)
         status = self.request.get("status")
-        user_id = self.request.get("user_id")
+        user_id = str(self.request.get("user_id"))
         bad = False
 
         try:

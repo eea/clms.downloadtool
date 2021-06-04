@@ -23,7 +23,7 @@ class DataRequestPost(Service):
     def reply(self):
         body = json_body(self.request)
 
-        user_id = body.get("user_id")
+        user_id = str(body.get("user_id"))
         download_format = body.get("download_format")
         dataset_id = body.get("dataset_id")
         spatial_extent = body.get("spatial_extent")

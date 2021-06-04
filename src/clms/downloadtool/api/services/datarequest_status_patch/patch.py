@@ -27,7 +27,7 @@ class datarequest_status_patch(Service):
         body = json_body(self.request)
 
         task_id = body.get("task_id")
-        user_id = body.get("user_id")
+        user_id = str(body.get("user_id"))
         download_format = body.get("download_format")
         dataset_id = body.get("dataset_id")
         spatial_extent = body.get("spatial_extent")
