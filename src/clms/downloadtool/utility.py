@@ -71,11 +71,12 @@ class DownloadToolUtility(object):
         log.info(registry)
 
         log.info(dataObject)
-        if user_id == dataObject["user_id"]:
-            dataObject["status"] =  "Cancelled"
-            registry[str(task_id)] = dataObject
-            annotations[ANNOTATION_KEY] = registry
-            return dataObject
+        if user_id:
+            if user_id == dataObject["user_id"]:
+                dataObject["status"] =  "Cancelled"
+                registry[str(task_id)] = dataObject
+                annotations[ANNOTATION_KEY] = registry
+                return dataObject
         
         else:
             return "Error, bad request" 

@@ -24,6 +24,8 @@ class datarequest_delete(Service):
         task_id = str(body.get("task_id"))
         log.info('DATAREQUEST_DELETE')
         utility = getUtility(IDownloadToolUtility)
+        log.info(user_id)
+        log.info(task_id)
         #try:
         if task_id and user_id:
             log.info(task_id)

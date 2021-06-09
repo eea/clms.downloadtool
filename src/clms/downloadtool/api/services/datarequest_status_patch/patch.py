@@ -68,7 +68,10 @@ class datarequest_status_patch(Service):
                 return response_json            
         else:
             self.request.response.setStatus(400)
-            return "Error, required fields not filled"
+            if status not in status_list:
+                return "Status not valid"
+            else:    
+                return "Error, required fields not filled"
         
         
         log.info("END")
