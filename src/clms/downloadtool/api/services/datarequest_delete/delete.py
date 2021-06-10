@@ -32,12 +32,12 @@ class datarequest_delete(Service):
             response_json = utility.datarequest_delete(task_id, user_id)
             self.request.response.setStatus(200)
         else:
-            response_json="BAD REQUEST ELSE"
+            response_json="BAD REQUESTqteqwtrqweqweqwe"
         '''except TypeError:
             response_json="BAD REQUEST, THE ELEMENT DOES NOT EXIST"
             self.request.response.setStatus(400)'''
 
-        if type(response_json) is "String":
+        if "Error" in response_json:
             self.request.response.setStatus(400)
 
    

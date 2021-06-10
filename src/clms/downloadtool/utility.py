@@ -64,19 +64,18 @@ class DownloadToolUtility(object):
 
         log.info(task_id)
         dataObject = registry.get(str(task_id))
-        log.info(registry.get(str(task_id)))
         #log.info(registry[task_id])
-        log.info(registry[str(task_id)])
         log.info("REGISTRY")
         log.info(registry)
 
         log.info(dataObject)
-        if user_id:
-            if user_id == dataObject["user_id"]:
-                dataObject["status"] =  "Cancelled"
-                registry[str(task_id)] = dataObject
-                annotations[ANNOTATION_KEY] = registry
-                return dataObject
+        if task_id in registry:
+            if user_id:
+                if user_id == dataObject["user_id"]:
+                    dataObject["status"] =  "Cancelled"
+                    registry[str(task_id)] = dataObject
+                    annotations[ANNOTATION_KEY] = registry
+                    return dataObject
         
         else:
             return "Error, bad request" 
@@ -126,14 +125,21 @@ class DownloadToolUtility(object):
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        tempObject = registry[str(task_id)]
-        tempObject.update(dataObject)
-        registry[str(task_id)] = tempObject
-        log.info("DATA OBJ")
-        log.info(tempObject)
-        annotations[ANNOTATION_KEY] = registry
         resp = {}
-        resp[task_id]  = tempObject
+
+        if task_id in registry:
+            tempObject = registry[str(task_id)]
+            tempObject.update(dataObject)
+            registry[str(task_id)] = tempObject
+            log.info("DATA OBJ")
+            log.info(tempObject)
+            annotations[ANNOTATION_KEY] = registry
+            resp[task_id]  = tempObject
+            self.request.response.setStatus(201)
+        else:
+            resp = "Error, task_id not registered"
+            self.request.response.setStatus(400)
+
         return resp
 
         ##-----------------------------------------------------------------------------------------------------------------------------------------

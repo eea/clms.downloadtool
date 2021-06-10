@@ -64,8 +64,8 @@ class datarequest_status_patch(Service):
                     response_json = {"user_id": user_id, "status":status, "download_format": download_format, "dataset_id": dataset_id, "spatial_extent": [spatial_extent[0],spatial_extent[1],spatial_extent[2],spatial_extent[3]]}
                     
 
-                self.request.response.setStatus(201)
-                return response_json            
+                #self.request.response.setStatus(201)
+                #return response_json            
         else:
             self.request.response.setStatus(400)
             if status not in status_list:
