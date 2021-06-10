@@ -138,7 +138,6 @@ class DownloadToolUtility(object):
             self.request.response.setStatus(201)
         else:
             resp = "Error, task_id not registered"
-            self.request.response.setStatus(400)
 
         return resp
 

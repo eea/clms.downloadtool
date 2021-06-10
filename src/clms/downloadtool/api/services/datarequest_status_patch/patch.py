@@ -76,6 +76,10 @@ class datarequest_status_patch(Service):
         
         log.info("END")
         response_json = utility.datarequest_status_patch(response_json, task_id)
+
+        if "Error" in response_json:
+            self.request.response.setStatus(400)
+
         return response_json
 
 
