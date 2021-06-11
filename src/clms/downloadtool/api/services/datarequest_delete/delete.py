@@ -22,7 +22,7 @@ class datarequest_delete(Service):
         body = json_body(self.request)
         user_id = str(body.get("user_id"))
         task_id = str(body.get("task_id"))
-        response_json = ""
+        response_json = None
         log.info('DATAREQUEST_DELETE')
         utility = getUtility(IDownloadToolUtility)
         log.info(user_id)
@@ -41,7 +41,7 @@ class datarequest_delete(Service):
             self.request.response.setStatus(400)'''
 
         log.info(response_json)
-        if "Error" in response_json:
+        if "Error" in response_json or response_json is None or "BAD" in response_json:
             self.request.response.setStatus(400)
 
    
