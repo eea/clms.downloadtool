@@ -62,23 +62,28 @@ class DownloadToolUtility(object):
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())     
 
+        dataObject = None
         log.info(task_id)
-        dataObject = registry.get(str(task_id))
         #log.info(registry[task_id])
         log.info("REGISTRY")
         log.info(registry)
 
         log.info(dataObject)
-        if task_id in registry:
-            if user_id:
-                if user_id == dataObject["user_id"]:
-                    dataObject["status"] =  "Cancelled"
-                    registry[str(task_id)] = dataObject
-                    annotations[ANNOTATION_KEY] = registry
-                    return dataObject
-        
-        else:
-            return "Error, bad request" 
+        if task_id in registry and user_id is not None:
+            dataObject = registry.get(str(task_id))
+            if user_id in dataObject["user_id"]:
+                dataObject["status"] =  "Cancelled"
+                registry[str(task_id)] = dataObject
+                annotations[ANNOTATION_KEY] = registry
+                log.info("FINAL RETURN")
+                log.info(dataObject)
+            else:
+                dataObject = None
+                
+        if dataObject is None:
+            dataObject = "Error, not found" 
+
+        return dataObject
 
 
     def datarequest_search(self, user_id, status):

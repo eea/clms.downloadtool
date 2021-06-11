@@ -22,14 +22,17 @@ class datarequest_delete(Service):
         body = json_body(self.request)
         user_id = str(body.get("user_id"))
         task_id = str(body.get("task_id"))
+        response_json = ""
         log.info('DATAREQUEST_DELETE')
         utility = getUtility(IDownloadToolUtility)
         log.info(user_id)
         log.info(task_id)
         #try:
-        if task_id and user_id:
+        if task_id:
             log.info(task_id)
             response_json = utility.datarequest_delete(task_id, user_id)
+            log.info("RETURNED VALUE")
+            log.info(response_json)
             self.request.response.setStatus(200)
         else:
             response_json="BAD REQUEST"
@@ -37,6 +40,7 @@ class datarequest_delete(Service):
             response_json="BAD REQUEST, THE ELEMENT DOES NOT EXIST"
             self.request.response.setStatus(400)'''
 
+        log.info(response_json)
         if "Error" in response_json:
             self.request.response.setStatus(400)
 
