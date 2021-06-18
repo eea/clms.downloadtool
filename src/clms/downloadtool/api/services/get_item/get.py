@@ -19,7 +19,7 @@ log = getLogger(__name__)
 class GetItem(Service):
     def reply(self):
 
-        key = self.request.get("task_id")
+        key = self.request.get("TaskID")
         log.info(key)
         utility = getUtility(IDownloadToolUtility)
         value = utility.get_item(key)

@@ -28,12 +28,12 @@ class RegisterItemPost(Service):
     def reply(self):
         body = json_body(self.request)
 
-        user_id = body.get("user_id")
-        status = body.get("status")
-        task_id = body.get("task_id")
+        user_id = body.get("UserID")
+        status = body.get("Status")
+        task_id = body.get("TaskID")
 
         utility = getUtility(IDownloadToolUtility)
         utility.register_item(status, task_id, user_id)
 
         self.request.response.setStatus(201)
-        return {"task_id":task_id, "status": status, "user_id": user_id}
+        return {"TaskID":task_id, "Status": status, "UserID": user_id}

@@ -20,7 +20,7 @@ log = getLogger(__name__)
 class datarequest_status_get(Service):
     def reply(self):
 
-        task_id = self.request.get("task_id")
+        task_id = self.request.get("TaskID")
         log.info('datarequest_status_get')
         utility = getUtility(IDownloadToolUtility)
 

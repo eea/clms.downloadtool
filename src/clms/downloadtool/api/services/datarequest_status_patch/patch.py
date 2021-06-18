@@ -18,21 +18,27 @@ from logging import getLogger
 
 log = getLogger(__name__)
 
+countries = {"BD": "BGD", "BE": "BEL", "BF": "BFA", "BG": "BGR", "BA": "BIH", "BB": "BRB", "WF": "WLF", "BL": "BLM", "BM": "BMU", "BN": "BRN", "BO": "BOL", "BH": "BHR", "BI": "BDI", "BJ": "BEN", "BT": "BTN", "JM": "JAM", "BV": "BVT", "BW": "BWA", "WS": "WSM", "BQ": "BES", "BR": "BRA", "BS": "BHS", "JE": "JEY", "BY": "BLR", "BZ": "BLZ", "RU": "RUS", "RW": "RWA", "RS": "SRB", "TL": "TLS", "RE": "REU", "TM": "TKM", "TJ": "TJK", "RO": "ROU", "TK": "TKL", "GW": "GNB", "GU": "GUM", "GT": "GTM", "GS": "SGS", "GR": "GRC", "GQ": "GNQ", "GP": "GLP", "JP": "JPN", "GY": "GUY", "GG": "GGY", "GF": "GUF", "GE": "GEO", "GD": "GRD", "GB": "GBR", "GA": "GAB", "SV": "SLV", "GN": "GIN", "GM": "GMB", "GL": "GRL", "GI": "GIB", "GH": "GHA", "OM": "OMN", "TN": "TUN", "JO": "JOR", "HR": "HRV", "HT": "HTI", "HU": "HUN", "HK": "HKG", "HN": "HND", "HM": "HMD", "VE": "VEN", "PR": "PRI", "PS": "PSE", "PW": "PLW", "PT": "PRT", "SJ": "SJM", "PY": "PRY", "IQ": "IRQ", "PA": "PAN", "PF": "PYF", "PG": "PNG", "PE": "PER", "PK": "PAK", "PH": "PHL", "PN": "PCN", "PL": "POL", "PM": "SPM", "ZM": "ZMB", "EH": "ESH", "EE": "EST", "EG": "EGY", "ZA": "ZAF", "EC": "ECU", "IT": "ITA", "VN": "VNM", "SB": "SLB", "ET": "ETH", "SO": "SOM", "ZW": "ZWE", "SA": "SAU", "ES": "ESP", "ER": "ERI", "ME": "MNE", "MD": "MDA", "MG": "MDG", "MF": "MAF", "MA": "MAR", "MC": "MCO", "UZ": "UZB", "MM": "MMR", "ML": "MLI", "MO": "MAC", "MN": "MNG", "MH": "MHL", "MK": "MKD", "MU": "MUS", "MT": "MLT", "MW": "MWI", "MV": "MDV", "MQ": "MTQ", "MP": "MNP", "MS": "MSR", "MR": "MRT", "IM": "IMN", "UG": "UGA", "TZ": "TZA", "MY": "MYS", "MX": "MEX", "IL": "ISR", "FR": "FRA", "IO": "IOT", "SH": "SHN", "FI": "FIN", "FJ": "FJI", "FK": "FLK", "FM": "FSM", "FO": "FRO", "NI": "NIC", "NL": "NLD", "NO": "NOR", "NA": "NAM", "VU": "VUT", "NC": "NCL", "NE": "NER", "NF": "NFK", "NG": "NGA", "NZ": "NZL", "NP": "NPL", "NR": "NRU", "NU": "NIU", "CK": "COK", "XK": "XKX", "CI": "CIV", "CH": "CHE", "CO": "COL", "CN": "CHN", "CM": "CMR", "CL": "CHL", "CC": "CCK", "CA": "CAN", "CG": "COG", "CF": "CAF", "CD": "COD", "CZ": "CZE", "CY": "CYP", "CX": "CXR", "CR": "CRI", "CW": "CUW", "CV": "CPV", "CU": "CUB", "SZ": "SWZ", "SY": "SYR", "SX": "SXM", "KG": "KGZ", "KE": "KEN", "SS": "SSD", "SR": "SUR", "KI": "KIR", "KH": "KHM", "KN": "KNA", "KM": "COM", "ST": "STP", "SK": "SVK", "KR": "KOR", "SI": "SVN", "KP": "PRK", "KW": "KWT", "SN": "SEN", "SM": "SMR", "SL": "SLE", "SC": "SYC", "KZ": "KAZ", "KY": "CYM", "SG": "SGP", "SE": "SWE", "SD": "SDN", "DO": "DOM", "DM": "DMA", "DJ": "DJI", "DK": "DNK", "VG": "VGB", "DE": "DEU", "YE": "YEM", "DZ": "DZA", "US": "USA", "UY": "URY", "YT": "MYT", "UM": "UMI", "LB": "LBN", "LC": "LCA", "LA": "LAO", "TV": "TUV", "TW": "TWN", "TT": "TTO", "TR": "TUR", "LK": "LKA", "LI": "LIE", "LV": "LVA", "TO": "TON", "LT": "LTU", "LU": "LUX", "LR": "LBR", "LS": "LSO", "TH": "THA", "TF": "ATF", "TG": "TGO", "TD": "TCD", "TC": "TCA", "LY": "LBY", "VA": "VAT", "VC": "VCT", "AE": "ARE", "AD": "AND", "AG": "ATG", "AF": "AFG", "AI": "AIA", "VI": "VIR", "IS": "ISL", "IR": "IRN", "AM": "ARM", "AL": "ALB", "AO": "AGO", "AQ": "ATA", "AS": "ASM", "AR": "ARG", "AU": "AUS", "AT": "AUT", "AW": "ABW", "IN": "IND", "AX": "ALA", "AZ": "AZE", "IE": "IRL", "ID": "IDN", "UA": "UKR", "QA": "QAT", "MZ": "MOZ"}
+GCS = ["EPGS:4326", "EPGS:3035", "EPGS:3857", "EPGS:4258"]
 class datarequest_status_patch(Service):
 
 
     def reply(self):
+        dataset_formats = ["Shapefile", "GDB", "GPKG", "Geojson", "Geotiff", "Netcdf", "GML", "WFS"]
         status_list = ["Rejected", "Queued", "In_progress", "Finished_ok", "Finished_nok", "Cancelled"]
 
         body = json_body(self.request)
 
-        task_id = body.get("task_id")
-        user_id = str(body.get("user_id"))
-        download_format = body.get("download_format")
-        dataset_id = body.get("dataset_id")
-        spatial_extent = body.get("spatial_extent")
-        temporal_extent = body.get("temporal_extent")
-        status = body.get("status")
+        task_id = body.get("TaskID")
+        user_id = str(body.get("UserID"))
+        dataset_format = body.get("DatasetFormat")
+        output_format = body.get("OutputFormat")
+        outputGCS = body.get("OutputGCS")
+        dataset_id = body.get("DatasetID")
+        spatial_extent = body.get("BoundingBox")
+        temporal_extent = body.get("TemporalFilter")
+        status = body.get("Status")
+        nuts_id = body.get("NUTSID")
 
         response_json = {}
 
@@ -41,31 +47,32 @@ class datarequest_status_patch(Service):
         log.info(task_id)
         if task_id and status in status_list:
             log.info("in")
-            response_json = {"status":status}
+            response_json = {"Status":status}
 
 
-            if user_id and download_format and dataset_id:
+            if user_id and dataset_format and dataset_id and nuts_id:
                 log.info("in")
-                response_json = {"user_id": user_id, "status":status, "download_format": download_format, "dataset_id": dataset_id}
-                if temporal_extent:
+                response_json = {"UserID": user_id, "Status":status, "DatasetFormat": dataset_format, "DatasetID": dataset_id}
+
+                if temporal_extent and validateDownloadFormat(dataset_format, output_format) and outputGCS in GCS:
                     temporal_extent_validate1 = validateDate1(temporal_extent)
                     temporal_extent_validate2 = validateDate2(temporal_extent)
 
                     if validateSpatialExtent(spatial_extent) and temporal_extent_validate1 or temporal_extent_validate2:
-                        response_json = {"user_id": user_id, "status":status, "download_format": download_format,
-                        "dataset_id": dataset_id, "temporal_extent": {"start_date":temporal_extent.get("start_date"), "end_date":temporal_extent.get("end_date")}} 
+                        for key in countries.keys():
+                            if key in nuts_id:
+                                response_json = {"UserID": user_id, "DatasetFormat": dataset_format,
+                                "DatasetID": dataset_id, "NUTSID":nuts_id, "OutputGCS":outputGCS, "OutputFormat": output_format,  "TemporalFilter": {"StartDate":temporal_extent.get("StartDate"), "EndDate":temporal_extent.get("EndDate")}} 
 
                     else: 
-                        response_json = {"user_id": user_id, "status":status, "download_format": download_format, "dataset_id": dataset_id,
-                        "spatial_extent": [spatial_extent[0],spatial_extent[1],spatial_extent[2],spatial_extent[3]],"temporal_extent": {"start_date":temporal_extent.get("start_date"), "end_date":temporal_extent.get("end_date")}}
+                        response_json = {"UserID": user_id, "DatasetFormat": dataset_format, "DatasetID": dataset_id, "NUTSID":nuts_id,
+                        "OutputGCS":outputGCS, "OutputFormat": output_format,
+                        "TemporalFilter": {"StartDate":temporal_extent.get("StartDate"), "EndDate":temporal_extent.get("EndDate")}}
 
 
                 elif validateSpatialExtent(spatial_extent):
-                    response_json = {"user_id": user_id, "status":status, "download_format": download_format, "dataset_id": dataset_id, "spatial_extent": [spatial_extent[0],spatial_extent[1],spatial_extent[2],spatial_extent[3]]}
-                    
-
-                #self.request.response.setStatus(201)
-                #return response_json            
+                    response_json = {"UserID": user_id, "DatasetFormat": dataset_format, "DatasetID": dataset_id, "NUTSID":nuts_id, "OutputFormat": output_format, "BoundingBox": [spatial_extent[0],spatial_extent[1],spatial_extent[2],spatial_extent[3]]}
+                            
         else:
             self.request.response.setStatus(400)
             if status not in status_list:
@@ -76,10 +83,11 @@ class datarequest_status_patch(Service):
         
         log.info("END")
         response_json = utility.datarequest_status_patch(response_json, task_id)
-
+        
         if "Error" in response_json:
             self.request.response.setStatus(400)
-
+        else:
+            self.request.response.setStatus(201)
         return response_json
 
 
@@ -134,5 +142,57 @@ def validateSpatialExtent(spatial_extent):
     except ValueError:
         return False
 
+def validateDownloadFormat(input_format, output_format):
+    dataset_formats = ["Shapefile", "GDB", "GPKG", "Geojson", "Geotiff", "Netcdf", "GML", "WFS"]
 
+    for input_iteration_format in dataset_formats:
 
+        if input_iteration_format == "Shapefile":
+            
+            for output_iteration_format in dataset_formats:
+                
+                if output_iteration_format == "GDB" or output_iteration_format == "GPKG" or output_iteration_format == "Geojson" or output_iteration_format == "GML":
+                    return True
+        
+        elif input_iteration_format == "GDB":
+
+            for output_iteration_format in dataset_formats:
+                
+                if output_iteration_format == "Shapefile" or output_iteration_format == "GPKG" or output_iteration_format == "Geojson" or output_iteration_format == "GML":
+                    return True
+        
+        elif input_iteration_format == "GPKG":
+
+            for output_iteration_format in dataset_formats:
+                
+                if output_iteration_format == "Shapefile" or output_iteration_format == "GDB" or output_iteration_format == "Geojson" or output_iteration_format == "GML":
+                    return True
+
+        elif input_iteration_format == "Geojson":
+
+            for output_iteration_format in dataset_formats:
+                
+                if output_iteration_format == "Shapefile" or output_iteration_format == "GDB" or output_iteration_format == "GPKG" or output_iteration_format == "GML":
+                    return True
+
+        elif input_iteration_format == "Geotiff":
+            return False
+        
+        elif input_iteration_format == "Netcdf":
+                
+            if output_format == "Geotiff":
+                return True
+
+        elif input_iteration_format == "WFS":
+            
+            for output_iteration_format in dataset_formats:
+
+                if output_iteration_format == "Shapefile" or output_iteration_format == "GDB" or output_iteration_format == "GPKG" or output_iteration_format == "Geojson" or output_iteration_format == "GML":
+                    return True
+        
+        else:
+            return False
+
+    return False
+
+   

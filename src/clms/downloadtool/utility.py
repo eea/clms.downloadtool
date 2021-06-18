@@ -64,15 +64,14 @@ class DownloadToolUtility(object):
 
         dataObject = None
         log.info(task_id)
-        #log.info(registry[task_id])
         log.info("REGISTRY")
         log.info(registry)
 
         log.info(dataObject)
         if task_id in registry and user_id is not None:
             dataObject = registry.get(str(task_id))
-            if user_id in dataObject["user_id"]:
-                dataObject["status"] =  "Cancelled"
+            if user_id in dataObject["UserID"]:
+                dataObject["Status"] =  "Cancelled"
                 registry[str(task_id)] = dataObject
                 annotations[ANNOTATION_KEY] = registry
                 log.info("FINAL RETURN")
@@ -97,14 +96,14 @@ class DownloadToolUtility(object):
             if status in status_list:
                 for key in registry.keys():
                     values = registry.get(key)
-                    if str(user_id) == values.get("user_id") and status == values.get("status"):
+                    if str(user_id) == values.get("UserID") and status == values.get("Status"):
                         dataObject[key] = values
             elif status:
                 return "Error, bad request status not recognized"
             else:
                 for key in registry.keys():
                     values = registry.get(key)
-                    if str(user_id) == values.get("user_id"):
+                    if str(user_id) == values.get("UserID"):
                         dataObject[key] = values
         else:
             return "Error, bad request user_id not defined"
@@ -140,7 +139,6 @@ class DownloadToolUtility(object):
             log.info(tempObject)
             annotations[ANNOTATION_KEY] = registry
             resp[task_id]  = tempObject
-            self.request.response.setStatus(201)
         else:
             resp = "Error, task_id not registered"
 
@@ -156,16 +154,16 @@ class DownloadToolUtility(object):
 
         if annotations.get(ANNOTATION_KEY, None) is None:
             log.info("IS NONE")
-            registry = annotations[ANNOTATION_KEY] = {"status":status, "user_id":user_id}
+            registry = annotations[ANNOTATION_KEY] = {"Status":status, "UserID":user_id}
 
         else:
             log.info("IS NOT NONE")
             log.info(annotations.get(ANNOTATION_KEY, None))
-            registry[task_id] = {"status":status, "user_id":user_id}
+            registry[task_id] = {"Status":status, "UserID":user_id}
         
         if registry is None:
            log.info("IF SENTENCE")
-           #{"status":status, "user_id":user_id}
+           #{"Status":status, "UserID":user_id}
         else:
            log.info("ELSE SENTENCE")
 

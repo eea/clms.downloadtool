@@ -22,8 +22,8 @@ class datarequest_search(Service):
 
         log.info('DATAREQUEST_SEARCH')
         utility = getUtility(IDownloadToolUtility)
-        status = self.request.get("status")
-        user_id = str(self.request.get("user_id"))
+        status = self.request.get("Status")
+        user_id = str(self.request.get("UserID"))
         bad = False
 
         try:

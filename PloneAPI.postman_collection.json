@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "f3c2cf5b-d738-47de-a643-8cdc0782a49d",
+		"_postman_id": "0eb56d83-eb31-411a-9497-c8d76099b933",
 		"name": "PloneAPI",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -192,7 +192,12 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"user_id\":3,\n    \"download_format\":\"3\",\n    \"dataset_id\":\"52\",\n    \"spatial_extent\":[15.23560, -15.38584, 30.65845,-30.42458],\n    \"temporal_extent\":{\"start_date\":\"20-11-1952\", \"end_date\": \"4-13-2002\"}\n}"
+					"raw": "{    \n    \"UserID\": \"3\", \n    \"DatasetID\": \"123\",\n    \"DatasetFormat\": \"SHAPE\",\n    \"DatasetPath\": \"\\\\cws-copernicus/shape.zip\",\n    \"OutputFormat\": \"Geodatabase\",\n    \"OutputGCS\": \"ETRS:89\",\n    \"NUTSID\": \"BE2\",\n    \"BoundingBox\": [33,5,62,-3],\n    \"TemporalFilter\": {\n        \"StartDate\": \"2013-8-13\",\n        \"EndDate\": \"1989-1-25\"\n    }\n}\n\nFaltan, DatasetPath, OutputFormat & DatasetFormat (Validation[done, probar] + 1 field), OutputGCS (incluido y validado si esta relleno), NUTSID\n\nMe he coordinado con Borja para hablar sobre la creacion del servicio al que FME llamaria para obtener los datos que necesita, de mientras estoy cambiando el formato del JSON para que sea lo mas homogeneo posible y las validaciones de los nuevos campos definidos (tabla de download_format)\n\nTambien me he reunido con David para ponerle bien docker en windows conseguimos ponerlo bien y desplegar Plone tal y como indicaban las instrucciones proporcionadas por CodeSyntax pero hubieron errores desplegando Volto, este problema se va a exponer en la reunion que tendra posteriormente con CS.\n\nMe he reunido con Gerardo porque tenia problemas de instalacion con Jenkins al desplegarlo con rancher en su VM de CentOS. Posiblemente el error haya sido causado por tener una verison de docker 20.10 la cual he comprobado que causa problemas.\n\nEn cuanto complete algunas validaciones significantes empezare a coordinarme con testing.\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
 					"raw": "http://localhost:8080/Plone2/@datarequest_post",

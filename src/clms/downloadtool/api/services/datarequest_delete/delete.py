@@ -20,8 +20,8 @@ class datarequest_delete(Service):
     def reply(self):
         
         body = json_body(self.request)
-        user_id = str(body.get("user_id"))
-        task_id = str(body.get("task_id"))
+        user_id = str(body.get("UserID"))
+        task_id = str(body.get("TaskID"))
         response_json = None
         log.info('DATAREQUEST_DELETE')
         utility = getUtility(IDownloadToolUtility)
