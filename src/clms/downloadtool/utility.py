@@ -51,6 +51,14 @@ class DownloadToolUtility(object):
             while exists:
                 if task_id not in registry:
                     exists = False
+                else:
+                    task_id = random.randint(0,99999999999)
+            '''
+            for task in registry.keys
+                if data_request.get("UserID") in registry:        
+                    registry[str(task_id)] = data_request
+                else:
+                    return "User not found" '''
             registry[str(task_id)] = data_request
             annotations[ANNOTATION_KEY] = registry
 
@@ -131,18 +139,18 @@ class DownloadToolUtility(object):
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         resp = {}
 
-        if task_id in registry:
-            tempObject = registry[str(task_id)]
-            tempObject.update(dataObject)
-            registry[str(task_id)] = tempObject
-            log.info("DATA OBJ")
-            log.info(tempObject)
-            annotations[ANNOTATION_KEY] = registry
-            resp[task_id]  = tempObject
-        else:
-            resp = "Error, task_id not registered"
+        if task_id not in registry:
+            return "Error, task_id not registered"
+        
+        tempObject = registry[str(task_id)]
+        tempObject.update(dataObject)
+        registry[str(task_id)] = tempObject
+        log.info("DATA OBJ")
+        log.info(tempObject)
+        annotations[ANNOTATION_KEY] = registry
+        
 
-        return resp
+        return registry[str(task_id)]
 
         ##-----------------------------------------------------------------------------------------------------------------------------------------
 
