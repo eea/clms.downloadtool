@@ -27,12 +27,12 @@ class datarequest_delete(Service):
         utility = getUtility(IDownloadToolUtility)
 
 
-        if task_id:
-            log.info(task_id)
-            response_json = utility.datarequest_delete(task_id, user_id)
-            self.request.response.setStatus(200)
-        else:
-            response_json="BAD REQUEST"
+        if not task_id:
+            response_json="Error, TaskID not defined"
+        
+        log.info(task_id)
+        response_json = utility.datarequest_delete(task_id, user_id)
+        self.request.response.setStatus(204)
 
 
         log.info(response_json)

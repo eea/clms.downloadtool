@@ -117,11 +117,11 @@ class datarequest_status_patch(Service):
         log.info('AFTER CALLING UPDATE METHOD')
         log.info(response_json)
 
-        if "Error" not in response_json 
+        if "Error" not in response_json:
             self.request.response.setStatus(400)
             return response_json
 
-        self.request.response.setStatus(201)
+        self.request.response.setStatus(204)
         return response_json
         
 
