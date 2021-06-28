@@ -11,7 +11,6 @@ from plone.restapi.services import Service
 from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
 
-# logger, do log.info('XXXX') to print in the console
 from logging import getLogger
 
 log = getLogger(__name__)
@@ -26,12 +25,12 @@ class datarequest_status_get(Service):
 
         if not task_id:
             self.request.response.setStatus(400)
-            log.info("BAD REQUEST")
-            response_json = "BAD REQUEST"
-        else:
-            self.request.response.setStatus(200)
-            response_json = utility.datarequest_status_get(task_id)
-        if response_json is None:
-            response_json = "The task does not exist"
+            return "Error, TaskID not defined"
+        
+        response_json = utility.datarequest_status_get(task_id)
+        if "Error, task not found" in response_json:
+            self.request.response.setStatus(404)
+            return "Error, the task does not exist"
             
+        self.request.response.setStatus(200)
         return response_json

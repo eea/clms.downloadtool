@@ -9,12 +9,9 @@ from plone.restapi.services import Service
 from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
 
-# logger, do log.info('XXXX') to print in the console
 from logging import getLogger
 
 log = getLogger(__name__)
-
-#devuelve una lista de IDs que cumplen con los requisitos
 
 class datarequest_search(Service):
     def reply(self):
@@ -24,20 +21,14 @@ class datarequest_search(Service):
         utility = getUtility(IDownloadToolUtility)
         status = self.request.get("Status")
         user_id = str(self.request.get("UserID"))
-        bad = False
 
-        try:
-            user_id = int(user_id)
-            if status and status not in status_list:
-                raise ValueError("Status not recognized")
-        except:
-            log.info("BAD REQUEST INCOMING")
-            bad = True
 
-        if not bad:
-            self.request.response.setStatus(200)
-            response_json = utility.datarequest_search(user_id, status)
-        else:
+        self.request.response.setStatus(200)
+        response_json = utility.datarequest_search(user_id, status)
+        if "Error, UserID not defined" in response_json:
             self.request.response.setStatus(400)
-            response_json = "BAD REQUEST"
+        
+        if "Error, status not recognized" in response_json:
+            self.request.response.setStatus(400)
+
         return response_json

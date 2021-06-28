@@ -113,11 +113,7 @@ class datarequest_status_patch(Service):
         if dataset_path:
             response_json.update({"DatasetPath": dataset_path})
 
-    
         response_json = utility.datarequest_status_patch(response_json, task_id)
-
-        log.info('AFTER CALLING UPDATE METHOD')
-        log.info(response_json)
 
         if "Error" not in response_json:
             self.request.response.setStatus(400)
