@@ -14,7 +14,6 @@ import datetime
 from collections import defaultdict
 
 
-# logger, do log.info('XXXX') to print in the console
 from logging import getLogger
 
 log = getLogger(__name__)
@@ -55,10 +54,6 @@ class DataRequestPost(Service):
         response_json = {}
 
         utility = getUtility(IDownloadToolUtility)
-        
-        # OPTIONAL mail dataset_path OutputGCS, nuts_id o bbox y temporal_filter  DATASET_FORMAT, OUTPUT_FORMAT (solo si viene con dataset_format), dataset_path, si no hay nuts ni bbox no hay transform.
-        # user_id, dataset_id,
-        #if !parametro or formato_parametro_incorrecto: exit
 
         if not user_id:
             self.request.response.setStatus(400) 
@@ -71,6 +66,9 @@ class DataRequestPost(Service):
         response_json = {"UserID": user_id, "DatasetID": dataset_id}
 
         if mail:
+            if not email_validation(mail):
+                self.request.response.setStatus(400)
+                return "Error, inserted mail is not valid"
             response_json.update({"Mail": mail})
         
         if nuts_id:
@@ -258,5 +256,18 @@ def validateNuts(nuts_id):
             return True
         else:
             return False
+    else:
+        return False
+
+def email_validation(mail):
+    a=0
+    y=len(mail)
+    dot=mail.find(".")
+    at=mail.find("@")
+    for i in range (0,at):
+        if((mail[i]>='a' and mail[i]<='z') or (mail[i]>='A' and mail[i]<='Z')):
+            a=a+1
+    if(a>0 and at>0 and (dot-at)>0 and (dot+1)<y):
+        return True
     else:
         return False
