@@ -54,15 +54,20 @@ class datarequest_status_patch(Service):
             self.request.response.setStatus(400) 
             return "Error, TaskID is not defined"
 
-        if not task_id:
+        if not status:
             self.request.response.setStatus(400) 
-            return "Error, TaskID is not defined"
+            return "Error, Status is not defined"
 
-        if not dataset_id:
+        if status not in status_list:
             self.request.response.setStatus(400) 
-            return "Error, DatasetID is not defined"
+            return "Error, defined Status is not in the list"
+        response_json = {"TaskID":task_id, "Status": status}
 
-        response_json = {"UserID": user_id, "DatasetID": dataset_id}
+        if dataset_id:
+            response_json.update({"DatasetID": dataset_id})
+        
+        if user_id:
+            response_json.update({"UserID": user_id})
 
         if mail:
             response_json.update({"Mail": mail})

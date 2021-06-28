@@ -92,7 +92,7 @@ class DataRequestPost(Service):
             if not table[dataset_format][output_format]:
                 self.request.response.setStatus(400)
                 return "Error, specified data formats are not supported in this way"
-            response_json.update({"DatasetPath": dataset_format, "OutputFormat":output_format})
+            response_json.update({"DatasetFormat": dataset_format, "OutputFormat":output_format})
 
         if temporal_filter:
             log.info(validateDate1(temporal_filter))
