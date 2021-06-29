@@ -39,6 +39,7 @@ class datarequest_status_patch(Service):
         outputGCS = body.get("OutputGCS")
         nuts_id = body.get("NUTSID")
         mail = body.get("Mail")
+        status = body.get("Status")
 
         response_json = {}
 
