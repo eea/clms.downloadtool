@@ -77,7 +77,10 @@ class DataRequestPost(Service):
                 return "NUTSID country error"
             response_json.update({"NUTSID": nuts_id})
 
-        if validateSpatialExtent(bounding_box):
+        if bounding_box:
+            if not validateSpatialExtent(bounding_box):
+                self.request.response.setStatus(400)
+                return "Error, BoundingBox is not well defined"
             response_json.update({"BoundingBox": bounding_box})
         
         if dataset_format or output_format:
@@ -87,7 +90,7 @@ class DataRequestPost(Service):
             if dataset_format not in dataset_formats or output_format not in dataset_formats:
                 self.request.response.setStatus(400)
                 return "Error, specified formats are not in the list"
-            if not table[dataset_format][output_format]:
+            if "GML" in dataset_format or not table[dataset_format][output_format]:
                 self.request.response.setStatus(400)
                 return "Error, specified data formats are not supported in this way"
             response_json.update({"DatasetFormat": dataset_format, "OutputFormat":output_format})
