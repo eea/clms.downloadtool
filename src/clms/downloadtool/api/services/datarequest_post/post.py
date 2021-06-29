@@ -94,7 +94,7 @@ class DataRequestPost(Service):
 
         if temporal_filter:
             log.info(validateDate1(temporal_filter))
-            if not validateDate1(temporal_filter) or not validateDate2(temporal_filter):
+            if not validateDate1(temporal_filter) and not validateDate2(temporal_filter):
                 self.request.response.setStatus(400)
                 return "Error, date format is not correct"
 
