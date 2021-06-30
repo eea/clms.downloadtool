@@ -40,6 +40,7 @@ class datarequest_status_patch(Service):
         nuts_id = body.get("NUTSID")
         mail = body.get("Mail")
         status = body.get("Status")
+        user_id = body.get("UserID")
 
         response_json = {}
 
