@@ -78,13 +78,18 @@ class DataRequestPost(Service):
             response_json.update({"NUTSID": nuts_id})
 
         if bounding_box:
+            if nuts_id:
+                self.request.response.setStatus(400)
+                return "Error, NUTSID is also defined"
+
             if not validateSpatialExtent(bounding_box):
                 self.request.response.setStatus(400)
-                return "Error, BoundingBox is not well defined"
+                return "Error, BoundingBox is not valid"
+
             response_json.update({"BoundingBox": bounding_box})
         
         if dataset_format or output_format:
-            if not dataset_format and output_format:
+            if not dataset_format and output_format or dataset_format and not output_format:
                 self.request.response.setStatus(400)
                 return "Error, you need to specify both formats"
             if dataset_format not in dataset_formats or output_format not in dataset_formats:
@@ -105,9 +110,13 @@ class DataRequestPost(Service):
                 self.request.response.setStatus(400)
                 return "Error, difference between StartDate and EndDate is not coherent"
             
-            if len(temporal_filter.keys())> 2 or "StartDate" not in temporal_filter.keys() or "EndDate" not in temporal_filter.keys() :
+            if len(temporal_filter.keys())> 2:
                 self.request.response.setStatus(400)
                 return "Error, TemporalFilter has too many fields"
+            if or "StartDate" not in temporal_filter.keys() or "EndDate" not in temporal_filter.keys():
+                self.request.response.setStatus(400)
+                return "Error, TemporalFilter does not have StartDate or EndDate"
+
             response_json.update({"TemporalFilter": temporal_filter})
 
                       
@@ -239,11 +248,15 @@ def validateDate2(temporal_filter):
         return False
     
 def validateSpatialExtent(bounding_box):
-
-    if len(bounding_box) == 4 and all(isinstance(x, int) for x in bounding_box) or all(isinstance(x, float) for x in bounding_box):
-        return True
-    else:
+    
+    if not len(bounding_box) == 4:
         return False    
+        
+    for x in bounding_box:
+        if not isinstance(x, int) and not isinstance(x, float):
+            return False
+
+    return True  
 
 def checkDateDifference(temporal_filter):
     log.info(temporal_filter)
@@ -269,6 +282,8 @@ def email_validation(mail):
     y=len(mail)
     dot=mail.find(".")
     at=mail.find("@")
+    if "_" in mail[0]:
+        return False
     for i in range (0,at):
         if((mail[i]>='a' and mail[i]<='z') or (mail[i]>='A' and mail[i]<='Z')):
             a=a+1

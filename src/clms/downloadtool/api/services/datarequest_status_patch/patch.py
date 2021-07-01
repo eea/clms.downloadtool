@@ -21,9 +21,10 @@ countries = {"BD": "BGD", "BE": "BEL", "BF": "BFA", "BG": "BGR", "BA": "BIH", "B
 GCS = ["EPGS:4326", "EPGS:3035", "EPGS:3857", "EPGS:4258"]
 status_list = ["Rejected", "Queued", "In_progress", "Finished_ok", "Finished_nok", "Cancelled"]
 dataset_formats = ["Shapefile", "GDB", "GPKG", "Geojson", "Geotiff", "Netcdf", "GML", "WFS"]
+table = {'Shapefile': {'Shapefile': False, 'GDB': True, 'GPKG': True, 'Geojson': True, 'Geotiff': False, 'Netcdf': False, 'GML': True, 'WFS': False}, 'GDB': {'Shapefile': True, 'GDB': False, 'GPKG': True, 'Geojson': True, 'Geotiff': False, 'Netcdf': False, 'GML': True, 'WFS': False}, 'GPKG': {'Shapefile': True, 'GDB': True, 'GPKG': False, 'Geojson': True, 'Geotiff': False, 'Netcdf': False, 'GML': True, 'WFS': False}, 'Geojson': {'Shapefile': True, 'GDB': True, 'GPKG': True, 'Geojson': False, 'Geotiff': False, 'Netcdf': False, 'GML': True, 'WFS': False}, 'Geotiff': {'Shapefile': False, 'GDB': False, 'GPKG': False, 'Geojson': False, 'Geotiff': False, 'Netcdf': False, 'GML': False, 'WFS': False}, 'Netcdf': {'Shapefile': False, 'GDB': False, 'GPKG': False, 'Geojson': False, 'Geotiff': True, 'Netcdf': False, 'GML': False, 'WFS': False}, 'WFS': {'Shapefile': True, 'GDB': True, 'GPKG': True, 'Geojson': True, 'Geotiff': False, 'Netcdf': False, 'GML': True, 'WFS': False}}
 class datarequest_status_patch(Service):
 
-
+# Nuts & BBox not at the same time
 
     def reply(self):
 
@@ -77,7 +78,15 @@ class datarequest_status_patch(Service):
                 return "NUTSID country error"
             response_json.update({"NUTSID": nuts_id})
 
-        if validateSpatialExtent(bounding_box):
+        if bounding_box:
+            if nuts_id:
+                self.request.response.setStatus(400)
+                return "Error, NUTSID is also defined"
+
+            if not validateSpatialExtent(bounding_box):
+                self.request.response.setStatus(400)
+                return "Error, BoundingBox is not valid"
+
             response_json.update({"BoundingBox": bounding_box})
         
         if dataset_format or output_format:
@@ -87,24 +96,26 @@ class datarequest_status_patch(Service):
             if dataset_format not in dataset_formats or output_format not in dataset_formats:
                 self.request.response.setStatus(400)
                 return "Error, specified formats are not in the list"
-            if not table[dataset_format][output_format]:
+            if "GML" in dataset_format or not table[dataset_format][output_format]:
                 self.request.response.setStatus(400)
                 return "Error, specified data formats are not supported in this way"
             response_json.update({"DatasetPath": dataset_format, "OutputFormat":output_format})
 
         if temporal_filter:
             log.info(validateDate1(temporal_filter))
-            if validateDate1(temporal_filter) or validateDate2(temporal_filter):
-
-                if not checkDateDifference(temporal_filter):
-                    self.request.response.setStatus(400)
-                    return "Error, difference between StartDate and EndDate is not coherent"
-                
-                response_json.update({"TemporalFilter": temporal_filter})
-
-            else:
+            if not validateDate1(temporal_filter) and not validateDate2(temporal_filter):
                 self.request.response.setStatus(400)
                 return "Error, date format is not correct"
+
+            if not checkDateDifference(temporal_filter):
+                self.request.response.setStatus(400)
+                return "Error, difference between StartDate and EndDate is not coherent"
+            
+            if len(temporal_filter.keys())> 2 or "StartDate" not in temporal_filter.keys() or "EndDate" not in temporal_filter.keys() :
+                self.request.response.setStatus(400)
+                return "Error, TemporalFilter has too many fields"
+            response_json.update({"TemporalFilter": temporal_filter})
+
                       
         if outputGCS:
             if not outputGCS in GCS:
@@ -116,12 +127,15 @@ class datarequest_status_patch(Service):
             response_json.update({"DatasetPath": dataset_path})
 
         response_json = utility.datarequest_status_patch(response_json, task_id)
+        self.request.response.setStatus(204)
 
         if "Error" not in response_json:
             self.request.response.setStatus(400)
             return response_json
 
-        self.request.response.setStatus(204)
+        if "Error, task_id not registered" in response_json:
+            self.request.response.setStatus(404)
+
         return response_json
         
 
@@ -162,11 +176,15 @@ def validateDate2(temporal_filter):
         return False
     
 def validateSpatialExtent(bounding_box):
-
-    if len(bounding_box) == 4 and all(isinstance(x, int) for x in bounding_box) or all(isinstance(x, float) for x in bounding_box):
-        return True
-    else:
+    
+    if not len(bounding_box) == 4:
         return False    
+        
+    for x in bounding_box:
+        if not isinstance(x, int) and not isinstance(x, float):
+            return False
+
+    return True
 
 def checkDateDifference(temporal_filter):
     log.info(temporal_filter)
@@ -192,6 +210,8 @@ def email_validation(mail):
     y=len(mail)
     dot=mail.find(".")
     at=mail.find("@")
+    if "_" in mail[0]:
+        return False
     for i in range (0,at):
         if((mail[i]>='a' and mail[i]<='z') or (mail[i]>='A' and mail[i]<='Z')):
             a=a+1
