@@ -113,7 +113,7 @@ class DataRequestPost(Service):
             if len(temporal_filter.keys())> 2:
                 self.request.response.setStatus(400)
                 return "Error, TemporalFilter has too many fields"
-            if or "StartDate" not in temporal_filter.keys() or "EndDate" not in temporal_filter.keys():
+            if "StartDate" not in temporal_filter.keys() or "EndDate" not in temporal_filter.keys():
                 self.request.response.setStatus(400)
                 return "Error, TemporalFilter does not have StartDate or EndDate"
 

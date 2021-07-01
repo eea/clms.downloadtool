@@ -111,9 +111,13 @@ class datarequest_status_patch(Service):
                 self.request.response.setStatus(400)
                 return "Error, difference between StartDate and EndDate is not coherent"
             
-            if len(temporal_filter.keys())> 2 or "StartDate" not in temporal_filter.keys() or "EndDate" not in temporal_filter.keys() :
+            if len(temporal_filter.keys())> 2:
                 self.request.response.setStatus(400)
                 return "Error, TemporalFilter has too many fields"
+            if "StartDate" not in temporal_filter.keys() or "EndDate" not in temporal_filter.keys():
+                self.request.response.setStatus(400)
+                return "Error, TemporalFilter does not have StartDate or EndDate"
+
             response_json.update({"TemporalFilter": temporal_filter})
 
                       
