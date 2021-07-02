@@ -282,6 +282,7 @@ def email_validation(mail):
     y=len(mail)
     dot=mail.find(".")
     at=mail.find("@")
+    log.info(mail)
     if "_" in mail[0]:
         return False
     for i in range (0,at):

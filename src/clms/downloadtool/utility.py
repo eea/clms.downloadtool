@@ -129,9 +129,13 @@ class DownloadToolUtility(object):
 
         if task_id not in registry:
             return "Error, task_id not registered"
+        log.info(dataObject)
+            
         
         tempObject = registry[str(task_id)]
         tempObject.update(dataObject)
+        if tempObject["NUTSID"] and tempObject["BoundingBox"]:
+            return "Error, NUTSID and BoundingBox cant be defined in the same task"
         registry[str(task_id)] = tempObject
         log.info("DATA OBJ")
         log.info(tempObject)
