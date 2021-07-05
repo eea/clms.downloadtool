@@ -143,8 +143,6 @@ class datarequest_status_patch(Service):
         if "Error, NUTSID and BoundingBox cant be defined in the same task" in response_json:
             self.request.response.setStatus(400)
 
-        if "Error, NUTSID and BoundingBox can't be defined in the same task" in response_json:
-            self.request.response.setStatus(400)
             
         return response_json
         
