@@ -113,6 +113,7 @@ class DataRequestPost(Service):
             if len(temporal_filter.keys())> 2:
                 self.request.response.setStatus(400)
                 return "Error, TemporalFilter has too many fields"
+                
             if "StartDate" not in temporal_filter.keys() or "EndDate" not in temporal_filter.keys():
                 self.request.response.setStatus(400)
                 return "Error, TemporalFilter does not have StartDate or EndDate"
@@ -283,8 +284,10 @@ def email_validation(mail):
     dot=mail.find(".")
     at=mail.find("@")
     log.info(mail)
-    if "_" in mail[0]:
+
+    if "_" in mail[len(mail)-1]:
         return False
+
     for i in range (0,at):
         if((mail[i]>='a' and mail[i]<='z') or (mail[i]>='A' and mail[i]<='Z')):
             a=a+1
