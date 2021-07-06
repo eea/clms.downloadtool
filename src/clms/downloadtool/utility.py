@@ -86,7 +86,7 @@ class DownloadToolUtility(object):
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         dataObject = {}
 
-        if user_id:
+        if not user_id:
             return "Error, UserID not defined"
 
         if not status:
@@ -134,7 +134,7 @@ class DownloadToolUtility(object):
         
         tempObject = registry[str(task_id)]
         tempObject.update(dataObject)
-
+        log.info(tempObject)
         if "NUTSID" in tempObject.keys() and "BoundingBox" in tempObject.keys():
             return "Error, NUTSID and BoundingBox can't be defined in the same task"
         
