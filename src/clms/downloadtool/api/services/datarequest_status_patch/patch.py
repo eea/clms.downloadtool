@@ -73,6 +73,10 @@ class datarequest_status_patch(Service):
             response_json.update({"Mail": mail})
         
         if nuts_id:
+            if bounding_box:
+                self.request.response.setStatus(400)
+                return "Error, BoundingBox is also defined"
+
             if not validateNuts(nuts_id):
                 self.request.response.setStatus(400)
                 return "NUTSID country error"

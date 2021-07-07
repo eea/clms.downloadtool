@@ -126,21 +126,21 @@ class DownloadToolUtility(object):
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         resp = {}
+        tempObject = {}
+
 
         if task_id not in registry:
             return "Error, task_id not registered"
-        log.info(dataObject)
-            
-        
-        tempObject = registry[str(task_id)]
-        tempObject.update(dataObject)
+    
+        tempObject = {**registry[task_id], **dataObject}
+
         if "NUTSID" in tempObject.keys() and "BoundingBox" in tempObject.keys():
+            dataObject = {}
             return "Error, NUTSID and BoundingBox can't be defined in the same task"
-        
-        log.info(tempObject)
+        dataObject = {}
         registry[str(task_id)] = tempObject
-        log.info("DATA OBJ")
-        log.info(tempObject)
+
+        
         annotations[ANNOTATION_KEY] = registry
         
 
