@@ -144,4 +144,4 @@ class DownloadToolUtility(object):
         annotations[ANNOTATION_KEY] = registry
         
 
-        return registry[str(task_id)]
+        return tempObject

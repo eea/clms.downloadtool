@@ -134,20 +134,25 @@ class datarequest_status_patch(Service):
         if dataset_path:
             response_json.update({"DatasetPath": dataset_path})
 
+        log.info(response_json)
         response_json = utility.datarequest_status_patch(response_json, task_id)
 
-        if "Error" not in response_json:
+        log.info(response_json)
+
+        if "Error" in response_json:
             self.request.response.setStatus(400)
             return response_json
 
         if "Error, task_id not registered" in response_json:
             self.request.response.setStatus(404)
+            return response_json
 
         if "Error, NUTSID and BoundingBox can't be defined in the same task" in response_json:
             self.request.response.setStatus(400)
+            return response_json
 
-        self.request.response.setStatus(204)
-            
+        self.request.response.setStatus(201)
+
         return response_json
         
 
