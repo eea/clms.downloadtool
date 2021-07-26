@@ -372,6 +372,22 @@ class DataRequestPost(Service):
         outputGCS = body.get("OutputGCS")
         nuts_id = body.get("NUTSID")
         mail = body.get("Mail")
+<<<<<<< HEAD
+=======
+        """
+        try:
+            table
+        except NameError:
+            log.info("Table not generated")
+            generated = False
+        else:
+            log.info("Table already generated")
+            generated = True
+
+        if not generated:
+            table = validateDownloadFormat()
+        """
+>>>>>>> fbdc0ce (Manual fix pep8)
         response_json = {}
 
         utility = getUtility(IDownloadToolUtility)
@@ -432,7 +448,10 @@ class DataRequestPost(Service):
 >>>>>>> 20d1121 (Add line limit for black)
             ):
                 self.request.response.setStatus(400)
+<<<<<<< HEAD
                 # pylint: disable=line-too-long
+=======
+>>>>>>> fbdc0ce (Manual fix pep8)
                 return "Error, specified data formats are not supported in this way"  # noqa
             response_json.update(
                 {
@@ -451,7 +470,10 @@ class DataRequestPost(Service):
 
             if not checkDateDifference(temporal_filter):
                 self.request.response.setStatus(400)
+<<<<<<< HEAD
                 # pylint: disable=line-too-long
+=======
+>>>>>>> fbdc0ce (Manual fix pep8)
                 return "Error, difference between StartDate and EndDate is not coherent"  # noqa
 
             if len(temporal_filter.keys()) > 2:

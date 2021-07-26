@@ -361,11 +361,12 @@ table = {
     },
 }
 
+
 class datarequest_status_patch(Service):
-    """ Nuts & BBox not at the same time
-    """
+    """Nuts & BBox not at the same time"""
+
     def reply(self):
-        """ JSON response """
+        """JSON response"""
         body = json_body(self.request)
 
         task_id = str(body.get("TaskID"))
@@ -436,14 +437,14 @@ class datarequest_status_patch(Service):
                 self.request.response.setStatus(400)
                 return "Error, you need to specify both formats"
             if (
-                dataset_format not in dataset_formats or
-                output_format not in dataset_formats
+                dataset_format not in dataset_formats
+                or output_format not in dataset_formats
             ):
                 self.request.response.setStatus(400)
                 return "Error, specified formats are not in the list"
             if (
-                "GML" in dataset_format or not
-                table[dataset_format][output_format]
+                "GML" in dataset_format
+                or not table[dataset_format][output_format]
             ):
                 self.request.response.setStatus(400)
                 # pylint: disable=line-too-long
@@ -472,8 +473,8 @@ class datarequest_status_patch(Service):
                 self.request.response.setStatus(400)
                 return "Error, TemporalFilter has too many fields"
             if (
-                "StartDate" not in temporal_filter.keys() or
-                "EndDate" not in temporal_filter.keys()
+                "StartDate" not in temporal_filter.keys()
+                or "EndDate" not in temporal_filter.keys()
             ):
                 self.request.response.setStatus(400)
                 return (
@@ -519,7 +520,7 @@ class datarequest_status_patch(Service):
 
 
 def validateDate1(temporal_filter):
-    """ Validate Dates year-month-day """
+    """Validate Dates year-month-day"""
     start_date = temporal_filter.get("StartDate")
     end_date = temporal_filter.get("EndDate")
 
@@ -537,7 +538,7 @@ def validateDate1(temporal_filter):
 
 
 def validateDate2(temporal_filter):
-    """ Validate Dates day-month-year """
+    """Validate Dates day-month-year"""
     start_date = temporal_filter.get("StartDate")
     end_date = temporal_filter.get("EndDate")
 
@@ -555,7 +556,7 @@ def validateDate2(temporal_filter):
 
 
 def validateSpatialExtent(bounding_box):
-    """ Validate Bounding Box """
+    """Validate Bounding Box"""
     if not len(bounding_box) == 4:
         return False
 
@@ -566,7 +567,7 @@ def validateSpatialExtent(bounding_box):
 
 
 def checkDateDifference(temporal_filter):
-    """ Check date order"""
+    """Check date order"""
     log.info(temporal_filter)
     start_date = temporal_filter["StartDate"]
     end_date = temporal_filter.get("EndDate")
@@ -575,7 +576,7 @@ def checkDateDifference(temporal_filter):
 
 
 def validateNuts(nuts_id):
-    """ validate nuts """
+    """validate nuts"""
     match = re.match(r"([a-z]+)([0-9]+)", nuts_id, re.I)
     if match:
         items = match.groups()
@@ -583,9 +584,8 @@ def validateNuts(nuts_id):
     return False
 
 
-
 def email_validation(mail):
-    """ Validate email address """
+    """Validate email address"""
     a = 0
     y = len(mail)
     dot = mail.find(".")

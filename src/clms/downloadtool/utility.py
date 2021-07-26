@@ -46,16 +46,15 @@ status_list = [
 
 
 class IDownloadToolUtility(Interface):
-    """Download interface
-    """
+    """Download interface"""
 
 
 @implementer(IDownloadToolUtility)
-class DownloadToolUtility():
-    """ Download utilites
-    """
+class DownloadToolUtility:
+    """Download utilites"""
+
     def datarequest_post(self, data_request):
-        """ Add a new data request"""
+        """Add a new data request"""
         site = getSite()
         annotations = IAnnotations(site)
         task_id = random.randint(0, 99999999999)
@@ -79,7 +78,7 @@ class DownloadToolUtility():
         return {task_id: data_request}
 
     def datarequest_delete(self, task_id, user_id):
-        """ Delete a data task """
+        """Delete a data task"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -100,7 +99,7 @@ class DownloadToolUtility():
         return dataObject
 
     def datarequest_search(self, user_id, status):
-        """ search user task """
+        """search user task"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -129,14 +128,14 @@ class DownloadToolUtility():
         return dataObject
 
     def dataset_get(self, key):
-        """ Get dataset """
+        """Get dataset"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         return registry.get(key)
 
     def datarequest_status_get(self, task_id):
-        """ Get request status """
+        """Get request status"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -145,7 +144,7 @@ class DownloadToolUtility():
         return registry.get(task_id)
 
     def datarequest_status_patch(self, dataObject, task_id):
-        """ Update request status """
+        """Update request status"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -161,9 +160,8 @@ class DownloadToolUtility():
         tempObject = {**registry[task_id], **dataObject}
 
         if (
-            "NUTSID" in tempObject.keys() and
-            "BoundingBox" in
-            tempObject.keys()
+            "NUTSID" in tempObject.keys()
+            and "BoundingBox" in tempObject.keys()
         ):
             dataObject = {}
             # pylint: disable=line-too-long
