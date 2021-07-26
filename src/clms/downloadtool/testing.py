@@ -19,11 +19,12 @@ class ClmsDownloadtoolLayer(PloneSandboxLayer):
         # The z3c.autoinclude feature is disabled in the Plone fixture base
         # layer.
         import plone.restapi
+
         self.loadZCML(package=plone.restapi)
         self.loadZCML(package=clms.downloadtool)
 
     def setUpPloneSite(self, portal):
-        applyProfile(portal, 'clms.downloadtool:default')
+        applyProfile(portal, "clms.downloadtool:default")
 
 
 CLMS_DOWNLOADTOOL_FIXTURE = ClmsDownloadtoolLayer()
@@ -31,13 +32,13 @@ CLMS_DOWNLOADTOOL_FIXTURE = ClmsDownloadtoolLayer()
 
 CLMS_DOWNLOADTOOL_INTEGRATION_TESTING = IntegrationTesting(
     bases=(CLMS_DOWNLOADTOOL_FIXTURE,),
-    name='ClmsDownloadtoolLayer:IntegrationTesting',
+    name="ClmsDownloadtoolLayer:IntegrationTesting",
 )
 
 
 CLMS_DOWNLOADTOOL_FUNCTIONAL_TESTING = FunctionalTesting(
     bases=(CLMS_DOWNLOADTOOL_FIXTURE,),
-    name='ClmsDownloadtoolLayer:FunctionalTesting',
+    name="ClmsDownloadtoolLayer:FunctionalTesting",
 )
 
 
@@ -47,5 +48,5 @@ CLMS_DOWNLOADTOOL_ACCEPTANCE_TESTING = FunctionalTesting(
         REMOTE_LIBRARY_BUNDLE_FIXTURE,
         z2.ZSERVER_FIXTURE,
     ),
-    name='ClmsDownloadtoolLayer:AcceptanceTesting',
+    name="ClmsDownloadtoolLayer:AcceptanceTesting",
 )

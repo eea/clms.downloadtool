@@ -24,7 +24,7 @@ class GetItem(Service):
         utility = getUtility(IDownloadToolUtility)
         value = utility.get_item(key)
 
-        log.info('VALUE GET ITEM RETURN')
+        log.info("VALUE GET ITEM RETURN")
         log.info(value)
 
         self.request.response.setStatus(200)

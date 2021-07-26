@@ -24,4 +24,4 @@ class AuthenticatedGet(Service):
         value = utility.get_item(key)
 
         self.request.response.setStatus(200)
-        return {key: value, 'user': user.getId()}
+        return {key: value, "user": user.getId()}
