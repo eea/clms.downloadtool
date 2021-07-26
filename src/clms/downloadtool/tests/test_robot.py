@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from clms.downloadtool.testing import CLMS_DOWNLOADTOOL_ACCEPTANCE_TESTING  # noqa: E501
+from clms.downloadtool.testing import (
+    CLMS_DOWNLOADTOOL_ACCEPTANCE_TESTING,
+)  # noqa: E501
 from plone.app.testing import ROBOT_TEST_LEVEL
 from plone.testing import layered
 

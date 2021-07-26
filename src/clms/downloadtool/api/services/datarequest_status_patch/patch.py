@@ -443,11 +443,17 @@ class datarequest_status_patch(Service):
             ):
                 self.request.response.setStatus(400)
                 return "Error, specified formats are not in the list"
-            if "GML" in dataset_format or not table[dataset_format][output_format]:
+            if (
+                "GML" in dataset_format
+                or not table[dataset_format][output_format]
+            ):
                 self.request.response.setStatus(400)
                 return "Error, specified data formats are not supported in this way"
             response_json.update(
-                {"DatasetFormat": dataset_format, "OutputFormat": output_format}
+                {
+                    "DatasetFormat": dataset_format,
+                    "OutputFormat": output_format,
+                }
             )
 
         if temporal_filter:
@@ -470,7 +476,9 @@ class datarequest_status_patch(Service):
                 or "EndDate" not in temporal_filter.keys()
             ):
                 self.request.response.setStatus(400)
-                return "Error, TemporalFilter does not have StartDate or EndDate"
+                return (
+                    "Error, TemporalFilter does not have StartDate or EndDate"
+                )
 
             response_json.update({"TemporalFilter": temporal_filter})
 
@@ -484,7 +492,9 @@ class datarequest_status_patch(Service):
             response_json.update({"DatasetPath": dataset_path})
 
         log.info(response_json)
-        response_json = utility.datarequest_status_patch(response_json, task_id)
+        response_json = utility.datarequest_status_patch(
+            response_json, task_id
+        )
 
         log.info(response_json)
 
@@ -588,7 +598,9 @@ def email_validation(mail):
     if "_" in mail[0]:
         return False
     for i in range(0, at):
-        if (mail[i] >= "a" and mail[i] <= "z") or (mail[i] >= "A" and mail[i] <= "Z"):
+        if (mail[i] >= "a" and mail[i] <= "z") or (
+            mail[i] >= "A" and mail[i] <= "Z"
+        ):
             a = a + 1
     if a > 0 and at > 0 and (dot - at) > 0 and (dot + 1) < y:
         return True

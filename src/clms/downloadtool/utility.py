@@ -107,7 +107,9 @@ class DownloadToolUtility(object):
 
         for key in registry.keys():
             values = registry.get(key)
-            if str(user_id) == values.get("UserID") and status == values.get("Status"):
+            if str(user_id) == values.get("UserID") and status == values.get(
+                "Status"
+            ):
                 dataObject[key] = values
 
         return dataObject
@@ -138,7 +140,10 @@ class DownloadToolUtility(object):
 
         tempObject = {**registry[task_id], **dataObject}
 
-        if "NUTSID" in tempObject.keys() and "BoundingBox" in tempObject.keys():
+        if (
+            "NUTSID" in tempObject.keys()
+            and "BoundingBox" in tempObject.keys()
+        ):
             dataObject = {}
             return "Error, NUTSID and BoundingBox can't be defined in the same task"
         registry[str(task_id)] = tempObject
