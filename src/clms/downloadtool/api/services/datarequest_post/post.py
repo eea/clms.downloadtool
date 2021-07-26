@@ -423,22 +423,20 @@ class DataRequestPost(Service):
 
         if dataset_format or output_format:
             if (
-                not dataset_format
-                and output_format
-                or dataset_format
-                and not output_format
+                not dataset_format and output_format or
+                dataset_format and not output_format
             ):
                 self.request.response.setStatus(400)
                 return "Error, you need to specify both formats"
             if (
-                dataset_format not in dataset_formats
-                or output_format not in dataset_formats
+                dataset_format not in dataset_formats or
+                output_format not in dataset_formats
             ):
                 self.request.response.setStatus(400)
                 return "Error, specified formats are not in the list"
             if (
-                "GML" in dataset_format
-                or not table[dataset_format][output_format]
+                "GML" in dataset_format or not
+                table[dataset_format][output_format]
             ):
                 self.request.response.setStatus(400)
                 return "Error, specified data formats are not supported in this way"  # noqa
@@ -466,8 +464,8 @@ class DataRequestPost(Service):
                 return "Error, TemporalFilter has too many fields"
 
             if (
-                "StartDate" not in temporal_filter.keys()
-                or "EndDate" not in temporal_filter.keys()
+                "StartDate" not in temporal_filter.keys() or
+                "EndDate" not in temporal_filter.keys()
             ):
                 self.request.response.setStatus(400)
                 return (
@@ -505,10 +503,10 @@ def validateDownloadFormat():
             for output_iteration_format in dataset_formats:
 
                 if (
-                    output_iteration_format == "GDB"
-                    or output_iteration_format == "GPKG"
-                    or output_iteration_format == "Geojson"
-                    or output_iteration_format == "GML"
+                    output_iteration_format == "GDB" or
+                    output_iteration_format == "GPKG" or
+                    output_iteration_format == "Geojson" or
+                    output_iteration_format == "GML"
                 ):
                     the_table[input_iteration_format][
                         output_iteration_format
@@ -524,10 +522,10 @@ def validateDownloadFormat():
             for output_iteration_format in dataset_formats:
 
                 if (
-                    output_iteration_format == "Shapefile"
-                    or output_iteration_format == "GPKG"
-                    or output_iteration_format == "Geojson"
-                    or output_iteration_format == "GML"
+                    output_iteration_format == "Shapefile" or
+                    output_iteration_format == "GPKG" or
+                    output_iteration_format == "Geojson" or
+                    output_iteration_format == "GML"
                 ):
                     the_table[input_iteration_format][
                         output_iteration_format
@@ -543,10 +541,10 @@ def validateDownloadFormat():
             for output_iteration_format in dataset_formats:
 
                 if (
-                    output_iteration_format == "Shapefile"
-                    or output_iteration_format == "GDB"
-                    or output_iteration_format == "Geojson"
-                    or output_iteration_format == "GML"
+                    output_iteration_format == "Shapefile" or
+                    output_iteration_format == "GDB" or
+                    output_iteration_format == "Geojson" or
+                    output_iteration_format == "GML"
                 ):
                     the_table[input_iteration_format][
                         output_iteration_format
@@ -562,10 +560,10 @@ def validateDownloadFormat():
             for output_iteration_format in dataset_formats:
 
                 if (
-                    output_iteration_format == "Shapefile"
-                    or output_iteration_format == "GDB"
-                    or output_iteration_format == "GPKG"
-                    or output_iteration_format == "GML"
+                    output_iteration_format == "Shapefile" or
+                    output_iteration_format == "GDB" or
+                    output_iteration_format == "GPKG" or
+                    output_iteration_format == "GML"
                 ):
                     the_table[input_iteration_format][
                         output_iteration_format
@@ -599,11 +597,11 @@ def validateDownloadFormat():
             for output_iteration_format in dataset_formats:
 
                 if (
-                    output_iteration_format == "Shapefile"
-                    or output_iteration_format == "GDB"
-                    or output_iteration_format == "GPKG"
-                    or output_iteration_format == "Geojson"
-                    or output_iteration_format == "GML"
+                    output_iteration_format == "Shapefile" or
+                    output_iteration_format == "GDB" or
+                    output_iteration_format == "GPKG" or
+                    output_iteration_format == "Geojson" or
+                    output_iteration_format == "GML"
                 ):
                     the_table[input_iteration_format][
                         output_iteration_format
