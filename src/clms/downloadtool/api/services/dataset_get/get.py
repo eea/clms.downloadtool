@@ -18,11 +18,10 @@ log = getLogger(__name__)
 class dataset_get(Service):
     def reply(self):
 
-        #key = self.request.get("key")
-        log.info('DATASET_GET')
+        # key = self.request.get("key")
+        log.info("DATASET_GET")
         log.info(self.request.get("dataset_title"))
         utility = getUtility(IDownloadToolUtility)
-
 
         value = self.request.get("dataset_title")
 

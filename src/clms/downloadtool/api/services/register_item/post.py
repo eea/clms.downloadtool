@@ -36,4 +36,4 @@ class RegisterItemPost(Service):
         utility.register_item(status, task_id, user_id)
 
         self.request.response.setStatus(201)
-        return {"TaskID":task_id, "Status": status, "UserID": user_id}
+        return {"TaskID": task_id, "Status": status, "UserID": user_id}
