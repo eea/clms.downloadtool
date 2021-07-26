@@ -29,6 +29,8 @@ from zope.interface import implementer
 from zope.interface import Interface
 from zope.site.hooks import getSite
 
+import random
+from logging import getLogger
 
 log = getLogger(__name__)
 

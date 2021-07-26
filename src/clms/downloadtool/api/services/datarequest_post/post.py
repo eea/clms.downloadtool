@@ -372,7 +372,6 @@ class DataRequestPost(Service):
         outputGCS = body.get("OutputGCS")
         nuts_id = body.get("NUTSID")
         mail = body.get("Mail")
-
         response_json = {}
 
         utility = getUtility(IDownloadToolUtility)
@@ -613,6 +612,7 @@ def validateNuts(nuts_id):
         items = match.groups()
         return items[0] in countries.keys()
     return False
+
 
 
 def email_validation(mail):

@@ -361,7 +361,6 @@ table = {
     },
 }
 
-
 class datarequest_status_patch(Service):
     """ Nuts & BBox not at the same time
     """
@@ -582,6 +581,7 @@ def validateNuts(nuts_id):
         items = match.groups()
         return items[0] in countries.keys()
     return False
+
 
 
 def email_validation(mail):
