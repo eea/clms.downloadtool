@@ -423,8 +423,13 @@ class DataRequestPost(Service):
                 self.request.response.setStatus(400)
                 return "Error, specified formats are not in the list"
             if (
+<<<<<<< HEAD
                 "GML" in dataset_format or not
                 table[dataset_format][output_format]
+=======
+                "GML" in dataset_format
+                or not table[dataset_format][output_format]
+>>>>>>> 20d1121 (Add line limit for black)
             ):
                 self.request.response.setStatus(400)
                 # pylint: disable=line-too-long
@@ -492,14 +497,33 @@ def validateDownloadFormat():
         if input_iteration_format == "Shapefile":
 
             for output_iteration_format in dataset_formats:
+<<<<<<< HEAD
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
                         output_iteration_format
                     ] = output_iteration_format in ("GDB", "GPKG", "Geojson", "GML")  # noqa: E501
+=======
+
+                if (
+                    output_iteration_format == "GDB"
+                    or output_iteration_format == "GPKG"
+                    or output_iteration_format == "Geojson"
+                    or output_iteration_format == "GML"
+                ):
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = True
+
+                else:
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = False
+>>>>>>> 20d1121 (Add line limit for black)
 
         elif input_iteration_format == "GDB":
 
             for output_iteration_format in dataset_formats:
+<<<<<<< HEAD
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
                         output_iteration_format
@@ -511,14 +535,68 @@ def validateDownloadFormat():
                 the_table[input_iteration_format][
                         output_iteration_format
                     ] = output_iteration_format in ("Shapefile", "GDB", "Geojson", "GML")  # noqa: E501
+=======
+
+                if (
+                    output_iteration_format == "Shapefile"
+                    or output_iteration_format == "GPKG"
+                    or output_iteration_format == "Geojson"
+                    or output_iteration_format == "GML"
+                ):
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = True
+
+                else:
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = False
+
+        elif input_iteration_format == "GPKG":
+
+            for output_iteration_format in dataset_formats:
+
+                if (
+                    output_iteration_format == "Shapefile"
+                    or output_iteration_format == "GDB"
+                    or output_iteration_format == "Geojson"
+                    or output_iteration_format == "GML"
+                ):
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = True
+
+                else:
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = False
+>>>>>>> 20d1121 (Add line limit for black)
 
         elif input_iteration_format == "Geojson":
 
             for output_iteration_format in dataset_formats:
+<<<<<<< HEAD
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
                         output_iteration_format
                     ] = output_iteration_format in ("Shapefile", "GDB", "GPKG", "GML")  # noqa: E501
+=======
+
+                if (
+                    output_iteration_format == "Shapefile"
+                    or output_iteration_format == "GDB"
+                    or output_iteration_format == "GPKG"
+                    or output_iteration_format == "GML"
+                ):
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = True
+
+                else:
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = False
+>>>>>>> 20d1121 (Add line limit for black)
 
         elif input_iteration_format == "Geotiff":
             for output_iteration_format in dataset_formats:
@@ -528,18 +606,49 @@ def validateDownloadFormat():
 
         elif input_iteration_format == "Netcdf":
             for output_iteration_format in dataset_formats:
+<<<<<<< HEAD
                 the_table[input_iteration_format][
                         output_iteration_format
                     ] = output_iteration_format == "Geotiff"
+=======
+
+                if output_iteration_format == "Geotiff":
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = True
+                else:
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = False
+>>>>>>> 20d1121 (Add line limit for black)
 
         elif input_iteration_format == "WFS":
 
             for output_iteration_format in dataset_formats:
+<<<<<<< HEAD
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
                         output_iteration_format
                     ] = output_iteration_format in ("Shapefile", "GDB", "GPKG", "Geojson", "GML")  # noqa: E501
     # pylint: disable=line-too-long
+=======
+
+                if (
+                    output_iteration_format == "Shapefile"
+                    or output_iteration_format == "GDB"
+                    or output_iteration_format == "GPKG"
+                    or output_iteration_format == "Geojson"
+                    or output_iteration_format == "GML"
+                ):
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = True
+                else:
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = False
+
+>>>>>>> 20d1121 (Add line limit for black)
     log.info(
         "------------------------------------------VALIDATION TABLE------------------------------------------"  # noqa
     )
