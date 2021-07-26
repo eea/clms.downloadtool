@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-For HTTP GET operations we can use standard HTTP parameter passing (through the URL)
+For HTTP GET operations we can use standard HTTP parameter passing
+(through the URL)
 
 """
 from plone import api
@@ -24,4 +25,4 @@ class AuthenticatedGet(Service):
         value = utility.get_item(key)
 
         self.request.response.setStatus(200)
-        return {key: value, 'user': user.getId()}
+        return {key: value, "user": user.getId()}

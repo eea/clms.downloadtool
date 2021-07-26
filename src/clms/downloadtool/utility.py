@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 """
-The best way to save the download tool registry is to save plain data-types in an annotation of the site object.
+The best way to save the download tool registry is to save plain data-types in
+an annotation of the site object.
 
-This way to store information is one of the techniques used in Plone to save non-contentish information.
+This way to store information is one of the techniques used in Plone to save
+non-contentish information.
 
-To achieve that we use the IAnnotations interface to abstract saving that informations. This technique provides us
-with a dictionary-like interface where we can save, update and retrieve information.
+To achieve that we use the IAnnotations interface to abstract saving that
+informations. This technique provides us with a dictionary-like interface
+where we can save, update and retrieve information.
 
-We will also encapsulate all operations with the download tool registry in this utility, this way it will be the
-central point of the all functionality involving the said registry.
+We will also encapsulate all operations with the download tool registry in
+this utility, this way it will be the central point of the all functionality
+involving the said registry.
 
-Wherever we need to interact with it (ex, REST API) we will get the utility and call its method.
+Wherever we need to interact with it (ex, REST API) we will get the utility
+and call its method.
 
 We have to understand the utility as being a Singleton object.
 
@@ -23,10 +28,18 @@ from zope.site.hooks import getSite
 
 import random
 from logging import getLogger
+
 log = getLogger(__name__)
 
 ANNOTATION_KEY = "clms.downloadtool"
-status_list = ["Rejected", "Queued", "In_progress", "Finished_ok", "Finished_nok", "Cancelled"]
+status_list = [
+    "Rejected",
+    "Queued",
+    "In_progress",
+    "Finished_ok",
+    "Finished_nok",
+    "Cancelled",
+]
 
 
 class IDownloadToolUtility(Interface):
@@ -35,11 +48,10 @@ class IDownloadToolUtility(Interface):
 
 @implementer(IDownloadToolUtility)
 class DownloadToolUtility(object):
-
     def datarequest_post(self, data_request):
         site = getSite()
         annotations = IAnnotations(site)
-        task_id = random.randint(0,99999999999)
+        task_id = random.randint(0, 99999999999)
 
         if annotations.get(ANNOTATION_KEY, None) is None:
             registry = {str(task_id): data_request}
@@ -52,18 +64,17 @@ class DownloadToolUtility(object):
                 if task_id not in registry:
                     exists = False
                 else:
-                    task_id = random.randint(0,99999999999)
+                    task_id = random.randint(0, 99999999999)
 
             registry[str(task_id)] = data_request
             annotations[ANNOTATION_KEY] = registry
-
 
         return {task_id: data_request}
 
     def datarequest_delete(self, task_id, user_id):
         site = getSite()
         annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())     
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
 
         dataObject = None
 
@@ -72,9 +83,9 @@ class DownloadToolUtility(object):
 
         dataObject = registry.get(str(task_id))
         if user_id not in dataObject["UserID"]:
-            return "Error, permission denied" 
-        
-        dataObject["Status"] =  "Cancelled"
+            return "Error, permission denied"
+
+        dataObject["Status"] = "Cancelled"
         registry[str(task_id)] = dataObject
         annotations[ANNOTATION_KEY] = registry
 
@@ -101,7 +112,9 @@ class DownloadToolUtility(object):
 
         for key in registry.keys():
             values = registry.get(key)
-            if str(user_id) == values.get("UserID") and status == values.get("Status"):
+            if str(user_id) == values.get("UserID") and status == values.get(
+                "Status"
+            ):
                 dataObject[key] = values
 
         return dataObject
@@ -120,7 +133,6 @@ class DownloadToolUtility(object):
             return "Error, task not found"
         return registry.get(task_id)
 
-
     def datarequest_status_patch(self, dataObject, task_id):
         site = getSite()
         annotations = IAnnotations(site)
@@ -128,19 +140,21 @@ class DownloadToolUtility(object):
         resp = {}
         tempObject = {}
 
-
         if task_id not in registry:
             return "Error, task_id not registered"
-    
+
         tempObject = {**registry[task_id], **dataObject}
 
-        if "NUTSID" in tempObject.keys() and "BoundingBox" in tempObject.keys():
+        if (
+            "NUTSID" in tempObject.keys() and
+            "BoundingBox" in
+            tempObject.keys()
+        ):
             dataObject = {}
-            return "Error, NUTSID and BoundingBox can't be defined in the same task"
+
+            return "Error, NUTSID and BoundingBox can't be defined in the same task"  # noqa
         registry[str(task_id)] = tempObject
 
-        
         annotations[ANNOTATION_KEY] = registry
-        
 
         return tempObject
