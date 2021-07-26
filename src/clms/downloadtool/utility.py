@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 """
-The best way to save the download tool registry is to save plain data-types in an annotation of the site object.
+The best way to save the download tool registry is to save plain data-types in
+an annotation of the site object.
 
-This way to store information is one of the techniques used in Plone to save non-contentish information.
+This way to store information is one of the techniques used in Plone to save
+non-contentish information.
 
-To achieve that we use the IAnnotations interface to abstract saving that informations. This technique provides us
-with a dictionary-like interface where we can save, update and retrieve information.
+To achieve that we use the IAnnotations interface to abstract saving that
+informations. This technique provides us with a dictionary-like interface
+where we can save, update and retrieve information.
 
-We will also encapsulate all operations with the download tool registry in this utility, this way it will be the
-central point of the all functionality involving the said registry.
+We will also encapsulate all operations with the download tool registry in
+this utility, this way it will be the central point of the all functionality
+involving the said registry.
 
-Wherever we need to interact with it (ex, REST API) we will get the utility and call its method.
+Wherever we need to interact with it (ex, REST API) we will get the utility
+and call its method.
 
 We have to understand the utility as being a Singleton object.
 
@@ -145,7 +150,8 @@ class DownloadToolUtility(object):
             and "BoundingBox" in tempObject.keys()
         ):
             dataObject = {}
-            return "Error, NUTSID and BoundingBox can't be defined in the same task"
+
+            return "Error, NUTSID and BoundingBox can't be defined in the same task"  # noqa
         registry[str(task_id)] = tempObject
 
         annotations[ANNOTATION_KEY] = registry

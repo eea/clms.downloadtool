@@ -39,7 +39,6 @@ setup(
         "PyPI": "https://pypi.python.org/pypi/clms.downloadtool",
         "Source": "https://github.com/collective/clms.downloadtool",
         "Tracker": "https://github.com/collective/clms.downloadtool/issues",
-        # 'Documentation': 'https://clms.downloadtool.readthedocs.io/en/latest/',
     },
     license="GPL version 2",
     packages=find_packages("src", exclude=["ez_setup"]),

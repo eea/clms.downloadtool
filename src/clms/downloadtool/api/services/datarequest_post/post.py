@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-For HTTP GET operations we can use standard HTTP parameter passing (through the URL)
+For HTTP GET operations we can use standard HTTP parameter passing
+through the URL)
 
 """
 from plone import api
@@ -372,7 +373,7 @@ class DataRequestPost(Service):
         mail = body.get("Mail")
         """
         try:
-            table 
+            table
         except NameError:
             log.info("Table not generated")
             generated = False
@@ -440,7 +441,7 @@ class DataRequestPost(Service):
                 or not table[dataset_format][output_format]
             ):
                 self.request.response.setStatus(400)
-                return "Error, specified data formats are not supported in this way"
+                return "Error, specified data formats are not supported in this way"  # noqa
             response_json.update(
                 {
                     "DatasetFormat": dataset_format,
@@ -458,7 +459,7 @@ class DataRequestPost(Service):
 
             if not checkDateDifference(temporal_filter):
                 self.request.response.setStatus(400)
-                return "Error, difference between StartDate and EndDate is not coherent"
+                return "Error, difference between StartDate and EndDate is not coherent"  # noqa
 
             if len(temporal_filter.keys()) > 2:
                 self.request.response.setStatus(400)
@@ -476,7 +477,7 @@ class DataRequestPost(Service):
             response_json.update({"TemporalFilter": temporal_filter})
 
         if outputGCS:
-            if not outputGCS in GCS:
+            if outputGCS not in GCS:
                 self.request.response.setStatus(400)
                 return "Error, defined GCS not in the list"
             response_json.update({"OutputGCS": outputGCS})
@@ -613,7 +614,7 @@ def validateDownloadFormat():
                     ] = False
 
     log.info(
-        "------------------------------------------VALIDATION TABLE------------------------------------------"
+        "------------------------------------------VALIDATION TABLE------------------------------------------"  # noqa
     )
     log.info(the_table)
     return the_table

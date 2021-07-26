@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-For HTTP GET operations we can use standard HTTP parameter passing (through the URL)
+For HTTP GET operations we can use standard HTTP parameter passing
+(through the URL)
 
 """
 from plone import api
@@ -448,7 +449,7 @@ class datarequest_status_patch(Service):
                 or not table[dataset_format][output_format]
             ):
                 self.request.response.setStatus(400)
-                return "Error, specified data formats are not supported in this way"
+                return "Error, specified data formats are not supported in this way"  # noqa
             response_json.update(
                 {
                     "DatasetFormat": dataset_format,
@@ -466,7 +467,7 @@ class datarequest_status_patch(Service):
 
             if not checkDateDifference(temporal_filter):
                 self.request.response.setStatus(400)
-                return "Error, difference between StartDate and EndDate is not coherent"
+                return "Error, difference between StartDate and EndDate is not coherent"  # noqa
 
             if len(temporal_filter.keys()) > 2:
                 self.request.response.setStatus(400)
@@ -483,7 +484,7 @@ class datarequest_status_patch(Service):
             response_json.update({"TemporalFilter": temporal_filter})
 
         if outputGCS:
-            if not outputGCS in GCS:
+            if outputGCS not in GCS:
                 self.request.response.setStatus(400)
                 return "Error, defined GCS not in the list"
             response_json.update({"OutputGCS": outputGCS})
