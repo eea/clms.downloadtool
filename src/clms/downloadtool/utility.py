@@ -160,8 +160,9 @@ class DownloadToolUtility:
         tempObject = {**registry[task_id], **dataObject}
 
         if (
-            "NUTSID" in tempObject.keys()
-            and "BoundingBox" in tempObject.keys()
+            "NUTSID" in tempObject.keys() and
+            "BoundingBox" in
+            tempObject.keys()
         ):
             dataObject = {}
             # pylint: disable=line-too-long

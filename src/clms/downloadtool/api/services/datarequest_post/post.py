@@ -440,12 +440,17 @@ class DataRequestPost(Service):
                 return "Error, specified formats are not in the list"
             if (
 <<<<<<< HEAD
+<<<<<<< HEAD
                 "GML" in dataset_format or not
                 table[dataset_format][output_format]
 =======
                 "GML" in dataset_format
                 or not table[dataset_format][output_format]
 >>>>>>> 20d1121 (Add line limit for black)
+=======
+                "GML" in dataset_format or not
+                table[dataset_format][output_format]
+>>>>>>> 556acdc (Fix W503)
             ):
                 self.request.response.setStatus(400)
 <<<<<<< HEAD
@@ -527,10 +532,10 @@ def validateDownloadFormat():
 =======
 
                 if (
-                    output_iteration_format == "GDB"
-                    or output_iteration_format == "GPKG"
-                    or output_iteration_format == "Geojson"
-                    or output_iteration_format == "GML"
+                    output_iteration_format == "GDB" or
+                    output_iteration_format == "GPKG" or
+                    output_iteration_format == "Geojson" or
+                    output_iteration_format == "GML"
                 ):
                     the_table[input_iteration_format][
                         output_iteration_format
@@ -560,10 +565,10 @@ def validateDownloadFormat():
 =======
 
                 if (
-                    output_iteration_format == "Shapefile"
-                    or output_iteration_format == "GPKG"
-                    or output_iteration_format == "Geojson"
-                    or output_iteration_format == "GML"
+                    output_iteration_format == "Shapefile" or
+                    output_iteration_format == "GPKG" or
+                    output_iteration_format == "Geojson" or
+                    output_iteration_format == "GML"
                 ):
                     the_table[input_iteration_format][
                         output_iteration_format
@@ -579,10 +584,10 @@ def validateDownloadFormat():
             for output_iteration_format in dataset_formats:
 
                 if (
-                    output_iteration_format == "Shapefile"
-                    or output_iteration_format == "GDB"
-                    or output_iteration_format == "Geojson"
-                    or output_iteration_format == "GML"
+                    output_iteration_format == "Shapefile" or
+                    output_iteration_format == "GDB" or
+                    output_iteration_format == "Geojson" or
+                    output_iteration_format == "GML"
                 ):
                     the_table[input_iteration_format][
                         output_iteration_format
@@ -605,10 +610,10 @@ def validateDownloadFormat():
 =======
 
                 if (
-                    output_iteration_format == "Shapefile"
-                    or output_iteration_format == "GDB"
-                    or output_iteration_format == "GPKG"
-                    or output_iteration_format == "GML"
+                    output_iteration_format == "Shapefile" or
+                    output_iteration_format == "GDB" or
+                    output_iteration_format == "GPKG" or
+                    output_iteration_format == "GML"
                 ):
                     the_table[input_iteration_format][
                         output_iteration_format
@@ -656,11 +661,11 @@ def validateDownloadFormat():
 =======
 
                 if (
-                    output_iteration_format == "Shapefile"
-                    or output_iteration_format == "GDB"
-                    or output_iteration_format == "GPKG"
-                    or output_iteration_format == "Geojson"
-                    or output_iteration_format == "GML"
+                    output_iteration_format == "Shapefile" or
+                    output_iteration_format == "GDB" or
+                    output_iteration_format == "GPKG" or
+                    output_iteration_format == "Geojson" or
+                    output_iteration_format == "GML"
                 ):
                     the_table[input_iteration_format][
                         output_iteration_format

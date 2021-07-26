@@ -437,14 +437,14 @@ class datarequest_status_patch(Service):
                 self.request.response.setStatus(400)
                 return "Error, you need to specify both formats"
             if (
-                dataset_format not in dataset_formats
-                or output_format not in dataset_formats
+                dataset_format not in dataset_formats or
+                output_format not in dataset_formats
             ):
                 self.request.response.setStatus(400)
                 return "Error, specified formats are not in the list"
             if (
-                "GML" in dataset_format
-                or not table[dataset_format][output_format]
+                "GML" in dataset_format or not
+                table[dataset_format][output_format]
             ):
                 self.request.response.setStatus(400)
                 # pylint: disable=line-too-long
@@ -473,8 +473,8 @@ class datarequest_status_patch(Service):
                 self.request.response.setStatus(400)
                 return "Error, TemporalFilter has too many fields"
             if (
-                "StartDate" not in temporal_filter.keys()
-                or "EndDate" not in temporal_filter.keys()
+                "StartDate" not in temporal_filter.keys() or
+                "EndDate" not in temporal_filter.keys()
             ):
                 self.request.response.setStatus(400)
                 return (
