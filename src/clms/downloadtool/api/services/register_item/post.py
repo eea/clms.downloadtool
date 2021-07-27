@@ -20,7 +20,6 @@ and encode it as a proper JSON response.
 
 """
 
-from plone import api
 from plone.restapi.services import Service
 from plone.restapi.deserializer import json_body
 
@@ -29,7 +28,10 @@ from clms.downloadtool.utility import IDownloadToolUtility
 
 
 class RegisterItemPost(Service):
+    """ Register an item
+    """
     def reply(self):
+        """ JSON endpoint """
         body = json_body(self.request)
 
         user_id = body.get("UserID")

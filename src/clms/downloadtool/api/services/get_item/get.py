@@ -4,22 +4,22 @@ For HTTP GET operations we can use standard HTTP parameter passing
 (through the URL)
 
 """
-from plone import api
+from logging import getLogger
+
 from plone.restapi.services import Service
 
 from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
-import json
 
 # logger, do log.info('XXXX') to print in the console
-from logging import getLogger
-
 log = getLogger(__name__)
 
 
 class GetItem(Service):
+    """Get item information
+    """
     def reply(self):
-
+        """ JSON endpoint """
         key = self.request.get("TaskID")
         log.info(key)
         utility = getUtility(IDownloadToolUtility)

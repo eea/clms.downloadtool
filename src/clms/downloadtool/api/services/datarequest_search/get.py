@@ -4,28 +4,22 @@ For HTTP GET operations we can use standard HTTP parameter passing
 (through the URL)
 
 """
-from plone import api
+from logging import getLogger
+
 from plone.restapi.services import Service
 
 from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
 
-from logging import getLogger
 
 log = getLogger(__name__)
 
 
 class datarequest_search(Service):
+    """ Search datarequest 
+    """
     def reply(self):
-        status_list = [
-            "Rejected",
-            "Queued",
-            "In_progress",
-            "Finished_ok",
-            "Finished_nok",
-            "Cancelled",
-        ]
-
+        """ JSON endpoint """
         log.info("DATAREQUEST_SEARCH")
         utility = getUtility(IDownloadToolUtility)
         status = self.request.get("Status")

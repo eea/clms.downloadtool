@@ -532,8 +532,6 @@ def validateDate1(temporal_filter):
             date_obj2 = datetime.datetime.strptime(end_date, date_format)
             log.info(date_obj2)
             return {"StartDate": date_obj1, "EndDate": date_obj2}
-        else:
-            return False
     except ValueError:
         log.info("Incorrect data format, should be YYYY-MM-DD")
         return False
@@ -584,8 +582,6 @@ def validateNuts(nuts_id):
     if match:
         items = match.groups()
         return items[0] in countries.keys()
-    else:
-        return False
 
 
 def email_validation(mail):
@@ -601,4 +597,4 @@ def email_validation(mail):
             mail[i] >= "A" and mail[i] <= "Z"
         ):
             a = a + 1
-    return (a > 0 and at > 0 and (dot - at) > 0 and (dot + 1) < y)
+    return a > 0 and at > 0 and (dot - at) > 0 and (dot + 1) < y

@@ -11,10 +11,13 @@ import clms.downloadtool
 
 
 class ClmsDownloadtoolLayer(PloneSandboxLayer):
+    """ Plone sandbox
+    """
 
     defaultBases = (PLONE_APP_CONTENTTYPES_FIXTURE,)
 
     def setUpZope(self, app, configurationContext):
+        """Custom shared utility setup for tests."""
         # Load any other ZCML that is required for your tests.
         # The z3c.autoinclude feature is disabled in the Plone fixture base
         # layer.
@@ -24,6 +27,7 @@ class ClmsDownloadtoolLayer(PloneSandboxLayer):
         self.loadZCML(package=clms.downloadtool)
 
     def setUpPloneSite(self, portal):
+        """ Setup cms site """
         applyProfile(portal, "clms.downloadtool:default")
 
 
