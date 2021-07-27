@@ -46,7 +46,6 @@ status_list = [
 class IDownloadToolUtility(Interface):
     """Download interface
     """
-    pass
 
 
 @implementer(IDownloadToolUtility)
