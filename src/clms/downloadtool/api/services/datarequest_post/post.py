@@ -612,8 +612,7 @@ def validateNuts(nuts_id):
     if match:
         items = match.groups()
         return items[0] in countries.keys()
-    else:
-        return False
+
 
 
 def email_validation(mail):
