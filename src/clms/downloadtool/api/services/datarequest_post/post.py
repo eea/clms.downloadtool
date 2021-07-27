@@ -496,31 +496,31 @@ def validateDownloadFormat():
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
                         output_iteration_format
-                    ] = output_iteration_format in ("GDB", "GPKG", "Geojson", "GML") # noqa: E501
-                
+                    ] = output_iteration_format in ("GDB", "GPKG", "Geojson", "GML")  # noqa: E501
+
         elif input_iteration_format == "GDB":
 
             for output_iteration_format in dataset_formats:
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
                         output_iteration_format
-                    ] = output_iteration_format in ("Shapefile", "GPKG", "Geojson", "GML") # noqa: E501
+                    ] = output_iteration_format in ("Shapefile", "GPKG", "Geojson", "GML")  # noqa: E501
         elif input_iteration_format == "GPKG":
 
             for output_iteration_format in dataset_formats:
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
                         output_iteration_format
-                    ] = output_iteration_format in ("Shapefile", "GDB", "Geojson", "GML") # noqa: E501
-                
+                    ] = output_iteration_format in ("Shapefile", "GDB", "Geojson", "GML")  # noqa: E501
+
         elif input_iteration_format == "Geojson":
 
             for output_iteration_format in dataset_formats:
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
                         output_iteration_format
-                    ] = output_iteration_format in ("Shapefile", "GDB", "GPKG", "GML") # noqa: E501
-    
+                    ] = output_iteration_format in ("Shapefile", "GDB", "GPKG", "GML")  # noqa: E501
+
         elif input_iteration_format == "Geotiff":
             for output_iteration_format in dataset_formats:
                 the_table[input_iteration_format][
@@ -529,15 +529,9 @@ def validateDownloadFormat():
 
         elif input_iteration_format == "Netcdf":
             for output_iteration_format in dataset_formats:
-
-                if output_iteration_format == "Geotiff":
-                    the_table[input_iteration_format][
+                the_table[input_iteration_format][
                         output_iteration_format
-                    ] = True
-                else:
-                    the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = False
+                    ] = output_iteration_format == "Geotiff"
 
         elif input_iteration_format == "WFS":
 
@@ -545,7 +539,7 @@ def validateDownloadFormat():
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
                         output_iteration_format
-                    ] = output_iteration_format in ("Shapefile", "GDB", "GPKG", "Geojson", "GML") # noqa: E501
+                    ] = output_iteration_format in ("Shapefile", "GDB", "GPKG", "Geojson", "GML")  # noqa: E501
     # pylint: disable=line-too-long
     log.info(
         "------------------------------------------VALIDATION TABLE------------------------------------------"  # noqa
@@ -567,8 +561,6 @@ def validateDate1(temporal_filter):
             date_obj2 = datetime.datetime.strptime(end_date, date_format)
             log.info(date_obj2)
             return {"StartDate": date_obj1, "EndDate": date_obj2}
-        else:
-            return False
     except ValueError:
         log.info("Incorrect data format, should be YYYY-MM-DD")
         return False
