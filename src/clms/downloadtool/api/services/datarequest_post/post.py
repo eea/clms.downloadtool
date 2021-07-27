@@ -4,18 +4,17 @@ For HTTP GET operations we can use standard HTTP parameter passing
 through the URL)
 
 """
-from plone import api
+import re
+import datetime
+from collections import defaultdict
+from logging import getLogger
+
 from plone.restapi.services import Service
 from plone.restapi.deserializer import json_body
 
 from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
 
-import datetime
-from collections import defaultdict
-
-
-from logging import getLogger
 
 log = getLogger(__name__)
 
@@ -357,8 +356,10 @@ table = {
 
 
 class DataRequestPost(Service):
+    """ Set Data
+    """
     def reply(self):
-
+        """ JSON response """
         body = json_body(self.request)
 
         user_id = str(body.get("UserID"))
@@ -371,19 +372,7 @@ class DataRequestPost(Service):
         outputGCS = body.get("OutputGCS")
         nuts_id = body.get("NUTSID")
         mail = body.get("Mail")
-        """
-        try:
-            table
-        except NameError:
-            log.info("Table not generated")
-            generated = False
-        else:
-            log.info("Table already generated")
-            generated = True
 
-        if not generated:
-            table = validateDownloadFormat()
-        """
         response_json = {}
 
         utility = getUtility(IDownloadToolUtility)
@@ -439,6 +428,7 @@ class DataRequestPost(Service):
                 table[dataset_format][output_format]
             ):
                 self.request.response.setStatus(400)
+                # pylint: disable=line-too-long
                 return "Error, specified data formats are not supported in this way"  # noqa
             response_json.update(
                 {
@@ -457,6 +447,7 @@ class DataRequestPost(Service):
 
             if not checkDateDifference(temporal_filter):
                 self.request.response.setStatus(400)
+                # pylint: disable=line-too-long
                 return "Error, difference between StartDate and EndDate is not coherent"  # noqa
 
             if len(temporal_filter.keys()) > 2:
@@ -494,6 +485,7 @@ class DataRequestPost(Service):
 
 
 def validateDownloadFormat():
+    """ validate correct file format """
     the_table = defaultdict(dict)
 
     for input_iteration_format in dataset_formats:
@@ -610,7 +602,7 @@ def validateDownloadFormat():
                     the_table[input_iteration_format][
                         output_iteration_format
                     ] = False
-
+    # pylint: disable=line-too-long
     log.info(
         "------------------------------------------VALIDATION TABLE------------------------------------------"  # noqa
     )
@@ -619,7 +611,7 @@ def validateDownloadFormat():
 
 
 def validateDate1(temporal_filter):
-
+    """ validate date format year-month day """
     start_date = temporal_filter.get("StartDate")
     end_date = temporal_filter.get("EndDate")
 
@@ -639,7 +631,7 @@ def validateDate1(temporal_filter):
 
 
 def validateDate2(temporal_filter):
-
+    """ validate date format day-month-year"""
     start_date = temporal_filter.get("StartDate")
     end_date = temporal_filter.get("EndDate")
 
@@ -657,7 +649,7 @@ def validateDate2(temporal_filter):
 
 
 def validateSpatialExtent(bounding_box):
-
+    """ validate Bounding Box """
     if not len(bounding_box) == 4:
         return False
 
@@ -669,6 +661,7 @@ def validateSpatialExtent(bounding_box):
 
 
 def checkDateDifference(temporal_filter):
+    """ Check date difference """
     log.info(temporal_filter)
     start_date = temporal_filter["StartDate"]
     end_date = temporal_filter.get("EndDate")
@@ -677,20 +670,18 @@ def checkDateDifference(temporal_filter):
 
 
 def validateNuts(nuts_id):
-    import re
+    """ validate nuts """
 
     match = re.match(r"([a-z]+)([0-9]+)", nuts_id, re.I)
     if match:
         items = match.groups()
-        if items[0] in countries.keys():
-            return True
-        else:
-            return False
+        return items[0] in countries.keys()
     else:
         return False
 
 
 def email_validation(mail):
+    """ validate email address """
     a = 0
     y = len(mail)
     dot = mail.find(".")
@@ -705,7 +696,5 @@ def email_validation(mail):
             mail[i] >= "A" and mail[i] <= "Z"
         ):
             a = a + 1
-    if a > 0 and at > 0 and (dot - at) > 0 and (dot + 1) < y:
-        return True
-    else:
-        return False
+    return (a > 0 and at > 0 and (dot - at) > 0 and (dot + 1) < y)
+        

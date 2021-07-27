@@ -602,3 +602,4 @@ def email_validation(mail):
         ):
             a = a + 1
     return (a > 0 and at > 0 and (dot - at) > 0 and (dot + 1) < y)
+    
