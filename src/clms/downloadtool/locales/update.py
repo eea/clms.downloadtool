@@ -57,7 +57,7 @@ def _rebuild():
 def _sync():
     """Sync translation files"""
     # pylint: disable=line-too-long
-    cmd = "{0} sync --pot {locale_path}/{domain}.pot {locale_path}*/LC_MESSAGES/{domain}.po".format(
+    cmd = "{0} sync --pot {locale_path}/{domain}.pot {locale_path}*/LC_MESSAGES/{domain}.po".format(  # NOQA: E501
         i18ndude,
         locale_path=locale_path,
         domain=domain
