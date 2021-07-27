@@ -8,9 +8,6 @@ from logging import getLogger
 
 from plone.restapi.services import Service
 
-from zope.component import getUtility
-from clms.downloadtool.utility import IDownloadToolUtility
-
 # logger, do log.info('XXXX') to print in the console
 
 log = getLogger(__name__)

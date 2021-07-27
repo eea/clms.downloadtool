@@ -16,7 +16,7 @@ log = getLogger(__name__)
 
 
 class datarequest_search(Service):
-    """ Search datarequest 
+    """ Search datarequest
     """
     def reply(self):
         """ JSON endpoint """
