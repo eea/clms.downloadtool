@@ -154,7 +154,7 @@ class DownloadToolUtility(object):
         # Disable check because need python >= 3.5
         # linter base image is based in 2-alpine which runs
         # python 2.7
-        # pylint: disble=invalid-syntax
+        # pylint: disble=syntax-error
         tempObject = {**registry[task_id], **dataObject}
 
         if (
