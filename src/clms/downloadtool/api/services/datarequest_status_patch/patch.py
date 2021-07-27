@@ -447,7 +447,7 @@ class datarequest_status_patch(Service):
                 table[dataset_format][output_format]
             ):
                 self.request.response.setStatus(400)
-                #pylint: disable=line-too-long
+                # pylint: disable=line-too-long
                 return "Error, specified data formats are not supported in this way"  # noqa
             response_json.update(
                 {
@@ -466,7 +466,7 @@ class datarequest_status_patch(Service):
 
             if not checkDateDifference(temporal_filter):
                 self.request.response.setStatus(400)
-                #pylint: disable=line-too-long
+                # pylint: disable=line-too-long
                 return "Error, difference between StartDate and EndDate is not coherent"  # noqa
 
             if len(temporal_filter.keys()) > 2:
@@ -583,10 +583,7 @@ def validateNuts(nuts_id):
     match = re.match(r"([a-z]+)([0-9]+)", nuts_id, re.I)
     if match:
         items = match.groups()
-        if items[0] in countries.keys():
-            return True
-        else:
-            return False
+        return items[0] in countries.keys()
     else:
         return False
 
@@ -604,7 +601,4 @@ def email_validation(mail):
             mail[i] >= "A" and mail[i] <= "Z"
         ):
             a = a + 1
-    if a > 0 and at > 0 and (dot - at) > 0 and (dot + 1) < y:
-        return True
-    else:
-        return False
+    return (a > 0 and at > 0 and (dot - at) > 0 and (dot + 1) < y)
