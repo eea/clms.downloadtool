@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-For HTTP GET operations we can use standard HTTP parameter passing (through the URL)
+For HTTP GET operations we can use standard HTTP parameter passing
+through the URL)
 
 """
 from plone import api
@@ -372,7 +373,7 @@ class DataRequestPost(Service):
         mail = body.get("Mail")
         """
         try:
-            table 
+            table
         except NameError:
             log.info("Table not generated")
             generated = False
@@ -422,24 +423,28 @@ class DataRequestPost(Service):
 
         if dataset_format or output_format:
             if (
-                not dataset_format
-                and output_format
-                or dataset_format
-                and not output_format
+                not dataset_format and output_format or
+                dataset_format and not output_format
             ):
                 self.request.response.setStatus(400)
                 return "Error, you need to specify both formats"
             if (
-                dataset_format not in dataset_formats
-                or output_format not in dataset_formats
+                dataset_format not in dataset_formats or
+                output_format not in dataset_formats
             ):
                 self.request.response.setStatus(400)
                 return "Error, specified formats are not in the list"
-            if "GML" in dataset_format or not table[dataset_format][output_format]:
+            if (
+                "GML" in dataset_format or not
+                table[dataset_format][output_format]
+            ):
                 self.request.response.setStatus(400)
-                return "Error, specified data formats are not supported in this way"
+                return "Error, specified data formats are not supported in this way"  # noqa
             response_json.update(
-                {"DatasetFormat": dataset_format, "OutputFormat": output_format}
+                {
+                    "DatasetFormat": dataset_format,
+                    "OutputFormat": output_format,
+                }
             )
 
         if temporal_filter:
@@ -452,23 +457,25 @@ class DataRequestPost(Service):
 
             if not checkDateDifference(temporal_filter):
                 self.request.response.setStatus(400)
-                return "Error, difference between StartDate and EndDate is not coherent"
+                return "Error, difference between StartDate and EndDate is not coherent"  # noqa
 
             if len(temporal_filter.keys()) > 2:
                 self.request.response.setStatus(400)
                 return "Error, TemporalFilter has too many fields"
 
             if (
-                "StartDate" not in temporal_filter.keys()
-                or "EndDate" not in temporal_filter.keys()
+                "StartDate" not in temporal_filter.keys() or
+                "EndDate" not in temporal_filter.keys()
             ):
                 self.request.response.setStatus(400)
-                return "Error, TemporalFilter does not have StartDate or EndDate"
+                return (
+                    "Error, TemporalFilter does not have StartDate or EndDate"
+                )
 
             response_json.update({"TemporalFilter": temporal_filter})
 
         if outputGCS:
-            if not outputGCS in GCS:
+            if outputGCS not in GCS:
                 self.request.response.setStatus(400)
                 return "Error, defined GCS not in the list"
             response_json.update({"OutputGCS": outputGCS})
@@ -496,90 +503,116 @@ def validateDownloadFormat():
             for output_iteration_format in dataset_formats:
 
                 if (
-                    output_iteration_format == "GDB"
-                    or output_iteration_format == "GPKG"
-                    or output_iteration_format == "Geojson"
-                    or output_iteration_format == "GML"
+                    output_iteration_format == "GDB" or
+                    output_iteration_format == "GPKG" or
+                    output_iteration_format == "Geojson" or
+                    output_iteration_format == "GML"
                 ):
-                    the_table[input_iteration_format][output_iteration_format] = True
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = True
 
                 else:
-                    the_table[input_iteration_format][output_iteration_format] = False
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = False
 
         elif input_iteration_format == "GDB":
 
             for output_iteration_format in dataset_formats:
 
                 if (
-                    output_iteration_format == "Shapefile"
-                    or output_iteration_format == "GPKG"
-                    or output_iteration_format == "Geojson"
-                    or output_iteration_format == "GML"
+                    output_iteration_format == "Shapefile" or
+                    output_iteration_format == "GPKG" or
+                    output_iteration_format == "Geojson" or
+                    output_iteration_format == "GML"
                 ):
-                    the_table[input_iteration_format][output_iteration_format] = True
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = True
 
                 else:
-                    the_table[input_iteration_format][output_iteration_format] = False
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = False
 
         elif input_iteration_format == "GPKG":
 
             for output_iteration_format in dataset_formats:
 
                 if (
-                    output_iteration_format == "Shapefile"
-                    or output_iteration_format == "GDB"
-                    or output_iteration_format == "Geojson"
-                    or output_iteration_format == "GML"
+                    output_iteration_format == "Shapefile" or
+                    output_iteration_format == "GDB" or
+                    output_iteration_format == "Geojson" or
+                    output_iteration_format == "GML"
                 ):
-                    the_table[input_iteration_format][output_iteration_format] = True
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = True
 
                 else:
-                    the_table[input_iteration_format][output_iteration_format] = False
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = False
 
         elif input_iteration_format == "Geojson":
 
             for output_iteration_format in dataset_formats:
 
                 if (
-                    output_iteration_format == "Shapefile"
-                    or output_iteration_format == "GDB"
-                    or output_iteration_format == "GPKG"
-                    or output_iteration_format == "GML"
+                    output_iteration_format == "Shapefile" or
+                    output_iteration_format == "GDB" or
+                    output_iteration_format == "GPKG" or
+                    output_iteration_format == "GML"
                 ):
-                    the_table[input_iteration_format][output_iteration_format] = True
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = True
 
                 else:
-                    the_table[input_iteration_format][output_iteration_format] = False
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = False
 
         elif input_iteration_format == "Geotiff":
             for output_iteration_format in dataset_formats:
-                the_table[input_iteration_format][output_iteration_format] = False
+                the_table[input_iteration_format][
+                    output_iteration_format
+                ] = False
 
         elif input_iteration_format == "Netcdf":
             for output_iteration_format in dataset_formats:
 
                 if output_iteration_format == "Geotiff":
-                    the_table[input_iteration_format][output_iteration_format] = True
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = True
                 else:
-                    the_table[input_iteration_format][output_iteration_format] = False
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = False
 
         elif input_iteration_format == "WFS":
 
             for output_iteration_format in dataset_formats:
 
                 if (
-                    output_iteration_format == "Shapefile"
-                    or output_iteration_format == "GDB"
-                    or output_iteration_format == "GPKG"
-                    or output_iteration_format == "Geojson"
-                    or output_iteration_format == "GML"
+                    output_iteration_format == "Shapefile" or
+                    output_iteration_format == "GDB" or
+                    output_iteration_format == "GPKG" or
+                    output_iteration_format == "Geojson" or
+                    output_iteration_format == "GML"
                 ):
-                    the_table[input_iteration_format][output_iteration_format] = True
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = True
                 else:
-                    the_table[input_iteration_format][output_iteration_format] = False
+                    the_table[input_iteration_format][
+                        output_iteration_format
+                    ] = False
 
     log.info(
-        "------------------------------------------VALIDATION TABLE------------------------------------------"
+        "------------------------------------------VALIDATION TABLE------------------------------------------"  # noqa
     )
     log.info(the_table)
     return the_table
@@ -668,7 +701,9 @@ def email_validation(mail):
         return False
 
     for i in range(0, at):
-        if (mail[i] >= "a" and mail[i] <= "z") or (mail[i] >= "A" and mail[i] <= "Z"):
+        if (mail[i] >= "a" and mail[i] <= "z") or (
+            mail[i] >= "A" and mail[i] <= "Z"
+        ):
             a = a + 1
     if a > 0 and at > 0 and (dot - at) > 0 and (dot + 1) < y:
         return True

@@ -57,7 +57,9 @@ class TestUninstall(unittest.TestCase):
 
     def test_product_uninstalled(self):
         """Test if clms.downloadtool is cleanly uninstalled."""
-        self.assertFalse(self.installer.isProductInstalled("clms.downloadtool"))
+        self.assertFalse(
+            self.installer.isProductInstalled("clms.downloadtool")
+        )
 
     def test_browserlayer_removed(self):
         """Test that IClmsDownloadtoolLayer is removed."""

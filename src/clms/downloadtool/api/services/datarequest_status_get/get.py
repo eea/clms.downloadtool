@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-For HTTP GET operations we can use standard HTTP parameter passing (through the URL)
+For HTTP GET operations we can use standard HTTP parameter passing
+(through the URL)
 
 """
 import json
