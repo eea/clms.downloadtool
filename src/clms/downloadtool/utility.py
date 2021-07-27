@@ -48,7 +48,7 @@ class IDownloadToolUtility(Interface):
 
 
 @implementer(IDownloadToolUtility)
-class DownloadToolUtility(object):
+class DownloadToolUtility():
     """ Download utilites
     """
     def datarequest_post(self, data_request):
@@ -154,7 +154,7 @@ class DownloadToolUtility(object):
         # Disable check because need python >= 3.5
         # linter base image is based in 2-alpine which runs
         # python 2.7
-        # pylint: disble=syntax-error
+        # pylint: disable=syntax-error
         tempObject = {**registry[task_id], **dataObject}
 
         if (

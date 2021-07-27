@@ -563,7 +563,7 @@ def validateDate1(temporal_filter):
             return {"StartDate": date_obj1, "EndDate": date_obj2}
     except ValueError:
         log.info("Incorrect data format, should be YYYY-MM-DD")
-        return False
+    return False
 
 
 def validateDate2(temporal_filter):
@@ -581,7 +581,7 @@ def validateDate2(temporal_filter):
             return {"StartDate": date_obj1, "EndDate": date_obj2}
     except ValueError:
         log.info("Incorrect data format, should be DD-MM-YYYY")
-        return False
+    return False
 
 
 def validateSpatialExtent(bounding_box):
@@ -612,7 +612,7 @@ def validateNuts(nuts_id):
     if match:
         items = match.groups()
         return items[0] in countries.keys()
-
+    return False
 
 def email_validation(mail):
     """ validate email address """
