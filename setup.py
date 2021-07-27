@@ -12,7 +12,7 @@ with open("CONTRIBUTORS.rst") as contributors_file:
     contributors_data = contributors_file.read()
 with open("CHANGES.rst") as changes_file:
     changes_data = changes_file.read()
-    
+
 long_description = "\n\n".join(
     [
         readme_data,
