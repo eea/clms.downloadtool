@@ -20,14 +20,16 @@ and call its method.
 We have to understand the utility as being a Singleton object.
 
 """
+import random
+from logging import getLogger
+
 from persistent.mapping import PersistentMapping
 from zope.annotation.interfaces import IAnnotations
 from zope.interface import implementer
 from zope.interface import Interface
 from zope.site.hooks import getSite
 
-import random
-from logging import getLogger
+
 
 log = getLogger(__name__)
 
@@ -48,7 +50,10 @@ class IDownloadToolUtility(Interface):
 
 @implementer(IDownloadToolUtility)
 class DownloadToolUtility(object):
+    """ Download utilites
+    """
     def datarequest_post(self, data_request):
+        """ Add a new data request"""
         site = getSite()
         annotations = IAnnotations(site)
         task_id = random.randint(0, 99999999999)
@@ -72,6 +77,7 @@ class DownloadToolUtility(object):
         return {task_id: data_request}
 
     def datarequest_delete(self, task_id, user_id):
+        """ Delete a data task """
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -92,6 +98,7 @@ class DownloadToolUtility(object):
         return dataObject
 
     def datarequest_search(self, user_id, status):
+        """ search user task """
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -120,12 +127,14 @@ class DownloadToolUtility(object):
         return dataObject
 
     def dataset_get(self, key):
+        """ Get dataset """
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         return registry.get(key)
 
     def datarequest_status_get(self, task_id):
+        """ Get request status """
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -134,10 +143,10 @@ class DownloadToolUtility(object):
         return registry.get(task_id)
 
     def datarequest_status_patch(self, dataObject, task_id):
+        """ Update request status """
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        resp = {}
         tempObject = {}
 
         if task_id not in registry:
@@ -151,7 +160,7 @@ class DownloadToolUtility(object):
             tempObject.keys()
         ):
             dataObject = {}
-
+            # pylint: disable=line-too-long
             return "Error, NUTSID and BoundingBox can't be defined in the same task"  # noqa
         registry[str(task_id)] = tempObject
 
