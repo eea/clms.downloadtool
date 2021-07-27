@@ -614,7 +614,6 @@ def validateNuts(nuts_id):
         return items[0] in countries.keys()
 
 
-
 def email_validation(mail):
     """ validate email address """
     a = 0
