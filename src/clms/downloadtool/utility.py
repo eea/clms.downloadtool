@@ -30,7 +30,6 @@ from zope.interface import Interface
 from zope.site.hooks import getSite
 
 
-
 log = getLogger(__name__)
 
 ANNOTATION_KEY = "clms.downloadtool"
@@ -152,6 +151,10 @@ class DownloadToolUtility(object):
         if task_id not in registry:
             return "Error, task_id not registered"
 
+        # Disable check because need python >= 3.5
+        # linter base image is based in 2-alpine which runs
+        # python 2.7
+        # pylint: disble=invalid-syntax
         tempObject = {**registry[task_id], **dataObject}
 
         if (
