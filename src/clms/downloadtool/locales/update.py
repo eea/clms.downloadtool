@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-
+"""Mangage translation strings
+"""
 import os
-import pkg_resources
 import subprocess
+import pkg_resources
 
 
 domain = "clms.downloadtool"
@@ -17,6 +18,7 @@ excludes = '"*.html *json-schema*.xml"'
 
 
 def locale_folder_setup():
+    """Setup locale folder"""
     os.chdir(locale_path)
     languages = [d for d in os.listdir(".") if os.path.isdir(d)]
     for lang in languages:
@@ -26,11 +28,9 @@ def locale_folder_setup():
         else:
             lc_messages_path = lang + "/LC_MESSAGES/"
             os.mkdir(lc_messages_path)
-            cmd = "msginit --locale={0} --input={1}.pot --output={2}/LC_MESSAGES/{3}.po".format(  # NOQA: E501
-                lang,
-                domain,
-                lang,
-                domain,
+            # pylint: disable=line-too-long
+            cmd = "msginit --locale={lang} --input={domain}.pot --output={lang}/LC_MESSAGES/{domain}.po".format(  # NOQA: E501
+                lang=lang, domain=domain
             )
             subprocess.call(
                 cmd,
@@ -41,6 +41,8 @@ def locale_folder_setup():
 
 
 def _rebuild():
+    """Rebuild locale files from po files"""
+    # pylint: disable=line-too-long
     cmd = "{i18ndude} rebuild-pot --pot {locale_path}/{domain}.pot --exclude {excludes} --create {domain} {target_path}".format(  # NOQA: E501
         i18ndude=i18ndude,
         locale_path=locale_path,
@@ -55,6 +57,7 @@ def _rebuild():
 
 
 def _sync():
+    """Sync translation files"""
     cmd = "{0} sync --pot {1}/{2}.pot {3}*/LC_MESSAGES/{4}.po".format(
         i18ndude,
         locale_path,
@@ -69,6 +72,7 @@ def _sync():
 
 
 def update_locale():
+    """Main entry point to update locales"""
     locale_folder_setup()
     _sync()
     _rebuild()
