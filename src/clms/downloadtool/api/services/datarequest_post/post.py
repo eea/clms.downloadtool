@@ -493,79 +493,34 @@ def validateDownloadFormat():
         if input_iteration_format == "Shapefile":
 
             for output_iteration_format in dataset_formats:
-
-                if (
-                    output_iteration_format == "GDB" or
-                    output_iteration_format == "GPKG" or
-                    output_iteration_format == "Geojson" or
-                    output_iteration_format == "GML"
-                ):
-                    the_table[input_iteration_format][
+                # pylint: disable=line-too-long
+                the_table[input_iteration_format][
                         output_iteration_format
-                    ] = True
-
-                else:
-                    the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = False
-
+                    ] = output_iteration_format in ("GDB", "GPKG", "Geojson", "GML") # noqa: E501
+                
         elif input_iteration_format == "GDB":
 
             for output_iteration_format in dataset_formats:
-
-                if (
-                    output_iteration_format == "Shapefile" or
-                    output_iteration_format == "GPKG" or
-                    output_iteration_format == "Geojson" or
-                    output_iteration_format == "GML"
-                ):
-                    the_table[input_iteration_format][
+                # pylint: disable=line-too-long
+                the_table[input_iteration_format][
                         output_iteration_format
-                    ] = True
-
-                else:
-                    the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = False
-
+                    ] = output_iteration_format in ("Shapefile", "GPKG", "Geojson", "GML") # noqa: E501
         elif input_iteration_format == "GPKG":
 
             for output_iteration_format in dataset_formats:
-
-                if (
-                    output_iteration_format == "Shapefile" or
-                    output_iteration_format == "GDB" or
-                    output_iteration_format == "Geojson" or
-                    output_iteration_format == "GML"
-                ):
-                    the_table[input_iteration_format][
+                # pylint: disable=line-too-long
+                the_table[input_iteration_format][
                         output_iteration_format
-                    ] = True
-
-                else:
-                    the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = False
-
+                    ] = output_iteration_format in ("Shapefile", "GDB", "Geojson", "GML") # noqa: E501
+                
         elif input_iteration_format == "Geojson":
 
             for output_iteration_format in dataset_formats:
-
-                if (
-                    output_iteration_format == "Shapefile" or
-                    output_iteration_format == "GDB" or
-                    output_iteration_format == "GPKG" or
-                    output_iteration_format == "GML"
-                ):
-                    the_table[input_iteration_format][
+                # pylint: disable=line-too-long
+                the_table[input_iteration_format][
                         output_iteration_format
-                    ] = True
-
-                else:
-                    the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = False
-
+                    ] = output_iteration_format in ("Shapefile", "GDB", "GPKG", "GML") # noqa: E501
+    
         elif input_iteration_format == "Geotiff":
             for output_iteration_format in dataset_formats:
                 the_table[input_iteration_format][
@@ -587,21 +542,10 @@ def validateDownloadFormat():
         elif input_iteration_format == "WFS":
 
             for output_iteration_format in dataset_formats:
-
-                if (
-                    output_iteration_format == "Shapefile" or
-                    output_iteration_format == "GDB" or
-                    output_iteration_format == "GPKG" or
-                    output_iteration_format == "Geojson" or
-                    output_iteration_format == "GML"
-                ):
-                    the_table[input_iteration_format][
+                # pylint: disable=line-too-long
+                the_table[input_iteration_format][
                         output_iteration_format
-                    ] = True
-                else:
-                    the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = False
+                    ] = output_iteration_format in ("Shapefile", "GDB", "GPKG", "Geojson", "GML") # noqa: E501
     # pylint: disable=line-too-long
     log.info(
         "------------------------------------------VALIDATION TABLE------------------------------------------"  # noqa
@@ -696,5 +640,4 @@ def email_validation(mail):
             mail[i] >= "A" and mail[i] <= "Z"
         ):
             a = a + 1
-    return (a > 0 and at > 0 and (dot - at) > 0 and (dot + 1) < y)
-        
+    return a > 0 and at > 0 and (dot - at) > 0 and (dot + 1) < y
