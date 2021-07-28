@@ -1,6 +1,9 @@
 Changelog
 =========
 
+0.2-dev0 - (unreleased)
+---------------------------
+
 0.1 - (2021-07-28)
 ---------------------------
 * Change: Implement automatic release  [valentinab25]
