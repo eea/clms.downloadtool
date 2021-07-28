@@ -17,9 +17,6 @@ with open(join("docs", "HISTORY.txt")) as history_file:
 with open(join(*PATH)) as version_file:
     version = version_file. read().strip()
 
-
-
-
 setup(
     name=NAME,
     version=version,
