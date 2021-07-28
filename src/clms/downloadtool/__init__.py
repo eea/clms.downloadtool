@@ -3,4 +3,4 @@
 from zope.i18nmessageid import MessageFactory
 
 
-_ = MessageFactory('clms.downloadtool')
+_ = MessageFactory("clms.downloadtool")

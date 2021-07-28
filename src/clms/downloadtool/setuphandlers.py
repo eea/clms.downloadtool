@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
+""" Custom setup
+"""
 from Products.CMFPlone.interfaces import INonInstallable
 from zope.interface import implementer
 
 
 @implementer(INonInstallable)
-class HiddenProfiles(object):
+class HiddenProfiles():
+    """Hidden profiles"""
 
     def getNonInstallableProfiles(self):
         """Hide uninstall profile from site-creation and quickinstaller."""
         return [
-            'clms.downloadtool:uninstall',
+            "clms.downloadtool:uninstall",
         ]
 
 

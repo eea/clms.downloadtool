@@ -1,28 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-For HTTP GET operations we can use standard HTTP parameter passing (through the URL)
+For HTTP GET operations we can use standard HTTP parameter passing
+(through the URL)
 
 """
-from plone import api
+from logging import getLogger
+
 from plone.restapi.services import Service
 
-from zope.component import getUtility
-from clms.downloadtool.utility import IDownloadToolUtility
-
 # logger, do log.info('XXXX') to print in the console
-from logging import getLogger
 
 log = getLogger(__name__)
 
 
 class dataset_get(Service):
+    """ Get datase info
+    """
     def reply(self):
-
-        #key = self.request.get("key")
-        log.info('DATASET_GET')
+        """ JSON response """
+        # key = self.request.get("key")
+        log.info("DATASET_GET")
         log.info(self.request.get("dataset_title"))
-        utility = getUtility(IDownloadToolUtility)
-
 
         value = self.request.get("dataset_title")
 
