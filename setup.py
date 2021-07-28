@@ -8,7 +8,7 @@ history = ""
 version = ""
 
 NAME = "clms.downloadtool"
-PATH = NAME.split('.') + ['version.txt']
+PATH = ["src"] + NAME.split('.') + ['version.txt']
 
 with open("README.rst") as readme_file:
     readme = readme_file.read()
