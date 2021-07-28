@@ -48,12 +48,6 @@ class IDownloadToolUtility(Interface):
 
 
 @implementer(IDownloadToolUtility)
-class DownloadToolUtility:
-    """Download utilites"""
-
-    def datarequest_post(self, data_request):
-        """Add a new data request"""
-
 class DownloadToolUtility():
     """ Download utilites
     """

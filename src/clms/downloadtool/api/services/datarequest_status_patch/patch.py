@@ -518,6 +518,7 @@ class datarequest_status_patch(Service):
 
         return response_json
 
+
 def validateDate1(temporal_filter):
     """ Validate Dates year-month-day """
     start_date = temporal_filter.get("StartDate")
@@ -534,6 +535,7 @@ def validateDate1(temporal_filter):
     except ValueError:
         log.info("Incorrect data format, should be YYYY-MM-DD")
     return False
+
 
 def validateDate2(temporal_filter):
     """ Validate Dates day-month-year """

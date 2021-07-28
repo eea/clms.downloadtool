@@ -7,25 +7,15 @@ readme = ""
 history = ""
 version = ""
 
-<<<<<<< HEAD
-readme = ""
-history = ""
-version = ""
-
 NAME = "clms.downloadtool"
 PATH = ["src"] + NAME.split('.') + ['version.txt']
 
-=======
-NAME = "clms.downloadtool"
-PATH = ["src"] + NAME.split('.') + ['version.txt']
-
->>>>>>> 6dfb40b87930ebc37c539b0f8ba616cb1fb49b30
 with open("README.rst") as readme_file:
     readme = readme_file.read()
 with open(join("docs", "HISTORY.txt")) as history_file:
     history = history_file.read()
 with open(join(*PATH)) as version_file:
-    version = version_file. read().strip()
+    version = version_file.read().strip()
 
 setup(
     name=NAME,
