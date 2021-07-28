@@ -3,15 +3,10 @@
 from os.path import join
 from setuptools import find_packages
 from setuptools import setup
-<<<<<<< HEAD
+
 readme = ""
 history = ""
 version = ""
-=======
-readme_data = ""
-contributors_data = ""
-changes_data = ""
->>>>>>> 16b936c (Update package info)
 
 NAME = "clms.downloadtool"
 PATH = ["src"] + NAME.split('.') + ['version.txt']
@@ -25,28 +20,13 @@ with open(join(*PATH)) as version_file:
 
 setup(
     name=NAME,
-<<<<<<< HEAD
     version=version,
-=======
-    version=VERSION,
->>>>>>> 880cbd4 (Remove spaces)
     description="An add-on for Plone",
     long_description_content_type="text/x-rst",
-<<<<<<< HEAD
-<<<<<<< HEAD
     long_description=(
           readme + "\n" +
           history
       ),
-=======
-    long_description=long_description,
->>>>>>> 012f303 (Updated setup.py, added long_description_content_type - needs review)
-=======
-    long_description=(
-          open("README.rst").read() + "\n" +
-          open(join("docs", "HISTORY.txt")).read()
-      ),
->>>>>>> 16b936c (Update package info)
     # Get more from https://pypi.org/classifiers/
     classifiers=[
         "Environment :: Web Environment",
