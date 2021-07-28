@@ -4,17 +4,16 @@ For HTTP GET operations we can use standard HTTP parameter passing
 (through the URL)
 
 """
-from plone import api
+import re
+from logging import getLogger
+import datetime
+
 from plone.restapi.services import Service
 from plone.restapi.deserializer import json_body
 
 
 from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
-
-import datetime
-
-from logging import getLogger
 
 log = getLogger(__name__)
 
@@ -364,11 +363,10 @@ table = {
 
 
 class datarequest_status_patch(Service):
-
-    # Nuts & BBox not at the same time
-
+    """ Nuts & BBox not at the same time
+    """
     def reply(self):
-
+        """ JSON response """
         body = json_body(self.request)
 
         task_id = str(body.get("TaskID"))
@@ -449,6 +447,7 @@ class datarequest_status_patch(Service):
                 table[dataset_format][output_format]
             ):
                 self.request.response.setStatus(400)
+                # pylint: disable=line-too-long
                 return "Error, specified data formats are not supported in this way"  # noqa
             response_json.update(
                 {
@@ -467,6 +466,7 @@ class datarequest_status_patch(Service):
 
             if not checkDateDifference(temporal_filter):
                 self.request.response.setStatus(400)
+                # pylint: disable=line-too-long
                 return "Error, difference between StartDate and EndDate is not coherent"  # noqa
 
             if len(temporal_filter.keys()) > 2:
@@ -520,7 +520,7 @@ class datarequest_status_patch(Service):
 
 
 def validateDate1(temporal_filter):
-
+    """ Validate Dates year-month-day """
     start_date = temporal_filter.get("StartDate")
     end_date = temporal_filter.get("EndDate")
 
@@ -532,15 +532,13 @@ def validateDate1(temporal_filter):
             date_obj2 = datetime.datetime.strptime(end_date, date_format)
             log.info(date_obj2)
             return {"StartDate": date_obj1, "EndDate": date_obj2}
-        else:
-            return False
     except ValueError:
         log.info("Incorrect data format, should be YYYY-MM-DD")
-        return False
+    return False
 
 
 def validateDate2(temporal_filter):
-
+    """ Validate Dates day-month-year """
     start_date = temporal_filter.get("StartDate")
     end_date = temporal_filter.get("EndDate")
 
@@ -554,22 +552,22 @@ def validateDate2(temporal_filter):
             return {"StartDate": date_obj1, "EndDate": date_obj2}
     except ValueError:
         log.info("Incorrect data format, should be DD-MM-YYYY")
-        return False
+    return False
 
 
 def validateSpatialExtent(bounding_box):
-
+    """ Validate Bounding Box """
     if not len(bounding_box) == 4:
         return False
 
     for x in bounding_box:
         if not isinstance(x, int) and not isinstance(x, float):
             return False
-
     return True
 
 
 def checkDateDifference(temporal_filter):
+    """ Check date order"""
     log.info(temporal_filter)
     start_date = temporal_filter["StartDate"]
     end_date = temporal_filter.get("EndDate")
@@ -578,20 +576,16 @@ def checkDateDifference(temporal_filter):
 
 
 def validateNuts(nuts_id):
-    import re
-
+    """ validate nuts """
     match = re.match(r"([a-z]+)([0-9]+)", nuts_id, re.I)
     if match:
         items = match.groups()
-        if items[0] in countries.keys():
-            return True
-        else:
-            return False
-    else:
-        return False
+        return items[0] in countries.keys()
+    return False
 
 
 def email_validation(mail):
+    """ Validate email address """
     a = 0
     y = len(mail)
     dot = mail.find(".")
@@ -603,7 +597,4 @@ def email_validation(mail):
             mail[i] >= "A" and mail[i] <= "Z"
         ):
             a = a + 1
-    if a > 0 and at > 0 and (dot - at) > 0 and (dot + 1) < y:
-        return True
-    else:
-        return False
+    return a > 0 and at > 0 and (dot - at) > 0 and (dot + 1) < y

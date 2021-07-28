@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
-from clms.downloadtool.testing import (
-    CLMS_DOWNLOADTOOL_ACCEPTANCE_TESTING,
-)  # noqa: E501
+""" Robot test suite
+"""
+import os
+import unittest
+import robotsuite
+
 from plone.app.testing import ROBOT_TEST_LEVEL
 from plone.testing import layered
 
-import os
-import robotsuite
-import unittest
+# pylint: disable=line-too-long
+from clms.downloadtool.testing import CLMS_DOWNLOADTOOL_ACCEPTANCE_TESTING  # noqa: E501
 
 
 def test_suite():
+    """Main test suite"""
     suite = unittest.TestSuite()
     current_dir = os.path.abspath(os.path.dirname(__file__))
     robot_dir = os.path.join(current_dir, "robot")

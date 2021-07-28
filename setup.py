@@ -3,13 +3,21 @@
 
 from setuptools import find_packages
 from setuptools import setup
-
+readme_data = ""
+contributors_data = ""
+changes_data = ""
+with open("README.rst") as readme_file:
+    readme_data = readme_file.read()
+with open("CONTRIBUTORS.rst") as contributors_file:
+    contributors_data = contributors_file.read()
+with open("CHANGES.rst") as changes_file:
+    changes_data = changes_file.read()
 
 long_description = "\n\n".join(
     [
-        open("README.rst").read(),
-        open("CONTRIBUTORS.rst").read(),
-        open("CHANGES.rst").read(),
+        readme_data,
+        contributors_data,
+        changes_data,
     ]
 )
 
