@@ -26,6 +26,7 @@ setup(
     name="clms.downloadtool",
     version="1.0.1",
     description="An add-on for Plone",
+    long_description_content_type="text/x-rst",
     long_description=long_description,
     # Get more from https://pypi.org/classifiers/
     classifiers=[
