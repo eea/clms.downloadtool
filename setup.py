@@ -7,7 +7,6 @@ readme = ""
 history = ""
 version = ""
 
-<<<<<<< HEAD
 NAME = "clms.downloadtool"
 PATH = ["src"] + NAME.split('.') + ['version.txt']
 
@@ -21,27 +20,16 @@ with open(join(*PATH)) as version_file:
 setup(
     name=NAME,
     version=version,
-=======
-long_description = "\n\n".join(
-    [
-        readme_data,
-        contributors_data,
-        changes_data,
-    ]
-)
-NAME = "clms.downloadtool"
-PATH = NAME.split('.') + ['version.txt']
-VERSION = open(join(*PATH)).read().strip()
-setup(
-    name= NAME,
-    version= VERSION,
->>>>>>> b827385 (Package info)
     description="An add-on for Plone",
     long_description_content_type="text/x-rst",
+<<<<<<< HEAD
     long_description=(
           readme + "\n" +
           history
       ),
+=======
+    long_description=long_description,
+>>>>>>> 012f303 (Updated setup.py, added long_description_content_type - needs review)
     # Get more from https://pypi.org/classifiers/
     classifiers=[
         "Environment :: Web Environment",
