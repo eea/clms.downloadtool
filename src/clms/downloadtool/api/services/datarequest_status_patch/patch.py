@@ -363,17 +363,10 @@ table = {
 
 
 class datarequest_status_patch(Service):
-<<<<<<< HEAD
-    """Nuts & BBox not at the same time"""
-
-    def reply(self):
-        """JSON response"""
-=======
     """ Nuts & BBox not at the same time
     """
     def reply(self):
         """ JSON response """
->>>>>>> 11f1214 (Linting changes)
         body = json_body(self.request)
 
         task_id = str(body.get("TaskID"))
@@ -525,13 +518,8 @@ class datarequest_status_patch(Service):
 
         return response_json
 
-
 def validateDate1(temporal_filter):
-<<<<<<< HEAD
-    """Validate Dates year-month-day"""
-=======
     """ Validate Dates year-month-day """
->>>>>>> 11f1214 (Linting changes)
     start_date = temporal_filter.get("StartDate")
     end_date = temporal_filter.get("EndDate")
 
@@ -547,13 +535,8 @@ def validateDate1(temporal_filter):
         log.info("Incorrect data format, should be YYYY-MM-DD")
     return False
 
-
 def validateDate2(temporal_filter):
-<<<<<<< HEAD
-    """Validate Dates day-month-year"""
-=======
     """ Validate Dates day-month-year """
->>>>>>> 11f1214 (Linting changes)
     start_date = temporal_filter.get("StartDate")
     end_date = temporal_filter.get("EndDate")
 
@@ -571,11 +554,8 @@ def validateDate2(temporal_filter):
 
 
 def validateSpatialExtent(bounding_box):
-<<<<<<< HEAD
-    """Validate Bounding Box"""
-=======
     """ Validate Bounding Box """
->>>>>>> 11f1214 (Linting changes)
+
     if not len(bounding_box) == 4:
         return False
 
@@ -586,11 +566,7 @@ def validateSpatialExtent(bounding_box):
 
 
 def checkDateDifference(temporal_filter):
-<<<<<<< HEAD
-    """Check date order"""
-=======
     """ Check date order"""
->>>>>>> 11f1214 (Linting changes)
     log.info(temporal_filter)
     start_date = temporal_filter["StartDate"]
     end_date = temporal_filter.get("EndDate")
@@ -599,11 +575,7 @@ def checkDateDifference(temporal_filter):
 
 
 def validateNuts(nuts_id):
-<<<<<<< HEAD
-    """validate nuts"""
-=======
     """ validate nuts """
->>>>>>> 11f1214 (Linting changes)
     match = re.match(r"([a-z]+)([0-9]+)", nuts_id, re.I)
     if match:
         items = match.groups()
@@ -612,11 +584,7 @@ def validateNuts(nuts_id):
 
 
 def email_validation(mail):
-<<<<<<< HEAD
-    """Validate email address"""
-=======
     """ Validate email address """
->>>>>>> 11f1214 (Linting changes)
     a = 0
     y = len(mail)
     dot = mail.find(".")

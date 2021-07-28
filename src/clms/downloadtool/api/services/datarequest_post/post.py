@@ -372,26 +372,7 @@ class DataRequestPost(Service):
         outputGCS = body.get("OutputGCS")
         nuts_id = body.get("NUTSID")
         mail = body.get("Mail")
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-        """
-        try:
-            table
-        except NameError:
-            log.info("Table not generated")
-            generated = False
-        else:
-            log.info("Table already generated")
-            generated = True
 
-        if not generated:
-            table = validateDownloadFormat()
-        """
->>>>>>> fbdc0ce (Manual fix pep8)
-=======
-
->>>>>>> 11f1214 (Linting changes)
         response_json = {}
 
         utility = getUtility(IDownloadToolUtility)
@@ -443,28 +424,11 @@ class DataRequestPost(Service):
                 self.request.response.setStatus(400)
                 return "Error, specified formats are not in the list"
             if (
-<<<<<<< HEAD
-<<<<<<< HEAD
                 "GML" in dataset_format or not
                 table[dataset_format][output_format]
-=======
-                "GML" in dataset_format
-                or not table[dataset_format][output_format]
->>>>>>> 20d1121 (Add line limit for black)
-=======
-                "GML" in dataset_format or not
-                table[dataset_format][output_format]
->>>>>>> 556acdc (Fix W503)
             ):
                 self.request.response.setStatus(400)
-<<<<<<< HEAD
-<<<<<<< HEAD
                 # pylint: disable=line-too-long
-=======
->>>>>>> fbdc0ce (Manual fix pep8)
-=======
-                # pylint: disable=line-too-long
->>>>>>> 11f1214 (Linting changes)
                 return "Error, specified data formats are not supported in this way"  # noqa
             response_json.update(
                 {
@@ -483,14 +447,7 @@ class DataRequestPost(Service):
 
             if not checkDateDifference(temporal_filter):
                 self.request.response.setStatus(400)
-<<<<<<< HEAD
-<<<<<<< HEAD
                 # pylint: disable=line-too-long
-=======
->>>>>>> fbdc0ce (Manual fix pep8)
-=======
-                # pylint: disable=line-too-long
->>>>>>> 11f1214 (Linting changes)
                 return "Error, difference between StartDate and EndDate is not coherent"  # noqa
 
             if len(temporal_filter.keys()) > 2:
@@ -536,41 +493,14 @@ def validateDownloadFormat():
         if input_iteration_format == "Shapefile":
 
             for output_iteration_format in dataset_formats:
-<<<<<<< HEAD
-<<<<<<< HEAD
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
                         output_iteration_format
                     ] = output_iteration_format in ("GDB", "GPKG", "Geojson", "GML")  # noqa: E501
-=======
-
-                if (
-                    output_iteration_format == "GDB" or
-                    output_iteration_format == "GPKG" or
-                    output_iteration_format == "Geojson" or
-                    output_iteration_format == "GML"
-                ):
-                    the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = True
-
-                else:
-                    the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = False
->>>>>>> 20d1121 (Add line limit for black)
-=======
-                # pylint: disable=line-too-long
-                the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = output_iteration_format in ("GDB", "GPKG", "Geojson", "GML")  # noqa: E501
->>>>>>> 11f1214 (Linting changes)
 
         elif input_iteration_format == "GDB":
 
             for output_iteration_format in dataset_formats:
-<<<<<<< HEAD
-<<<<<<< HEAD
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
                         output_iteration_format
@@ -582,71 +512,14 @@ def validateDownloadFormat():
                 the_table[input_iteration_format][
                         output_iteration_format
                     ] = output_iteration_format in ("Shapefile", "GDB", "Geojson", "GML")  # noqa: E501
-=======
-
-                if (
-                    output_iteration_format == "Shapefile" or
-                    output_iteration_format == "GPKG" or
-                    output_iteration_format == "Geojson" or
-                    output_iteration_format == "GML"
-                ):
-                    the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = True
-
-                else:
-                    the_table[input_iteration_format][
-=======
-                # pylint: disable=line-too-long
-                the_table[input_iteration_format][
->>>>>>> 11f1214 (Linting changes)
-                        output_iteration_format
-                    ] = output_iteration_format in ("Shapefile", "GPKG", "Geojson", "GML")  # noqa: E501
-        elif input_iteration_format == "GPKG":
-
-            for output_iteration_format in dataset_formats:
-                # pylint: disable=line-too-long
-                the_table[input_iteration_format][
-                        output_iteration_format
-<<<<<<< HEAD
-                    ] = False
->>>>>>> 20d1121 (Add line limit for black)
-=======
-                    ] = output_iteration_format in ("Shapefile", "GDB", "Geojson", "GML")  # noqa: E501
->>>>>>> 11f1214 (Linting changes)
 
         elif input_iteration_format == "Geojson":
 
             for output_iteration_format in dataset_formats:
-<<<<<<< HEAD
-<<<<<<< HEAD
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
                         output_iteration_format
                     ] = output_iteration_format in ("Shapefile", "GDB", "GPKG", "GML")  # noqa: E501
-=======
-
-                if (
-                    output_iteration_format == "Shapefile" or
-                    output_iteration_format == "GDB" or
-                    output_iteration_format == "GPKG" or
-                    output_iteration_format == "GML"
-                ):
-                    the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = True
-
-                else:
-                    the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = False
->>>>>>> 20d1121 (Add line limit for black)
-=======
-                # pylint: disable=line-too-long
-                the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = output_iteration_format in ("Shapefile", "GDB", "GPKG", "GML")  # noqa: E501
->>>>>>> 11f1214 (Linting changes)
 
         elif input_iteration_format == "Geotiff":
             for output_iteration_format in dataset_formats:
@@ -656,63 +529,18 @@ def validateDownloadFormat():
 
         elif input_iteration_format == "Netcdf":
             for output_iteration_format in dataset_formats:
-<<<<<<< HEAD
-<<<<<<< HEAD
                 the_table[input_iteration_format][
                         output_iteration_format
                     ] = output_iteration_format == "Geotiff"
-=======
-
-                if output_iteration_format == "Geotiff":
-                    the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = True
-                else:
-                    the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = False
->>>>>>> 20d1121 (Add line limit for black)
-=======
-                the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = output_iteration_format == "Geotiff"
->>>>>>> 11f1214 (Linting changes)
 
         elif input_iteration_format == "WFS":
 
             for output_iteration_format in dataset_formats:
-<<<<<<< HEAD
-<<<<<<< HEAD
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
                         output_iteration_format
                     ] = output_iteration_format in ("Shapefile", "GDB", "GPKG", "Geojson", "GML")  # noqa: E501
     # pylint: disable=line-too-long
-=======
-
-                if (
-                    output_iteration_format == "Shapefile" or
-                    output_iteration_format == "GDB" or
-                    output_iteration_format == "GPKG" or
-                    output_iteration_format == "Geojson" or
-                    output_iteration_format == "GML"
-                ):
-                    the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = True
-                else:
-                    the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = False
-
->>>>>>> 20d1121 (Add line limit for black)
-=======
-                # pylint: disable=line-too-long
-                the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = output_iteration_format in ("Shapefile", "GDB", "GPKG", "Geojson", "GML")  # noqa: E501
-    # pylint: disable=line-too-long
->>>>>>> 11f1214 (Linting changes)
     log.info(
         "------------------------------------------VALIDATION TABLE------------------------------------------"  # noqa
     )
@@ -785,10 +613,6 @@ def validateNuts(nuts_id):
         items = match.groups()
         return items[0] in countries.keys()
     return False
-<<<<<<< HEAD
-
-=======
->>>>>>> 11f1214 (Linting changes)
 
 
 def email_validation(mail):

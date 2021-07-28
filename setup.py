@@ -3,7 +3,11 @@
 from os.path import join
 from setuptools import find_packages
 from setuptools import setup
+readme = ""
+history = ""
+version = ""
 
+<<<<<<< HEAD
 readme = ""
 history = ""
 version = ""
@@ -11,6 +15,11 @@ version = ""
 NAME = "clms.downloadtool"
 PATH = ["src"] + NAME.split('.') + ['version.txt']
 
+=======
+NAME = "clms.downloadtool"
+PATH = ["src"] + NAME.split('.') + ['version.txt']
+
+>>>>>>> 6dfb40b87930ebc37c539b0f8ba616cb1fb49b30
 with open("README.rst") as readme_file:
     readme = readme_file.read()
 with open(join("docs", "HISTORY.txt")) as history_file:
