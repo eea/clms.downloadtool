@@ -7,6 +7,7 @@ readme = ""
 history = ""
 version = ""
 
+<<<<<<< HEAD
 NAME = "clms.downloadtool"
 PATH = ["src"] + NAME.split('.') + ['version.txt']
 
@@ -20,6 +21,21 @@ with open(join(*PATH)) as version_file:
 setup(
     name=NAME,
     version=version,
+=======
+long_description = "\n\n".join(
+    [
+        readme_data,
+        contributors_data,
+        changes_data,
+    ]
+)
+NAME = "clms.downloadtool"
+PATH = NAME.split('.') + ['version.txt']
+VERSION = open(join(*PATH)).read().strip()
+setup(
+    name= NAME,
+    version= VERSION,
+>>>>>>> b827385 (Package info)
     description="An add-on for Plone",
     long_description_content_type="text/x-rst",
     long_description=(
