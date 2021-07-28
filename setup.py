@@ -11,8 +11,8 @@ NAME = "clms.downloadtool"
 PATH = NAME.split('.') + ['version.txt']
 VERSION = open(join(*PATH)).read().strip()
 setup(
-    name= NAME,
-    version= VERSION,
+    name=NAME,
+    version=VERSION,
     description="An add-on for Plone",
     long_description_content_type="text/x-rst",
     long_description=(
