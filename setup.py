@@ -1,21 +1,28 @@
 # -*- coding: utf-8 -*-
 """Installer for the clms.downloadtool package."""
-
+from os.path import join
 from setuptools import find_packages
 from setuptools import setup
 readme = ""
 history = ""
+version = ""
 
 NAME = "clms.downloadtool"
 PATH = NAME.split('.') + ['version.txt']
-VERSION = open(join(*PATH)).read().strip()
+
 with open("README.rst") as readme_file:
     readme = readme_file.read()
 with open(join("docs", "HISTORY.txt")) as history_file:
     history = history_file.read()
+with open(join(*PATH)) as version_file:
+    version = version_file. read().strip()
+
+
+
+
 setup(
     name=NAME,
-    version=VERSION,
+    version=version,
     description="An add-on for Plone",
     long_description_content_type="text/x-rst",
     long_description=(
