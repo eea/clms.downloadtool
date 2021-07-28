@@ -29,8 +29,6 @@ from zope.interface import implementer
 from zope.interface import Interface
 from zope.site.hooks import getSite
 
-import random
-from logging import getLogger
 
 log = getLogger(__name__)
 
@@ -46,6 +44,7 @@ status_list = [
 
 
 class IDownloadToolUtility(Interface):
+<<<<<<< HEAD
     """Download interface"""
 
 
@@ -55,6 +54,18 @@ class DownloadToolUtility:
 
     def datarequest_post(self, data_request):
         """Add a new data request"""
+=======
+    """Download interface
+    """
+
+
+@implementer(IDownloadToolUtility)
+class DownloadToolUtility():
+    """ Download utilites
+    """
+    def datarequest_post(self, data_request):
+        """ Add a new data request"""
+>>>>>>> 11f1214 (Linting changes)
         site = getSite()
         annotations = IAnnotations(site)
         task_id = random.randint(0, 99999999999)
@@ -78,7 +89,11 @@ class DownloadToolUtility:
         return {task_id: data_request}
 
     def datarequest_delete(self, task_id, user_id):
+<<<<<<< HEAD
         """Delete a data task"""
+=======
+        """ Delete a data task """
+>>>>>>> 11f1214 (Linting changes)
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -99,7 +114,11 @@ class DownloadToolUtility:
         return dataObject
 
     def datarequest_search(self, user_id, status):
+<<<<<<< HEAD
         """search user task"""
+=======
+        """ search user task """
+>>>>>>> 11f1214 (Linting changes)
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -128,14 +147,22 @@ class DownloadToolUtility:
         return dataObject
 
     def dataset_get(self, key):
+<<<<<<< HEAD
         """Get dataset"""
+=======
+        """ Get dataset """
+>>>>>>> 11f1214 (Linting changes)
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         return registry.get(key)
 
     def datarequest_status_get(self, task_id):
+<<<<<<< HEAD
         """Get request status"""
+=======
+        """ Get request status """
+>>>>>>> 11f1214 (Linting changes)
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -144,7 +171,11 @@ class DownloadToolUtility:
         return registry.get(task_id)
 
     def datarequest_status_patch(self, dataObject, task_id):
+<<<<<<< HEAD
         """Update request status"""
+=======
+        """ Update request status """
+>>>>>>> 11f1214 (Linting changes)
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
