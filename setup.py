@@ -24,7 +24,7 @@ long_description = "\n\n".join(
 
 setup(
     name="clms.downloadtool",
-    version="1.0a1",
+    version="1.0.1",
     description="An add-on for Plone",
     long_description=long_description,
     # Get more from https://pypi.org/classifiers/
