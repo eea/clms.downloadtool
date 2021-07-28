@@ -25,7 +25,11 @@ with open(join(*PATH)) as version_file:
 
 setup(
     name=NAME,
+<<<<<<< HEAD
     version=version,
+=======
+    version=VERSION,
+>>>>>>> 880cbd4 (Remove spaces)
     description="An add-on for Plone",
     long_description_content_type="text/x-rst",
 <<<<<<< HEAD
