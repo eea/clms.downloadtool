@@ -20,11 +20,12 @@ long_description = "\n\n".join(
         changes_data,
     ]
 )
-
-
+NAME = "clms.downloadtool"
+PATH = NAME.split('.') + ['version.txt']
+VERSION = open(join(*PATH)).read().strip()
 setup(
-    name="clms.downloadtool",
-    version="1.0.1",
+    name= NAME,
+    version= VERSION,
     description="An add-on for Plone",
     long_description=long_description,
     # Get more from https://pypi.org/classifiers/
