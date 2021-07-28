@@ -3,21 +3,24 @@
 
 from setuptools import find_packages
 from setuptools import setup
-readme_data = ""
-contributors_data = ""
-changes_data = ""
+readme = ""
+history = ""
 
 NAME = "clms.downloadtool"
 PATH = NAME.split('.') + ['version.txt']
 VERSION = open(join(*PATH)).read().strip()
+with open("README.rst") as readme_file:
+    readme = readme_file.read()
+with open(join("docs", "HISTORY.txt")) as history_file:
+    history = history_file.read()
 setup(
     name=NAME,
     version=VERSION,
     description="An add-on for Plone",
     long_description_content_type="text/x-rst",
     long_description=(
-          open("README.rst").read() + "\n" +
-          open(join("docs", "HISTORY.txt")).read()
+          readme + "\n" +
+          history
       ),
     # Get more from https://pypi.org/classifiers/
     classifiers=[
