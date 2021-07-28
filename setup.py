@@ -6,20 +6,7 @@ from setuptools import setup
 readme_data = ""
 contributors_data = ""
 changes_data = ""
-with open("README.rst") as readme_file:
-    readme_data = readme_file.read()
-with open("CONTRIBUTORS.rst") as contributors_file:
-    contributors_data = contributors_file.read()
-with open("CHANGES.rst") as changes_file:
-    changes_data = changes_file.read()
 
-long_description = "\n\n".join(
-    [
-        readme_data,
-        contributors_data,
-        changes_data,
-    ]
-)
 NAME = "clms.downloadtool"
 PATH = NAME.split('.') + ['version.txt']
 VERSION = open(join(*PATH)).read().strip()
@@ -28,7 +15,10 @@ setup(
     version= VERSION,
     description="An add-on for Plone",
     long_description_content_type="text/x-rst",
-    long_description=long_description,
+    long_description=(
+          open("README.rst").read() + "\n" +
+          open(join("docs", "HISTORY.txt")).read()
+      ),
     # Get more from https://pypi.org/classifiers/
     classifiers=[
         "Environment :: Web Environment",
