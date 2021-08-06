@@ -471,8 +471,8 @@ class datarequest_status_patch(Service):
                 # pylint: disable=line-too-long
                 return {
                     "status": "error",
-                    "msg": "Error, specified data formats are not supported in this way",
-                }  # noqa
+                    "msg": "Error, specified data formats are not supported in this way",  # noqa
+                }
             response_json.update(
                 {
                     "DatasetFormat": dataset_format,
@@ -496,8 +496,8 @@ class datarequest_status_patch(Service):
                 # pylint: disable=line-too-long
                 return {
                     "status": "error",
-                    "msg": "Error, difference between StartDate and EndDate is not coherent",
-                }  # noqa
+                    "msg": "Error, difference between StartDate and EndDate is not coherent",  # noqa
+                }
 
             if len(temporal_filter.keys()) > 2:
                 self.request.response.setStatus(400)
