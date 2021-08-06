@@ -356,8 +356,8 @@ table = {
 
 
 class DataRequestPost(Service):
-    """ Set Data
-    """
+    """Set Data"""
+
     def reply(self):
         """ JSON response """
         body = json_body(self.request)
@@ -379,57 +379,80 @@ class DataRequestPost(Service):
 
         if not user_id:
             self.request.response.setStatus(400)
-            return "Error, UserID is not defined"
+            return {"status": "error", "msg": "Error, UserID is not defined"}
 
         if not dataset_id:
             self.request.response.setStatus(400)
-            return "Error, DatasetID is not defined"
+            return {
+                "status": "error",
+                "msg": "Error, DatasetID is not defined",
+            }
 
         response_json = {"UserID": user_id, "DatasetID": dataset_id}
 
         if mail:
             if not email_validation(mail):
                 self.request.response.setStatus(400)
-                return "Error, inserted mail is not valid"
+                return {
+                    "status": "error",
+                    "msg": "Error, inserted mail is not valid",
+                }
             response_json.update({"Mail": mail})
 
         if nuts_id:
             if not validateNuts(nuts_id):
                 self.request.response.setStatus(400)
-                return "NUTSID country error"
+                return {"status": "error", "msg": "NUTSID country error"}
             response_json.update({"NUTSID": nuts_id})
 
         if bounding_box:
             if nuts_id:
                 self.request.response.setStatus(400)
-                return "Error, NUTSID is also defined"
+                return {
+                    "status": "error",
+                    "msg": "Error, NUTSID is also defined",
+                }
 
             if not validateSpatialExtent(bounding_box):
                 self.request.response.setStatus(400)
-                return "Error, BoundingBox is not valid"
+                return {
+                    "status": "error",
+                    "msg": "Error, BoundingBox is not valid",
+                }
 
             response_json.update({"BoundingBox": bounding_box})
 
         if dataset_format or output_format:
             if (
-                not dataset_format and output_format or
-                dataset_format and not output_format
+                not dataset_format
+                and output_format
+                or dataset_format
+                and not output_format
             ):
                 self.request.response.setStatus(400)
-                return "Error, you need to specify both formats"
+                return {
+                    "status": "error",
+                    "msg": "Error, you need to specify both formats",
+                }
             if (
-                dataset_format not in dataset_formats or
-                output_format not in dataset_formats
+                dataset_format not in dataset_formats
+                or output_format not in dataset_formats
             ):
                 self.request.response.setStatus(400)
-                return "Error, specified formats are not in the list"
+                return {
+                    "status": "error",
+                    "msg": "Error, specified formats are not in the list",
+                }
             if (
-                "GML" in dataset_format or not
-                table[dataset_format][output_format]
+                "GML" in dataset_format
+                or not table[dataset_format][output_format]
             ):
                 self.request.response.setStatus(400)
                 # pylint: disable=line-too-long
-                return "Error, specified data formats are not supported in this way"  # noqa
+                return {
+                    "status": "error",
+                    "msg": "Error, specified data formats are not supported in this way",
+                }  # noqa
             response_json.update(
                 {
                     "DatasetFormat": dataset_format,
@@ -443,32 +466,45 @@ class DataRequestPost(Service):
                 temporal_filter
             ):
                 self.request.response.setStatus(400)
-                return "Error, date format is not correct"
+                return {
+                    "status": "error",
+                    "msg": "Error, date format is not correct",
+                }
 
             if not checkDateDifference(temporal_filter):
                 self.request.response.setStatus(400)
                 # pylint: disable=line-too-long
-                return "Error, difference between StartDate and EndDate is not coherent"  # noqa
+                return {
+                    "status": "error",
+                    "msg": "Error, difference between StartDate and EndDate is not coherent",
+                }  # noqa
 
             if len(temporal_filter.keys()) > 2:
                 self.request.response.setStatus(400)
-                return "Error, TemporalFilter has too many fields"
+                return {
+                    "status": "error",
+                    "msg": "Error, TemporalFilter has too many fields",
+                }
 
             if (
-                "StartDate" not in temporal_filter.keys() or
-                "EndDate" not in temporal_filter.keys()
+                "StartDate" not in temporal_filter.keys()
+                or "EndDate" not in temporal_filter.keys()
             ):
                 self.request.response.setStatus(400)
-                return (
-                    "Error, TemporalFilter does not have StartDate or EndDate"
-                )
+                return {
+                    "status": "error",
+                    "msg": "Error, TemporalFilter does not have StartDate or EndDate",
+                }
 
             response_json.update({"TemporalFilter": temporal_filter})
 
         if outputGCS:
             if outputGCS not in GCS:
                 self.request.response.setStatus(400)
-                return "Error, defined GCS not in the list"
+                return {
+                    "status": "error",
+                    "msg": "Error, defined GCS not in the list",
+                }
             response_json.update({"OutputGCS": outputGCS})
 
         if dataset_path:
@@ -495,31 +531,51 @@ def validateDownloadFormat():
             for output_iteration_format in dataset_formats:
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = output_iteration_format in ("GDB", "GPKG", "Geojson", "GML")  # noqa: E501
+                    output_iteration_format
+                ] = output_iteration_format in (
+                    "GDB",
+                    "GPKG",
+                    "Geojson",
+                    "GML",
+                )  # noqa: E501
 
         elif input_iteration_format == "GDB":
 
             for output_iteration_format in dataset_formats:
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = output_iteration_format in ("Shapefile", "GPKG", "Geojson", "GML")  # noqa: E501
+                    output_iteration_format
+                ] = output_iteration_format in (
+                    "Shapefile",
+                    "GPKG",
+                    "Geojson",
+                    "GML",
+                )  # noqa: E501
         elif input_iteration_format == "GPKG":
 
             for output_iteration_format in dataset_formats:
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = output_iteration_format in ("Shapefile", "GDB", "Geojson", "GML")  # noqa: E501
+                    output_iteration_format
+                ] = output_iteration_format in (
+                    "Shapefile",
+                    "GDB",
+                    "Geojson",
+                    "GML",
+                )  # noqa: E501
 
         elif input_iteration_format == "Geojson":
 
             for output_iteration_format in dataset_formats:
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = output_iteration_format in ("Shapefile", "GDB", "GPKG", "GML")  # noqa: E501
+                    output_iteration_format
+                ] = output_iteration_format in (
+                    "Shapefile",
+                    "GDB",
+                    "GPKG",
+                    "GML",
+                )  # noqa: E501
 
         elif input_iteration_format == "Geotiff":
             for output_iteration_format in dataset_formats:
@@ -529,17 +585,23 @@ def validateDownloadFormat():
 
         elif input_iteration_format == "Netcdf":
             for output_iteration_format in dataset_formats:
-                the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = output_iteration_format == "Geotiff"
+                the_table[input_iteration_format][output_iteration_format] = (
+                    output_iteration_format == "Geotiff"
+                )
 
         elif input_iteration_format == "WFS":
 
             for output_iteration_format in dataset_formats:
                 # pylint: disable=line-too-long
                 the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = output_iteration_format in ("Shapefile", "GDB", "GPKG", "Geojson", "GML")  # noqa: E501
+                    output_iteration_format
+                ] = output_iteration_format in (
+                    "Shapefile",
+                    "GDB",
+                    "GPKG",
+                    "Geojson",
+                    "GML",
+                )  # noqa: E501
     # pylint: disable=line-too-long
     log.info(
         "------------------------------------------VALIDATION TABLE------------------------------------------"  # noqa

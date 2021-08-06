@@ -18,8 +18,8 @@ log = getLogger(__name__)
 
 
 class datarequest_delete(Service):
-    """Delete data
-    """
+    """Delete data"""
+
     def reply(self):
         """ JSON response """
         body = json_body(self.request)
@@ -31,10 +31,10 @@ class datarequest_delete(Service):
 
         if not task_id:
             self.request.response.setStatus(400)
-            return "Error, TaskID not defined"
+            return {"status": "error", "msg": "Error, TaskID not defined"}
         if not user_id:
             self.request.response.setStatus(400)
-            return "Error, UserID not defined"
+            return {"status": "error", "msg": "Error, UserID not defined"}
 
         response_json = utility.datarequest_delete(task_id, user_id)
 
