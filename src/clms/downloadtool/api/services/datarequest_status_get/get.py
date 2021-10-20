@@ -16,8 +16,8 @@ log = getLogger(__name__)
 
 
 class datarequest_status_get(Service):
-    """ Get datarequest status
-    """
+    """Get datarequest status"""
+
     def reply(self):
         """ JSON endpoint """
         task_id = self.request.get("TaskID")

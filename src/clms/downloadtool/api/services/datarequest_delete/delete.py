@@ -18,8 +18,8 @@ log = getLogger(__name__)
 
 
 class datarequest_delete(Service):
-    """Delete data
-    """
+    """Delete data"""
+
     def reply(self):
         """ JSON response """
         body = json_body(self.request)

@@ -14,8 +14,7 @@ import clms.downloadtool
 
 
 class ClmsDownloadtoolLayer(PloneSandboxLayer):
-    """ Plone sandbox
-    """
+    """Plone sandbox"""
 
     defaultBases = (PLONE_APP_CONTENTTYPES_FIXTURE,)
 

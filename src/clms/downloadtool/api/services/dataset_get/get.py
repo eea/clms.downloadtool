@@ -14,8 +14,8 @@ log = getLogger(__name__)
 
 
 class dataset_get(Service):
-    """ Get datase info
-    """
+    """Get datase info"""
+
     def reply(self):
         """ JSON response """
         # key = self.request.get("key")

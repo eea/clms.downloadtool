@@ -16,8 +16,8 @@ log = getLogger(__name__)
 
 
 class GetItem(Service):
-    """Get item information
-    """
+    """Get item information"""
+
     def reply(self):
         """ JSON endpoint """
         key = self.request.get("TaskID")

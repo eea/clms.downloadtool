@@ -19,8 +19,8 @@ log = getLogger(__name__)
 
 
 class AuthenticatedGet(Service):
-    """ Get authenticated data
-    """
+    """Get authenticated data"""
+
     def reply(self):
         """ JSON response """
         key = self.request.get("key")

@@ -48,9 +48,9 @@ class IDownloadToolUtility(Interface):
 
 
 @implementer(IDownloadToolUtility)
-class DownloadToolUtility():
-    """ Download utilites
-    """
+class DownloadToolUtility:
+    """Download utilites"""
+
     def datarequest_post(self, data_request):
         """ Add a new data request"""
         site = getSite()
@@ -157,11 +157,8 @@ class DownloadToolUtility():
         # pylint: disable=syntax-error
         tempObject = {**registry[task_id], **dataObject}
 
-        if (
-            "NUTSID" in tempObject.keys() and
-            "BoundingBox" in
-            tempObject.keys()
-        ):
+        # pylint: disable=line-too-long
+        if "NUTSID" in tempObject.keys() and "BoundingBox" in tempObject.keys():  # noqa:
             dataObject = {}
             # pylint: disable=line-too-long
             return "Error, NUTSID and BoundingBox can't be defined in the same task"  # noqa

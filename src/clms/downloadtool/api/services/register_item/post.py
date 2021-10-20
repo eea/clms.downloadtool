@@ -28,8 +28,8 @@ from clms.downloadtool.utility import IDownloadToolUtility
 
 
 class RegisterItemPost(Service):
-    """ Register an item
-    """
+    """Register an item"""
+
     def reply(self):
         """ JSON endpoint """
         body = json_body(self.request)
