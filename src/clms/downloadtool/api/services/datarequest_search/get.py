@@ -27,10 +27,10 @@ class datarequest_search(Service):
 
         self.request.response.setStatus(200)
         response_json = utility.datarequest_search(user_id, status)
-        if "Error, UserID not defined" in response_json:
+        if "Error, UserID not defined" in response_json.get("msg", ""):
             self.request.response.setStatus(400)
 
-        if "Error, status not recognized" in response_json:
+        if "Error, status not recognized" in response_json.get("msg", ""):
             self.request.response.setStatus(400)
 
         return response_json

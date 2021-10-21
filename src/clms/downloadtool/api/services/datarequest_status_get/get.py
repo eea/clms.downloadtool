@@ -26,12 +26,12 @@ class datarequest_status_get(Service):
 
         if not task_id:
             self.request.response.setStatus(400)
-            return "Error, TaskID not defined"
+            return {"status": "error", "msg": "Error, TaskID not defined"}
 
         response_json = utility.datarequest_status_get(task_id)
-        if "Error, task not found" in response_json:
+        if "Error, task not found" in response_json.get("msg", ""):
             self.request.response.setStatus(404)
-            return "Error, the task does not exist"
+            return {"status": "error", "msg": "Error, the task does not exist"}
 
         self.request.response.setStatus(200)
         return response_json

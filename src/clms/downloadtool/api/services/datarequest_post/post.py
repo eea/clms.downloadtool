@@ -49,34 +49,46 @@ class DataRequestPost(Service):
 
         if not user_id:
             self.request.response.setStatus(400)
-            return "Error, UserID is not defined"
+            return {"status": "error", "msg": "Error, UserID is not defined"}
 
         if not dataset_id:
             self.request.response.setStatus(400)
-            return "Error, DatasetID is not defined"
+            return {
+                "status": "error",
+                "msg": "Error, DatasetID is not defined"
+            }
 
         response_json = {"UserID": user_id, "DatasetID": dataset_id}
 
         if mail:
             if not email_validation(mail):
                 self.request.response.setStatus(400)
-                return "Error, inserted mail is not valid"
+                return {
+                    "status": "error",
+                    "msg": "Error, inserted mail is not valid"
+                }
             response_json.update({"Mail": mail})
 
         if nuts_id:
             if not validateNuts(nuts_id):
                 self.request.response.setStatus(400)
-                return "NUTSID country error"
+                return {"status": "error", "msg": "NUTSID country error"}
             response_json.update({"NUTSID": nuts_id})
 
         if bounding_box:
             if nuts_id:
                 self.request.response.setStatus(400)
-                return "Error, NUTSID is also defined"
+                return {
+                    "status": "error",
+                    "msg": "Error, NUTSID is also defined"
+                }
 
             if not validateSpatialExtent(bounding_box):
                 self.request.response.setStatus(400)
-                return "Error, BoundingBox is not valid"
+                return {
+                    "status": "error",
+                    "msg": "Error, BoundingBox is not valid"
+                }
 
             response_json.update({"BoundingBox": bounding_box})
 
@@ -87,20 +99,29 @@ class DataRequestPost(Service):
                 dataset_format and not output_format
             ):
                 self.request.response.setStatus(400)
-                return "Error, you need to specify both formats"
+                return {
+                    "status": "error",
+                    "msg": "Error, you need to specify both formats"
+                }
             if (
                 dataset_format not in DATASET_FORMATS or
                 output_format not in DATASET_FORMATS
             ):
                 self.request.response.setStatus(400)
-                return "Error, specified formats are not in the list"
+                return {
+                    "status": "error",
+                    "msg": "Error, specified formats are not in the list"
+                }
             if (
                 "GML" in dataset_format or not
                 FORMAT_CONVERSION_TABLE[dataset_format][output_format]
             ):
                 self.request.response.setStatus(400)
                 # pylint: disable=line-too-long
-                return "Error, specified data formats are not supported in this way"  # noqa
+                return {
+                    "status": "error",
+                    "msg": "Error, specified data formats are not supported in this way"  # noqa
+                }
 
             response_json.update(
                 {
@@ -115,32 +136,46 @@ class DataRequestPost(Service):
                 temporal_filter
             ):
                 self.request.response.setStatus(400)
-                return "Error, date format is not correct"
+                return {
+                    "status": "error",
+                    "msg": "Error, date format is not correct"
+                }
 
             if not checkDateDifference(temporal_filter):
                 self.request.response.setStatus(400)
                 # pylint: disable=line-too-long
-                return "Error, difference between StartDate and EndDate is not coherent"  # noqa
+                return {
+                    "status": "error",
+                    "msg": "Error, difference between StartDate and EndDate is not coherent"  # noqa
+                }
 
             if len(temporal_filter.keys()) > 2:
                 self.request.response.setStatus(400)
-                return "Error, TemporalFilter has too many fields"
+                return {
+                    "status": "error",
+                    "msg": "Error, TemporalFilter has too many fields"
+                }
 
             if (
                 "StartDate" not in temporal_filter.keys() or
                 "EndDate" not in temporal_filter.keys()  # noqa
             ):
                 self.request.response.setStatus(400)
-                return (
-                    "Error, TemporalFilter does not have StartDate or EndDate"
-                )
+                # pylint: disable=line-too-long
+                return {
+                    "status": "error",
+                    "msg": "Error, TemporalFilter does not have StartDate or EndDate"  # noqa
+                }
 
             response_json.update({"TemporalFilter": temporal_filter})
 
         if outputGCS:
             if outputGCS not in GCS:
                 self.request.response.setStatus(400)
-                return "Error, defined GCS not in the list"
+                return {
+                    "status": "error",
+                    "msg": "Error, defined GCS not in the list"
+                }
             response_json.update({"OutputGCS": outputGCS})
 
         if dataset_path:

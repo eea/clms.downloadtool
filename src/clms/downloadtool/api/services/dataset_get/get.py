@@ -27,7 +27,7 @@ class dataset_get(Service):
         if not value:
             self.request.response.setStatus(400)
             log.info("BAD REQUEST")
-            response_json = "BAD REQUEST"
+            response_json = {"status": "error", "msg": "BAD REQUEST"}
         else:
             self.request.response.setStatus(200)
             response_json = {"dataset_title": value}

@@ -25,24 +25,23 @@ class datarequest_delete(Service):
         body = json_body(self.request)
         user_id = str(body.get("UserID"))
         task_id = str(body.get("TaskID"))
-        response_json = None
         log.info("DATAREQUEST_DELETE")
         utility = getUtility(IDownloadToolUtility)
 
         if not task_id:
             self.request.response.setStatus(400)
-            return "Error, TaskID not defined"
+            return {"status": "error", "msg": "Error, TaskID not defined"}
         if not user_id:
             self.request.response.setStatus(400)
-            return "Error, UserID not defined"
+            return {"status": "error", "msg": "Error, UserID not defined"}
 
         response_json = utility.datarequest_delete(task_id, user_id)
 
-        if "Error, TaskID not registered" in response_json:
+        if "Error, TaskID not registered" in response_json.get("msg", ""):
             self.request.response.setStatus(403)
             return response_json
 
-        if "Error, permission denied" in response_json:
+        if "Error, permission denied" in response_json.get("msg", ""):
             self.request.response.setStatus(404)
             return response_json
 
