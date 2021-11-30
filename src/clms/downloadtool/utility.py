@@ -145,7 +145,7 @@ class DownloadToolUtility(object):
                 search_list.append(i)
         if not search_list:
             return "Error, dataset not found"
-        return search_list      
+        return search_list
 
     def datarequest_status_get(self, task_id):
         site = getSite()
@@ -187,12 +187,13 @@ class DownloadToolUtility(object):
         annotations = IAnnotations(site)
         task_id = random.randint(0, 99999999999)
 
-        url = "https://clmsdemo.devel6cph.eea.europa.eu/api/@search?portal_type=DataSet"
-        r=requests.get(url, headers={"Accept":"application/json"})
+        url = "https://clmsdemo.devel6cph.eea.europa.eu/api/"
+        + "@search?portal_type=DataSet"
+        r=requests.get(url, headers={"Accept": "application/json"})
 
         datasets = r.json()
         return datasets["items"]
-    
+
     def get_item(self, key):
         site = getSite()
         annotations = IAnnotations(site)
