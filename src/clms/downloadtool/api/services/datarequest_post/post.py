@@ -436,10 +436,12 @@ class DataRequestPost(Service):
                     return {"status": "error",
                             "msg": "Error, BoundingBox is not valid"}
 
-                response_json.update({"BoundingBox":
+                response_json.update(
+                    {"BoundingBox":
                     dataset_json["BoundingBox"]})
                 dataset_string += r', "BoundingBox":['
-                dataset_string += r''.join(str(e) +
+                dataset_string += r''.join(
+                    str(e) +
                     ", " for e in
                     dataset_json["BoundingBox"])
                 dataset_string = dataset_string[:-2]
@@ -515,7 +517,8 @@ class DataRequestPost(Service):
                     "EndDate" not in dataset_json["TemporalFilter"].keys()
                 ):
                     self.request.response.setStatus(400)
-                    return {"status": "error",
+                    return {
+                        "status": "error",
                         "msg": "Error, TemporalFilter does" +
                         " not have StartDate or EndDate"}
 
@@ -531,10 +534,11 @@ class DataRequestPost(Service):
                     self.request.response.setStatus(400)
                     return(
                         {"status": "error",
-                            "msg": "Error, defined GCS not in the list"}
-                        )
-                response_json.update({"OutputGCS":
-                    dataset_json["OutputGCS"]})
+                            "msg": "Error, defined GCS not in the list"})
+                response_json.update(
+                    {"OutputGCS":
+                    dataset_json["OutputGCS"]}
+                    )
                 dataset_string += r', "OutputGCS": "'
                 + dataset_json["OutputGCS"] + r'"'
 
@@ -683,7 +687,8 @@ def checkDateDifference(temporal_filter):
 
 def validateNuts(nuts_id):
     """ validate nuts """
-    match = re.match(r"([a-z]+)([0-9]+)",
+    match = re.match(
+        r"([a-z]+)([0-9]+)",
         nuts_id, re.I)
     if match:
         items = match.groups()
@@ -699,7 +704,8 @@ def getPathUID(dataset_id):
     url = "https://clmsdemo.devel6cph.eea.europa.eu/"
     + "api/@search?portal_type=DataSet&fullobjects=True"
 
-    request_headers = {"Content-Type": "application/json; charset=utf-8",
+    request_headers = { 
+        "Content-Type": "application/json; charset=utf-8",
         "Accept": "application/json",
         "Authorization": "Basic YWRtaW46YWRtaW4="}
 
