@@ -31,10 +31,10 @@ class datarequest_search(Service):
 
         if "Error, UserID not defined" in response_json:
             self.request.response.setStatus(400)
-            return {"status": "error", "msg":response_json}
+            return {"status": "error", "msg": response_json}
 
         if "Error, status not recognized" in response_json:
             self.request.response.setStatus(400)
-            return {"status": "error", "msg":response_json}
+            return {"status": "error", "msg": response_json}
 
         return response_json

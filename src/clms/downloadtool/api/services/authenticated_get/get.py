@@ -20,12 +20,10 @@ log = getLogger(__name__)
 
 class AuthenticatedGet(Service):
     def reply(self):
-
-        #key = self.request.get("key")
+        # key = self.request.get("key")
         user = str(api.user.get_current())
         utility = getUtility(IDownloadToolUtility)
-        last_connection = utility.save_login(str(user), '{date:%Y-%m-%d %H:%M:%S}'.format( date=datetime.datetime.now()))
 
         self.request.response.setStatus(200)
-        log.info(last_connection)
-        return last_connection
+        log.info(user)
+        return user

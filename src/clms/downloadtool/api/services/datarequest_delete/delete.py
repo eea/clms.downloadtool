@@ -31,20 +31,20 @@ class datarequest_delete(Service):
 
         if not task_id:
             self.request.response.setStatus(400)
-            return {"status": "error", "msg":"Error, TaskID not defined"}
+            return {"status": "error", "msg": "Error, TaskID not defined"}
         if not user_id:
             self.request.response.setStatus(400)
-            return {"status": "error", "msg":"Error, UserID not defined"}
+            return {"status": "error", "msg": "Error, UserID not defined"}
 
         response_json = utility.datarequest_delete(task_id, user_id)
 
         if "Error, TaskID not registered" in response_json:
             self.request.response.setStatus(403)
-            return {"status": "error", "msg":response_json}
+            return {"status": "error", "msg": response_json}
 
         if "Error, permission denied" in response_json:
             self.request.response.setStatus(404)
-            return {"status": "error", "msg":response_json}
+            return {"status": "error", "msg": response_json}
 
         self.request.response.setStatus(204)
         return response_json

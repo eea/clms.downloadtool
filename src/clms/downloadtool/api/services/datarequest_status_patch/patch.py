@@ -380,20 +380,20 @@ class datarequest_status_patch(Service):
 
         if not task_id:
             self.request.response.setStatus(400)
-            return {"status": "error", "msg":"Error, TaskID is not defined"}
+            return {"status": "error", "msg": "Error, TaskID is not defined"}
 
         if not status:
             self.request.response.setStatus(400)
-            return {"status": "error", "msg":"Error, Status is not defined"}
+            return {"status": "error", "msg": "Error, Status is not defined"}
 
         if status not in status_list:
             self.request.response.setStatus(400)
-            return {"status": "error", "msg":"Error, defined Status is not in the list"}
+            return {"status": "error", "msg": "Error, defined Status is not in the list"}
         response_json = {"TaskID": task_id, "Status": status}
 
         if filesize:
             response_json.update({"FileSize": filesize})
-        
+
         if download_url:
             response_json.update({"DownloadURL": download_url})
 
@@ -404,22 +404,21 @@ class datarequest_status_patch(Service):
 
         log.info(response_json)
 
-
         if "Error, task_id not registered" in response_json:
             self.request.response.setStatus(404)
-            return {"status": "error", "msg":response_json}
+            return {"status": "error", "msg": response_json}
 
         if (
             "Error, NUTSID and BoundingBox can't be defined in the same task"
             in response_json
         ):
             self.request.response.setStatus(400)
-            return{"status": "error", "msg":response_json}
+            return{"status": "error", "msg": response_json}
 
         if "Error" in response_json:
             self.request.response.setStatus(400)
-            return {"status": "error", "msg":response_json}
-            
+            return {"status": "error", "msg": response_json}
+
         self.request.response.setStatus(201)
 
         return response_json
