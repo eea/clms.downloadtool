@@ -8,7 +8,6 @@ from plone.app.testing import FunctionalTesting
 from plone.app.testing import IntegrationTesting
 from plone.app.testing import PloneSandboxLayer
 from plone.testing import z2
-import plone.restapi
 
 import clms.downloadtool
 
@@ -24,6 +23,8 @@ class ClmsDownloadtoolLayer(PloneSandboxLayer):
         # Load any other ZCML that is required for your tests.
         # The z3c.autoinclude feature is disabled in the Plone fixture base
         # layer.
+        import plone.restapi
+
         self.loadZCML(package=plone.restapi)
         self.loadZCML(package=clms.downloadtool)
 

@@ -23,7 +23,9 @@ def locale_folder_setup():
     languages = [d for d in os.listdir(".") if os.path.isdir(d)]
     for lang in languages:
         folder = os.listdir(lang)
-        if "LC_MESSAGES" not in folder:
+        if "LC_MESSAGES" in folder:
+            continue
+        else:
             lc_messages_path = lang + "/LC_MESSAGES/"
             os.mkdir(lc_messages_path)
             # pylint: disable=line-too-long
@@ -56,11 +58,12 @@ def _rebuild():
 
 def _sync():
     """Sync translation files"""
-    # pylint: disable=line-too-long
-    cmd = "{0} sync --pot {locale_path}/{domain}.pot {locale_path}*/LC_MESSAGES/{domain}.po".format(  # NOQA: E501
+    cmd = "{0} sync --pot {1}/{2}.pot {3}*/LC_MESSAGES/{4}.po".format(
         i18ndude,
-        locale_path=locale_path,
-        domain=domain
+        locale_path,
+        domain,
+        locale_path,
+        domain,
     )
     subprocess.call(
         cmd,

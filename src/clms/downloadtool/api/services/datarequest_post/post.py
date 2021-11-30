@@ -4,20 +4,24 @@ For HTTP GET operations we can use standard HTTP parameter passing
 through the URL)
 
 """
-import re
+import urllib.request
 import datetime
 from collections import defaultdict
 from logging import getLogger
-
+import json
 from plone.restapi.services import Service
 from plone.restapi.deserializer import json_body
-
+from plone import api
 from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
-
+from urllib import request, parse
 
 log = getLogger(__name__)
-
+#fme_url = "https://copernicus-fme.eea.europa.eu/fmeserver/#/workbench/viewer/CLMS/testAPI-FME.fmw?fmetoken=2d6aaef2df4ba3667c883884f57a8b6bab2efc5e"
+fme_url = 'https://copernicus-fme.eea.europa.eu/fmerest/v3/transformations/submit/CLMS/testAPI-FME.fmw'
+stats_url = "http://192.168.0.15:800/Plone/@register_item"
+TOKEN="2d6aaef2df4ba3667c883884f57a8b6bab2efc5e"
+headers = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json", 'Authorization' : 'fmetoken token={0}'.format(TOKEN)}
 countries = {
     "BD": "BGD",
     "BE": "BEL",
@@ -362,191 +366,220 @@ class DataRequestPost(Service):
         """ JSON response """
         body = json_body(self.request)
 
-        user_id = str(body.get("UserID"))
-        dataset_id = body.get("DatasetID")
-        dataset_format = body.get("DatasetFormat")
-        dataset_path = body.get("DatasetPath")
-        bounding_box = body.get("BoundingBox")
-        temporal_filter = body.get("TemporalFilter")
-        output_format = body.get("OutputFormat")
-        outputGCS = body.get("OutputGCS")
-        nuts_id = body.get("NUTSID")
-        mail = body.get("Mail")
-
+        user_id = api.user.get_current()
+        datasets_json = body.get("Datasets")        
+        mail = ""
+        #mail = user.getProperty('mail')
         response_json = {}
+        data_object = {}
+        data_object["Datasets"] = []
+        dataset_string = r'{'
+
+        valid_dataset = False
 
         utility = getUtility(IDownloadToolUtility)
+        datasets = utility.get_dataset_info()
 
-        if not user_id:
-            self.request.response.setStatus(400)
-            return "Error, UserID is not defined"
+        log.info(datasets_json)
 
-        if not dataset_id:
-            self.request.response.setStatus(400)
-            return "Error, DatasetID is not defined"
-
-        response_json = {"UserID": user_id, "DatasetID": dataset_id}
-
-        if mail:
-            if not email_validation(mail):
+        for dataset_json in datasets_json:
+            
+            log.info(user_id)
+            log.info(dataset_json)
+            if not dataset_json["DatasetID"]:
                 self.request.response.setStatus(400)
-                return "Error, inserted mail is not valid"
-            response_json.update({"Mail": mail})
+                return {"status": "error", "msg":"Error, DatasetID is not defined"}
+            valid_dataset = False
+            dataset_download = []
 
-        if nuts_id:
-            if not validateNuts(nuts_id):
-                self.request.response.setStatus(400)
-                return "NUTSID country error"
-            response_json.update({"NUTSID": nuts_id})
+            for dataset in datasets:
+                if dataset_json["DatasetID"] == dataset["@id"]:
+                    log.info(dataset)
+                    valid_dataset = True
+                    dataset_download.append(dataset_json["DatasetID"])           
+            
+            if not valid_dataset:
+                    self.request.response.setStatus(400)
+                    return {"status": "error", "msg":"Error, the DatasetID is not valid"}
+            
+            response_json.update({"DatasetID": dataset_json["DatasetID"]})
 
-        if bounding_box:
-            if nuts_id:
-                self.request.response.setStatus(400)
-                return "Error, NUTSID is also defined"
+            if len(dataset_string) == 1:
+                dataset_string += r'"DatasetID": "' + dataset_json["DatasetID"] + r'"'
+            else:
+                dataset_string += r'},{"DatasetID": "' + dataset_json["DatasetID"] + r'"'
 
-            if not validateSpatialExtent(bounding_box):
-                self.request.response.setStatus(400)
-                return "Error, BoundingBox is not valid"
 
-            response_json.update({"BoundingBox": bounding_box})
+            if "NUTSID" in dataset_json:
+                if not validateNuts(dataset_json["NUTSID"]):
+                    self.request.response.setStatus(400)
+                    return {"status": "error", "msg":"NUTSID country error"}
+                response_json.update({"NUTSID": nuts_id})
+                dataset_string += r', "NUTSID": "' + dataset_json["NUTSID"] + r'"'
+           
+            if "BoundingBox" in dataset_json:
+                if "NUTSID" in dataset_json:
+                    self.request.response.setStatus(400)
+                    return {"status": "error", "msg":"Error, NUTSID is also defined"}
 
-        if dataset_format or output_format:
-            if (
-                not dataset_format and output_format or
-                dataset_format and not output_format
-            ):
-                self.request.response.setStatus(400)
-                return "Error, you need to specify both formats"
-            if (
-                dataset_format not in dataset_formats or
-                output_format not in dataset_formats
-            ):
-                self.request.response.setStatus(400)
-                return "Error, specified formats are not in the list"
-            if (
-                "GML" in dataset_format or not
-                table[dataset_format][output_format]
-            ):
-                self.request.response.setStatus(400)
-                # pylint: disable=line-too-long
-                return "Error, specified data formats are not supported in this way"  # noqa
-            response_json.update(
-                {
-                    "DatasetFormat": dataset_format,
-                    "OutputFormat": output_format,
-                }
-            )
+                if not validateSpatialExtent(dataset_json["BoundingBox"] ):
+                    self.request.response.setStatus(400)
+                    return {"status": "error", "msg":"Error, BoundingBox is not valid"}
 
-        if temporal_filter:
-            log.info(validateDate1(temporal_filter))
-            if not validateDate1(temporal_filter) and not validateDate2(
-                temporal_filter
-            ):
-                self.request.response.setStatus(400)
-                return "Error, date format is not correct"
+                response_json.update({"BoundingBox": dataset_json["BoundingBox"]})
+                dataset_string += r', "BoundingBox":['
+                dataset_string += r''.join(str(e) + ", "   for e in dataset_json["BoundingBox"])
+                dataset_string = dataset_string [:-2]
+                dataset_string += r']' 
 
-            if not checkDateDifference(temporal_filter):
-                self.request.response.setStatus(400)
-                # pylint: disable=line-too-long
-                return "Error, difference between StartDate and EndDate is not coherent"  # noqa
-
-            if len(temporal_filter.keys()) > 2:
-                self.request.response.setStatus(400)
-                return "Error, TemporalFilter has too many fields"
-
-            if (
-                "StartDate" not in temporal_filter.keys() or
-                "EndDate" not in temporal_filter.keys()
-            ):
-                self.request.response.setStatus(400)
-                return (
-                    "Error, TemporalFilter does not have StartDate or EndDate"
+            if "DatasetFormat" in dataset_json or "OutputFormat" in dataset_json:
+                if (
+                    not "DatasetFormat" in dataset_json and "OutputFormat" in dataset_json or
+                    "DatasetFormat" in dataset_json and not "OutputFormat" in dataset_json
+                ):
+                    self.request.response.setStatus(400)
+                    return {"status": "error", "msg":"Error, you need to specify both formats"}
+                if (
+                    dataset_json["DatasetFormat"] not in dataset_formats or
+                    dataset_json["OutputFormat"] not in dataset_formats
+                ):
+                    self.request.response.setStatus(400)
+                    return {"status": "error", "msg":"Error, specified formats are not in the list"}
+                if (
+                    "GML" in dataset_json["DatasetFormat"] or not
+                    table[dataset_json["DatasetFormat"]][dataset_json["OutputFormat"]]
+                ):
+                    self.request.response.setStatus(400)
+                    return {"status": "error", "msg":"Error, specified data formats are not supported"}  
+                dataset_string += r', "DatasetFormat": "' + dataset_json["DatasetFormat"] + r'"'
+                dataset_string += r', "OutputFormat": "' + dataset_json["OutputFormat"] + r'"'
+                response_json.update(
+                    {
+                        "DatasetFormat": dataset_json["DatasetFormat"],
+                        "OutputFormat": dataset_json["OutputFormat"],
+                    }
                 )
 
-            response_json.update({"TemporalFilter": temporal_filter})
+            if "TemporalFilter" in dataset_json:
+                log.info(validateDate1(dataset_json["TemporalFilter"]))
+                if not validateDate1(dataset_json["TemporalFilter"]) and not validateDate2(
+                    dataset_json["TemporalFilter"]
+                ):
+                    self.request.response.setStatus(400)
+                    return {"status": "error", "msg":"Error, date format is not correct"}
 
-        if outputGCS:
-            if outputGCS not in GCS:
-                self.request.response.setStatus(400)
-                return "Error, defined GCS not in the list"
-            response_json.update({"OutputGCS": outputGCS})
+                if not checkDateDifference(dataset_json["TemporalFilter"]):
+                    self.request.response.setStatus(400)
+                    # pylint: disable=line-too-long
+                    return {"status": "error", "msg":"Error, difference between StartDate and EndDate is not coherent"}  
 
-        if dataset_path:
-            response_json.update({"DatasetPath": dataset_path})
+                if len(dataset_json["TemporalFilter"].keys()) > 2:
+                    self.request.response.setStatus(400)
+                    return {"status": "error", "msg":"Error, TemporalFilter has too many fields"}
 
-        response_json["Status"] = "In_progress"
-        response_json = utility.datarequest_post(response_json)
+                if (
+                    "StartDate" not in dataset_json["TemporalFilter"].keys() or
+                    "EndDate" not in dataset_json["TemporalFilter"].keys()
+                ):
+                    self.request.response.setStatus(400)
+                    return {"status": "error", "msg":"Error, TemporalFilter does not have StartDate or EndDate"}
 
-        log.info("AFTER CALLING INSERTION METHOD")
+                response_json.update({"TemporalFilter": dataset_json["TemporalFilter"]})
+                dataset_string += r', "TemporalFilter": ' + json.dumps(dataset_json["TemporalFilter"])
+
+            if "OutputGCS" in dataset_json:
+                if dataset_json["OutputGCS"] not in GCS:
+                    self.request.response.setStatus(400)
+                    return {"status": "error", "msg":"Error, defined GCS not in the list"}
+                response_json.update({"OutputGCS": dataset_json["OutputGCS"]})
+                dataset_string += r', "OutputGCS": "' + dataset_json["OutputGCS"] + r'"'
+
+            response_json["Status"] = "In_progress"
+
+            #FileID, FilePath
+            endpoint_data = getPathUID(response_json["DatasetID"]) 
+
+            dataset_string += r', "FileID": "' + endpoint_data["FileID"] + r'"'
+            dataset_string += r', "FilePath": "' + endpoint_data["FilePath"] + r'"'
+            dataset_string += r', "DatasetPath": "' + endpoint_data["DatasetPath"] + r'"'
+
+            response_json.update({"DatasetPath": endpoint_data["DatasetPath"]})
+            response_json.update({"FilePath": endpoint_data["FilePath"]})
+            response_json.update({"FileID": endpoint_data["FileID"]})
+
+            data_object["Datasets"].append(response_json)
+
+
+            
+
+
+        response_json = utility.datarequest_post(data_object["Datasets"])
+        
+        
+
         log.info(response_json)
+        dataset_string += r'}'
+        log.info(dataset_string)
 
+        datasets = r'{'
+        datasets += r'    "Datasets": [' + dataset_string + ']'
+        datasets += r'}'
+
+     
+        log.info(user_id)
+        log.info(str(user_id))
+        log.info(datasets)
+        params = {
+            "publishedParameters": [{
+                    "name": "UserID",
+                    "value": str(user_id),
+                }, {
+                    "name": "TaskID",
+                    "value": get_task_id(response_json)
+                }, {
+                    "name": "UserMail",
+                    "value": mail,
+                }, {
+                    "name": "json",
+                    "value": datasets
+                }
+            ]
+        }
+
+        stats_params = {
+            "Start":"",
+            "User": str(user_id),
+            "Dataset": "", # this is a list, need 2 be converted
+            "TransformationData": datasets,
+            "TaskID": get_task_id(response_json),
+            "End": "",
+            "TransformationDuration": "",
+            "TransformationSize":"",
+            "TransformationResultData": "",
+            "Successful": ""
+        }
+
+        #Statstool request
+        #stats_body = json.loads(json.dumps(stats_params))
+        #headers = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json" }
+        #import requests
+        #req = requests.post(stats_url, auth=('admin','admin'), json=stats_body, headers=headers)
+
+
+        body = json.dumps(params).encode('utf-8')
+
+        req = urllib.request.Request(fme_url, data=body, headers=headers) 
+        r = urllib.request.urlopen(req)
+        resp = r.read()
+        resp = resp.decode('utf-8')
+        resp = json.loads(resp)
+        log.info('Request status: ' + str(r.status))  
+        
+        
+
+        #log.info(json.dumps(fme_json))
         self.request.response.setStatus(201)
-        return response_json
-
-
-def validateDownloadFormat():
-    """ validate correct file format """
-    the_table = defaultdict(dict)
-
-    for input_iteration_format in dataset_formats:
-
-        if input_iteration_format == "Shapefile":
-
-            for output_iteration_format in dataset_formats:
-                # pylint: disable=line-too-long
-                the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = output_iteration_format in ("GDB", "GPKG", "Geojson", "GML")  # noqa: E501
-
-        elif input_iteration_format == "GDB":
-
-            for output_iteration_format in dataset_formats:
-                # pylint: disable=line-too-long
-                the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = output_iteration_format in ("Shapefile", "GPKG", "Geojson", "GML")  # noqa: E501
-        elif input_iteration_format == "GPKG":
-
-            for output_iteration_format in dataset_formats:
-                # pylint: disable=line-too-long
-                the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = output_iteration_format in ("Shapefile", "GDB", "Geojson", "GML")  # noqa: E501
-
-        elif input_iteration_format == "Geojson":
-
-            for output_iteration_format in dataset_formats:
-                # pylint: disable=line-too-long
-                the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = output_iteration_format in ("Shapefile", "GDB", "GPKG", "GML")  # noqa: E501
-
-        elif input_iteration_format == "Geotiff":
-            for output_iteration_format in dataset_formats:
-                the_table[input_iteration_format][
-                    output_iteration_format
-                ] = False
-
-        elif input_iteration_format == "Netcdf":
-            for output_iteration_format in dataset_formats:
-                the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = output_iteration_format == "Geotiff"
-
-        elif input_iteration_format == "WFS":
-
-            for output_iteration_format in dataset_formats:
-                # pylint: disable=line-too-long
-                the_table[input_iteration_format][
-                        output_iteration_format
-                    ] = output_iteration_format in ("Shapefile", "GDB", "GPKG", "Geojson", "GML")  # noqa: E501
-    # pylint: disable=line-too-long
-    log.info(
-        "------------------------------------------VALIDATION TABLE------------------------------------------"  # noqa
-    )
-    log.info(the_table)
-    return the_table
-
+        return resp
 
 def validateDate1(temporal_filter):
     """ validate date format year-month day """
@@ -563,8 +596,7 @@ def validateDate1(temporal_filter):
             return {"StartDate": date_obj1, "EndDate": date_obj2}
     except ValueError:
         log.info("Incorrect data format, should be YYYY-MM-DD")
-    return False
-
+        return False
 
 def validateDate2(temporal_filter):
     """ validate date format day-month-year"""
@@ -581,8 +613,7 @@ def validateDate2(temporal_filter):
             return {"StartDate": date_obj1, "EndDate": date_obj2}
     except ValueError:
         log.info("Incorrect data format, should be DD-MM-YYYY")
-    return False
-
+        return False
 
 def validateSpatialExtent(bounding_box):
     """ validate Bounding Box """
@@ -595,7 +626,6 @@ def validateSpatialExtent(bounding_box):
 
     return True
 
-
 def checkDateDifference(temporal_filter):
     """ Check date difference """
     log.info(temporal_filter)
@@ -604,7 +634,6 @@ def checkDateDifference(temporal_filter):
 
     return start_date < end_date
 
-
 def validateNuts(nuts_id):
     """ validate nuts """
 
@@ -612,23 +641,31 @@ def validateNuts(nuts_id):
     if match:
         items = match.groups()
         return items[0] in countries.keys()
-    return False
+        
+def get_task_id(params):
+    for item in params:
+        return item
+        
+def getPathUID(dataset_id):
+    url = "https://clmsdemo.devel6cph.eea.europa.eu/api/@search?portal_type=DataSet&fullobjects=True"
 
+    request_headers = {"Content-Type": "application/json; charset=utf-8", "Accept": "application/json", "Authorization": "Basic YWRtaW46YWRtaW4=" }
 
-def email_validation(mail):
-    """ validate email address """
-    a = 0
-    y = len(mail)
-    dot = mail.find(".")
-    at = mail.find("@")
-    log.info(mail)
+    req = urllib.request.Request(url, headers=request_headers)
+    r = urllib.request.urlopen(req)
+    resp = r.read()
+    resp = resp.decode('utf-8')
+    resp = json.loads(resp)
+    value = {}
+    file_values = {}
+    for element in resp["items"]:
+        if dataset_id == element["@id"]:
+            value = element
+            for index in value["downloadable_files"]["items"]:
+               file_values = {"FileID": index["@id"]}
+               file_values["FilePath"] = index["path"]
 
-    if "_" in mail[len(mail) - 1]:
-        return False
-
-    for i in range(0, at):
-        if (mail[i] >= "a" and mail[i] <= "z") or (
-            mail[i] >= "A" and mail[i] <= "Z"
-        ):
-            a = a + 1
-    return a > 0 and at > 0 and (dot - at) > 0 and (dot + 1) < y
+    file_values["UID"] = value["UID"]
+    file_values["DatasetPath"] = value["dataset_full_path"]
+    
+    return file_values

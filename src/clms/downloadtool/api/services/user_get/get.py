@@ -8,24 +8,28 @@ from logging import getLogger
 
 from plone import api
 from plone.restapi.services import Service
-
+import datetime
 from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
-import datetime
+
 # logger, do log.info('XXXX') to print in the console
-from logging import getLogger
+
 
 log = getLogger(__name__)
 
 
-class AuthenticatedGet(Service):
+class user_get(Service):
+    """ Get authenticated data
+    """
     def reply(self):
-
-        #key = self.request.get("key")
-        user = str(api.user.get_current())
+        """ JSON response """
         utility = getUtility(IDownloadToolUtility)
-        last_connection = utility.save_login(str(user), '{date:%Y-%m-%d %H:%M:%S}'.format( date=datetime.datetime.now()))
-
+        user = str(api.user.get_current())
+        log.info(user)
+        user_data = utility.get_user(user)
+        log.info(user_data)
+        #last_connection = user.getProperty('login')
+        if not user:
+            return "Error, User not defined"
         self.request.response.setStatus(200)
-        log.info(last_connection)
-        return last_connection
+        return user_data

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Setup tests for this package."""
-# pylint: disable=import-outside-toplevel
 import unittest
 from plone import api
 from plone.app.testing import setRoles, TEST_USER_ID
