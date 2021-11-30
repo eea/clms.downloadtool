@@ -23,7 +23,7 @@ stats_url = "http://192.168.0.15:800/Plone/@register_item"
 TOKEN = "2d6aaef2df4ba3667c883884f57a8b6bab2efc5e"
 headers = {"Content-Type": "application/json; charset=utf-8",
             "Accept": "application/json",
-            'Authorization' : 'fmetoken token={0}'.format(TOKEN)}
+            'Authorization': 'fmetoken token={0}'.format(TOKEN)}
 countries = {
     "BD": "BGD",
     "BE": "BEL",
@@ -436,10 +436,11 @@ class DataRequestPost(Service):
                             "msg": "Error, BoundingBox is not valid"}
 
                 response_json.update({"BoundingBox":
-                                    dataset_json["BoundingBox"]})
+                                        dataset_json["BoundingBox"]})
                 dataset_string += r', "BoundingBox":['
                 dataset_string += r''.join(str(e) +
-                                        ", " for e in dataset_json["BoundingBox"])
+                                            ", " for e in 
+                                            dataset_json["BoundingBox"])
                 dataset_string = dataset_string[:-2]
                 dataset_string += r']'
 
@@ -462,18 +463,19 @@ class DataRequestPost(Service):
                 ):
                     self.request.response.setStatus(400)
                     return {"status": "error",
-                            "msg": "Error, specified formats are not in the list"}
+                            "msg":
+                            "Error, specified formats are not in the list"}
                 if (
-                    "GML" in dataset_json["DatasetFormat"] or not
-                    table[dataset_json["DatasetFormat"]]
+                    "GML" in dataset_json["DatasetFormat"] or
+                    not table[dataset_json["DatasetFormat"]]
                     [dataset_json["OutputFormat"]]
                 ):
                     self.request.response.setStatus(400)
                     return {"status": "error",
                             "msg": "Error, specified data formats are not supported"}
-                dataset_string += r', "DatasetFormat": "' 
+                dataset_string += r', "DatasetFormat": "'
                 + dataset_json["DatasetFormat"] + r'"'
-                dataset_string += r', "OutputFormat": "' 
+                dataset_string += r', "OutputFormat": "'
                 + dataset_json["OutputFormat"] + r'"'
                 response_json.update(
                     {
@@ -497,8 +499,8 @@ class DataRequestPost(Service):
                     self.request.response.setStatus(400)
                     # pylint: disable=line-too-long
                     return {"status": "error",
-                            "msg": "Error, difference between StartDate"
-                            + " and EndDate is not coherent"
+                            "msg": "Error, difference between StartDate" +
+                            " and EndDate is not coherent"
                             }
 
                 if len(dataset_json["TemporalFilter"].keys()) > 2:
@@ -512,11 +514,12 @@ class DataRequestPost(Service):
                 ):
                     self.request.response.setStatus(400)
                     return {"status": "error",
-                    "msg": "Error, TemporalFilter does"
-                    + " not have StartDate or EndDate"}
+                                "msg": "Error, TemporalFilter does" +
+                                " not have StartDate or EndDate"}
 
                 response_json.update(
-                                    {"TemporalFilter": dataset_json["TemporalFilter"]}
+                                    {"TemporalFilter":
+                                        dataset_json["TemporalFilter"]}
                                     )
                 dataset_string += r', "TemporalFilter": '
                 + json.dumps(dataset_json["TemporalFilter"])
@@ -526,10 +529,10 @@ class DataRequestPost(Service):
                     self.request.response.setStatus(400)
                     return(
                         {"status": "error",
-                        "msg": "Error, defined GCS not in the list"}
+                            "msg": "Error, defined GCS not in the list"}
                         )
                 response_json.update({"OutputGCS":
-                dataset_json["OutputGCS"]})
+                                        dataset_json["OutputGCS"]})
                 dataset_string += r', "OutputGCS": "'
                 + dataset_json["OutputGCS"] + r'"'
 
@@ -679,7 +682,7 @@ def checkDateDifference(temporal_filter):
 def validateNuts(nuts_id):
     """ validate nuts """
     match = re.match(r"([a-z]+)([0-9]+)",
-                    nuts_id, re.I)
+                        nuts_id, re.I)
     if match:
         items = match.groups()
         return items[0] in countries.keys()
@@ -695,7 +698,8 @@ def getPathUID(dataset_id):
     + "api/@search?portal_type=DataSet&fullobjects=True"
 
     request_headers = {"Content-Type": "application/json; charset=utf-8",
-                        "Accept": "application/json", "Authorization": "Basic YWRtaW46YWRtaW4="}
+                            "Accept": "application/json",
+                            "Authorization": "Basic YWRtaW46YWRtaW4="}
 
     req = urllib.request.Request(url, headers=request_headers)
     r = urllib.request.urlopen(req)

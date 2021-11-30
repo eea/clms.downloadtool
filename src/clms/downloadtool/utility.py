@@ -189,7 +189,7 @@ class DownloadToolUtility(object):
 
         url = "https://clmsdemo.devel6cph.eea.europa.eu/api/"
         + "@search?portal_type=DataSet"
-        r=requests.get(url, headers={"Accept": "application/json"})
+        r = requests.get(url, headers={"Accept": "application/json"})
 
         datasets = r.json()
         return datasets["items"]

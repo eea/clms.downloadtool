@@ -388,8 +388,8 @@ class datarequest_status_patch(Service):
 
         if status not in status_list:
             self.request.response.setStatus(400)
-            return {"status": "error", "msg": 
-            "Error, defined Status is not in the list"}
+            return {"status": "error", "msg":
+                        "Error, defined Status is not in the list"}
         response_json = {"TaskID": task_id, "Status": status}
 
         if filesize:
