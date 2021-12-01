@@ -546,7 +546,7 @@ class DataRequestPost(Service):
                     dataset_json["OutputGCS"]})
                 dataset_string += r', "OutputGCS": "'.join(
                     dataset_json["OutputGCS"] + r'"'
-                ) 
+                )
 
             response_json["Status"] = "In_progress"
 
@@ -558,7 +558,7 @@ class DataRequestPost(Service):
                 endpoint_data["FilePath"] + r'"'
             )
             dataset_string += r', "DatasetPath": "'.join(
-            endpoint_data["DatasetPath"] + r'"'
+                endpoint_data["DatasetPath"] + r'"'
             )
 
             response_json.update({"DatasetPath": endpoint_data["DatasetPath"]})
@@ -597,11 +597,11 @@ class DataRequestPost(Service):
             ]
         }
 
-        """
+        '''
         stats_params = {
             "Start": "",
             "User": str(user_id),
-            "Dataset": response_json["DatasetID"],  
+            "Dataset": response_json["DatasetID"],
             "TransformationData": datasets,
             "TaskID": get_task_id(response_json),
             "End": "",
@@ -609,8 +609,8 @@ class DataRequestPost(Service):
             "TransformationSize": "",
             "TransformationResultData": "",
             "Successful": ""
-        } 
-        """
+        }
+        '''
 
         # Statstool request
         # stats_body = json.loads(json.dumps(stats_params))
@@ -627,7 +627,7 @@ class DataRequestPost(Service):
         resp = r.read()
         resp = resp.decode('utf-8')
         resp = json.loads(resp)
-        log.info('Request status: ' + str(r.status))
+        log.info('Request status: {0}'.format(str(r.status)))
 
         # log.info(json.dumps(fme_json))
         self.request.response.setStatus(201)
@@ -733,8 +733,8 @@ def getPathUID(dataset_id):
     req = urllib.request.Request(url, headers=request_headers)
     r = urllib.request.urlopen(req)
 
-    with r.read() as re:
-        resp = re.decode('utf-8')
+    with r.read() as read_request:
+        resp = read_request.decode('utf-8')
         resp = json.loads(resp)
         value = {}
         file_values = {}

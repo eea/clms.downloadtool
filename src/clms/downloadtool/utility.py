@@ -135,7 +135,6 @@ class DownloadToolUtility():
         """ DatasetGet method
         """
         site = getSite()
-        annotations = IAnnotations(site)
         log.info("Before the for")
         datasets = self.get_dataset_info()
 
@@ -178,8 +177,10 @@ class DownloadToolUtility():
         if task_id not in registry:
             return "Error, task_id not registered"
 
-        """ if registry[task_id]["UserID"] != dataObject["UserID"]:
-            return "Error, the UserID does not match" """
+        ''' 
+        if registry[task_id]["UserID"] != dataObject["UserID"]:
+        return "Error, the UserID does not match"
+        '''
 
         for element in registry[task_id]:
             element["Status"] = data_object["Status"]
