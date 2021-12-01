@@ -3,11 +3,11 @@
 import unittest
 from plone import api
 from plone.app.testing import setRoles, TEST_USER_ID
+from plone.browserlayer import utils
 from clms.downloadtool.testing import (
     CLMS_DOWNLOADTOOL_INTEGRATION_TESTING,  # noqa: E501,,
 )
 from clms.downloadtool.interfaces import IClmsDownloadtoolLayer
-from plone.browserlayer import utils
 
 try:
     from Products.CMFPlone.utils import get_installer

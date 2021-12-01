@@ -608,7 +608,7 @@ class DataRequestPost(Service):
         #    "TransformationSize": "",
         #    "TransformationResultData": "",
         #    "Successful": ""
-        #}
+        # }
 
         # Statstool request
         # stats_body = json.loads(json.dumps(stats_params))
