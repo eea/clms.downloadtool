@@ -20,14 +20,15 @@ and call its method.
 We have to understand the utility as being a Singleton object.
 
 """
+from logging import getLogger
 from persistent.mapping import PersistentMapping
 from zope.annotation.interfaces import IAnnotations
 from zope.interface import implementer
 from zope.interface import Interface
 from zope.site.hooks import getSite
+import requests
 
 import random
-from logging import getLogger
 
 log = getLogger(__name__)
 
@@ -45,12 +46,10 @@ status_list = [
 class IDownloadToolUtility(Interface):
     """ Downloadtool utility interface
     """
-    pass
-
 
 
 @implementer(IDownloadToolUtility)
-class DownloadToolUtility(object):
+class DownloadToolUtility():
     """ Downloadtool request methods
     """
     def datarequest_post(self, data_request):
@@ -137,7 +136,6 @@ class DownloadToolUtility(object):
         """
         site = getSite()
         annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         log.info("Before the for")
         datasets = self.get_dataset_info()
 
@@ -175,7 +173,6 @@ class DownloadToolUtility(object):
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        resp = {}
         tempObject = {}
 
         if task_id not in registry:
@@ -197,8 +194,6 @@ class DownloadToolUtility(object):
     def get_dataset_info(self):
         """ GetDatasetInfo method
         """
-        import requests
-
         url = "https://clmsdemo.devel6cph.eea.europa.eu/api/"
         url.join("@search?portal_type=DataSet")
         r = requests.get(url, headers={"Accept": "application/json"})

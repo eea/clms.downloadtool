@@ -13,6 +13,7 @@ from plone.restapi.deserializer import json_body
 from plone import api
 from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
+import re
 
 log = getLogger(__name__)
 fme_url = 'https://copernicus-fme.eea.europa.eu/'
@@ -402,18 +403,20 @@ class DataRequestPost(Service):
                     dataset_download.append(dataset_json["DatasetID"])
 
             if not valid_dataset:
-                    self.request.response.setStatus(400)
-                    return {"status": "error",
-                            "msg": "Error, the DatasetID is not valid"}
+                self.request.response.setStatus(400)
+                return {"status": "error",
+                        "msg": "Error, the DatasetID is not valid"}
 
             response_json.update({"DatasetID": dataset_json["DatasetID"]})
 
             if len(dataset_string) == 1:
-                dataset_string += r'"DatasetID": "'
-                + dataset_json["DatasetID"] + r'"'
+                dataset_string += r'"DatasetID": "'.join(
+                    dataset_json["DatasetID"] + r'"'
+                )
             else:
-                dataset_string += r'},{"DatasetID": "'
-                + dataset_json["DatasetID"] + r'"'
+                dataset_string += r'},{"DatasetID": "'.join(
+                    dataset_json["DatasetID"] + r'"'
+                )
 
             if "NUTSID" in dataset_json:
                 if not validateNuts(dataset_json["NUTSID"]):
@@ -421,8 +424,9 @@ class DataRequestPost(Service):
                     return {"status": "error",
                             "msg": "NUTSID country error"}
                 response_json.update({"NUTSID": dataset_json["NUTSID"]})
-                dataset_string += r', "NUTSID": "'
-                + dataset_json["NUTSID"] + r'"'
+                dataset_string += r', "NUTSID": "'.join(
+                    dataset_json["NUTSID"] + r'"'
+                )
 
             if "BoundingBox" in dataset_json:
                 if "NUTSID" in dataset_json:
@@ -476,10 +480,12 @@ class DataRequestPost(Service):
                     return {"status": "error",
                             "msg":
                             "Error, specified data formats are not supported"}
-                dataset_string += r', "DatasetFormat": "'
-                + dataset_json["DatasetFormat"] + r'"'
-                dataset_string += r', "OutputFormat": "'
-                + dataset_json["OutputFormat"] + r'"'
+                dataset_string += r', "DatasetFormat": "'.join(
+                    dataset_json["DatasetFormat"] + r'"'
+                )
+                dataset_string += r', "OutputFormat": "'.join(
+                    dataset_json["OutputFormat"] + r'"'
+                )
                 response_json.update(
                     {
                         "DatasetFormat": dataset_json["DatasetFormat"],
@@ -538,19 +544,22 @@ class DataRequestPost(Service):
                 response_json.update({
                     "OutputGCS":
                     dataset_json["OutputGCS"]})
-                dataset_string += r', "OutputGCS": "'
-                + dataset_json["OutputGCS"] + r'"'
+                dataset_string += r', "OutputGCS": "'.join(
+                    dataset_json["OutputGCS"] + r'"'
+                ) 
 
             response_json["Status"] = "In_progress"
-            # FileID, FilePath
-            endpoint_data = getPathUID(response_json["DatasetID"])
 
-            dataset_string += r', "FileID": "'
-            + endpoint_data["FileID"] + r'"'
-            dataset_string += r', "FilePath": "'
-            + endpoint_data["FilePath"] + r'"'
-            dataset_string += r', "DatasetPath": "'
-            + endpoint_data["DatasetPath"] + r'"'
+            endpoint_data = getPathUID(response_json["DatasetID"])
+            dataset_string += r', "FileID": "'.join(
+                endpoint_data["FileID"] + r'"'
+            )
+            dataset_string += r', "FilePath": "'.join(
+                endpoint_data["FilePath"] + r'"'
+            )
+            dataset_string += r', "DatasetPath": "'.join(
+            endpoint_data["DatasetPath"] + r'"'
+            )
 
             response_json.update({"DatasetPath": endpoint_data["DatasetPath"]})
             response_json.update({"FilePath": endpoint_data["FilePath"]})
@@ -588,10 +597,11 @@ class DataRequestPost(Service):
             ]
         }
 
+        """
         stats_params = {
             "Start": "",
             "User": str(user_id),
-            "Dataset": "",  # this is a list, need 2 be converted
+            "Dataset": response_json["DatasetID"],  
             "TransformationData": datasets,
             "TaskID": get_task_id(response_json),
             "End": "",
@@ -599,7 +609,8 @@ class DataRequestPost(Service):
             "TransformationSize": "",
             "TransformationResultData": "",
             "Successful": ""
-        }
+        } 
+        """
 
         # Statstool request
         # stats_body = json.loads(json.dumps(stats_params))
@@ -635,13 +646,13 @@ def validateDate1(temporal_filter):
             log.info(date_obj1)
             date_obj2 = datetime.datetime.strptime(end_date, date_format)
             log.info(date_obj2)
-            value = {
+            return {
                 "StartDate": date_obj1,
                 "EndDate": date_obj2}
-            return value
     except ValueError:
         log.info("Incorrect data format, should be YYYY-MM-DD")
         return False
+    return False
 
 
 def validateDate2(temporal_filter):
@@ -661,6 +672,7 @@ def validateDate2(temporal_filter):
     except ValueError:
         log.info("Incorrect data format, should be DD-MM-YYYY")
         return False
+    return False
 
 
 def validateSpatialExtent(bounding_box):
@@ -689,7 +701,6 @@ def checkDateDifference(temporal_filter):
 
 def validateNuts(nuts_id):
     """ validate nuts """
-    import re
     match = re.match(
         r"([a-z]+)([0-9]+)",
         nuts_id, re.I)
@@ -697,6 +708,7 @@ def validateNuts(nuts_id):
         items = match.groups()
         valid_nuts = items[0] in countries.keys()
         return valid_nuts
+    return None
 
 
 def get_task_id(params):
