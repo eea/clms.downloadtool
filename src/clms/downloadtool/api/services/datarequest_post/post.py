@@ -597,8 +597,8 @@ class DataRequestPost(Service):
             ]
         }
 
-        '''
-        stats_params = {
+        
+        """ stats_params = {
             "Start": "",
             "User": str(user_id),
             "Dataset": response_json["DatasetID"],
@@ -609,8 +609,8 @@ class DataRequestPost(Service):
             "TransformationSize": "",
             "TransformationResultData": "",
             "Successful": ""
-        }
-        '''
+        } """
+        
 
         # Statstool request
         # stats_body = json.loads(json.dumps(stats_params))
@@ -627,9 +627,6 @@ class DataRequestPost(Service):
             resp = r.read()
             resp = resp.decode('utf-8')
             resp = json.loads(resp)
-            log.info('Request status: {0}'.format(str(r.status)))
-
-            # log.info(json.dumps(fme_json))
             self.request.response.setStatus(201)
             return resp
 

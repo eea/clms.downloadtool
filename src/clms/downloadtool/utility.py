@@ -21,8 +21,8 @@ We have to understand the utility as being a Singleton object.
 
 """
 from logging import getLogger
-import requests
 import random
+import requests
 from persistent.mapping import PersistentMapping
 from zope.annotation.interfaces import IAnnotations
 from zope.interface import implementer

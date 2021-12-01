@@ -6,7 +6,10 @@ from plone.app.testing import setRoles, TEST_USER_ID
 from clms.downloadtool.testing import (
     CLMS_DOWNLOADTOOL_INTEGRATION_TESTING,  # noqa: E501,,
 )
-
+from clms.downloadtool.interfaces import IClmsDownloadtoolLayer
+from plone.browserlayer import utils
+from clms.downloadtool.interfaces import IClmsDownloadtoolLayer
+from plone.browserlayer import utils
 try:
     from Products.CMFPlone.utils import get_installer
 except ImportError:
@@ -32,9 +35,6 @@ class TestSetup(unittest.TestCase):
 
     def test_browserlayer(self):
         """Test that IClmsDownloadtoolLayer is registered."""
-        from clms.downloadtool.interfaces import IClmsDownloadtoolLayer
-        from plone.browserlayer import utils
-
         self.assertIn(IClmsDownloadtoolLayer, utils.registered_layers())
 
 
@@ -63,7 +63,4 @@ class TestUninstall(unittest.TestCase):
 
     def test_browserlayer_removed(self):
         """Test that IClmsDownloadtoolLayer is removed."""
-        from clms.downloadtool.interfaces import IClmsDownloadtoolLayer
-        from plone.browserlayer import utils
-
         self.assertNotIn(IClmsDownloadtoolLayer, utils.registered_layers())
