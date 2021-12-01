@@ -21,14 +21,13 @@ We have to understand the utility as being a Singleton object.
 
 """
 from logging import getLogger
+import requests
+import random
 from persistent.mapping import PersistentMapping
 from zope.annotation.interfaces import IAnnotations
 from zope.interface import implementer
 from zope.interface import Interface
 from zope.site.hooks import getSite
-import requests
-
-import random
 
 log = getLogger(__name__)
 
@@ -134,7 +133,6 @@ class DownloadToolUtility():
     def dataset_get(self, title):
         """ DatasetGet method
         """
-        site = getSite()
         log.info("Before the for")
         datasets = self.get_dataset_info()
 
@@ -176,11 +174,6 @@ class DownloadToolUtility():
 
         if task_id not in registry:
             return "Error, task_id not registered"
-
-        ''' 
-        if registry[task_id]["UserID"] != dataObject["UserID"]:
-        return "Error, the UserID does not match"
-        '''
 
         for element in registry[task_id]:
             element["Status"] = data_object["Status"]

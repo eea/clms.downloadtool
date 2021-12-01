@@ -8,12 +8,12 @@ import urllib.request
 import datetime
 from logging import getLogger
 import json
+import re
 from plone.restapi.services import Service
 from plone.restapi.deserializer import json_body
 from plone import api
 from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
-import re
 
 log = getLogger(__name__)
 fme_url = 'https://copernicus-fme.eea.europa.eu/'
@@ -623,15 +623,15 @@ class DataRequestPost(Service):
         body = json.dumps(params).encode('utf-8')
 
         req = urllib.request.Request(fme_url, data=body, headers=headers)
-        r = urllib.request.urlopen(req)
-        resp = r.read()
-        resp = resp.decode('utf-8')
-        resp = json.loads(resp)
-        log.info('Request status: {0}'.format(str(r.status)))
+        with urllib.request.urlopen(req) as r:
+            resp = r.read()
+            resp = resp.decode('utf-8')
+            resp = json.loads(resp)
+            log.info('Request status: {0}'.format(str(r.status)))
 
-        # log.info(json.dumps(fme_json))
-        self.request.response.setStatus(201)
-        return resp
+            # log.info(json.dumps(fme_json))
+            self.request.response.setStatus(201)
+            return resp
 
 
 def validateDate1(temporal_filter):
@@ -731,9 +731,9 @@ def getPathUID(dataset_id):
         "Authorization": "Basic YWRtaW46YWRtaW4="}
 
     req = urllib.request.Request(url, headers=request_headers)
-    r = urllib.request.urlopen(req)
 
-    with r.read() as read_request:
+    with urllib.request.urlopen(req) as r:
+        read_request = r.read()
         resp = read_request.decode('utf-8')
         resp = json.loads(resp)
         value = {}
