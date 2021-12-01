@@ -6,7 +6,6 @@ through the URL)
 """
 import urllib.request
 import datetime
-from collections import defaultdict
 from logging import getLogger
 import json
 from plone.restapi.services import Service
@@ -14,7 +13,6 @@ from plone.restapi.deserializer import json_body
 from plone import api
 from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
-from urllib import request, parse
 
 log = getLogger(__name__)
 fme_url = 'https://copernicus-fme.eea.europa.eu/'
@@ -421,7 +419,7 @@ class DataRequestPost(Service):
                     self.request.response.setStatus(400)
                     return {"status": "error",
                             "msg": "NUTSID country error"}
-                response_json.update({"NUTSID": nuts_id})
+                response_json.update({"NUTSID": dataset_json["NUTSID"]})
                 dataset_string += r', "NUTSID": "'
                 + dataset_json["NUTSID"] + r'"'
 
@@ -436,8 +434,8 @@ class DataRequestPost(Service):
                     return {"status": "error",
                             "msg": "Error, BoundingBox is not valid"}
 
-                response_json.update(
-                    {"BoundingBox":
+                response_json.update({
+                    "BoundingBox":
                     dataset_json["BoundingBox"]})
                 dataset_string += r', "BoundingBox":['
                 dataset_string += r''.join(
@@ -535,10 +533,9 @@ class DataRequestPost(Service):
                     return(
                         {"status": "error",
                             "msg": "Error, defined GCS not in the list"})
-                response_json.update(
-                    {"OutputGCS":
-                    dataset_json["OutputGCS"]}
-                    )
+                response_json.update({
+                    "OutputGCS":
+                    dataset_json["OutputGCS"]})
                 dataset_string += r', "OutputGCS": "'
                 + dataset_json["OutputGCS"] + r'"'
 
@@ -636,7 +633,10 @@ def validateDate1(temporal_filter):
             log.info(date_obj1)
             date_obj2 = datetime.datetime.strptime(end_date, date_format)
             log.info(date_obj2)
-            return {"StartDate": date_obj1, "EndDate": date_obj2}
+            value = {
+                "StartDate": date_obj1,
+                "EndDate": date_obj2}
+            return value
     except ValueError:
         log.info("Incorrect data format, should be YYYY-MM-DD")
         return False
@@ -687,42 +687,50 @@ def checkDateDifference(temporal_filter):
 
 def validateNuts(nuts_id):
     """ validate nuts """
+    import re
     match = re.match(
         r"([a-z]+)([0-9]+)",
         nuts_id, re.I)
     if match:
         items = match.groups()
-        return items[0] in countries.keys()
+        valid_nuts = items[0] in countries.keys()
+        return valid_nuts
 
 
 def get_task_id(params):
+    """ GetTaskID Method
+    """
     for item in params:
         return item
 
 
 def getPathUID(dataset_id):
-    url = "https://clmsdemo.devel6cph.eea.europa.eu/"
-    + "api/@search?portal_type=DataSet&fullobjects=True"
+    """ GetPathUID Method
+    """
+    url = "https://clmsdemo.devel6cph.eea.europa.eu/".join(
+        "api/@search?portal_type=DataSet&fullobjects=True"
+    )
 
-    request_headers = { 
+    request_headers = {
         "Content-Type": "application/json; charset=utf-8",
         "Accept": "application/json",
         "Authorization": "Basic YWRtaW46YWRtaW4="}
 
     req = urllib.request.Request(url, headers=request_headers)
     r = urllib.request.urlopen(req)
-    resp = r.read()
-    resp = resp.decode('utf-8')
-    resp = json.loads(resp)
-    value = {}
-    file_values = {}
-    for element in resp["items"]:
-        if dataset_id == element["@id"]:
-            value = element
-            for index in value["downloadable_files"]["items"]:
-                file_values = {"FileID": index["@id"]}
-                file_values["FilePath"] = index["path"]
 
-    file_values["UID"] = value["UID"]
-    file_values["DatasetPath"] = value["dataset_full_path"]
-    return file_values
+    with r.read() as re:
+        resp = re.decode('utf-8')
+        resp = json.loads(resp)
+        value = {}
+        file_values = {}
+        for element in resp["items"]:
+            if dataset_id == element["@id"]:
+                value = element
+                for index in value["downloadable_files"]["items"]:
+                    file_values = {"FileID": index["@id"]}
+                    file_values["FilePath"] = index["path"]
+
+        file_values["UID"] = value["UID"]
+        file_values["DatasetPath"] = value["dataset_full_path"]
+        return file_values

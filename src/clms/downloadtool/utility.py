@@ -43,13 +43,19 @@ status_list = [
 
 
 class IDownloadToolUtility(Interface):
+    """ Downloadtool utility interface
+    """
     pass
+
 
 
 @implementer(IDownloadToolUtility)
 class DownloadToolUtility(object):
-
+    """ Downloadtool request methods
+    """
     def datarequest_post(self, data_request):
+        """ DatarequestPost method
+        """
         site = getSite()
         annotations = IAnnotations(site)
         task_id = random.randint(0, 99999999999)
@@ -73,6 +79,8 @@ class DownloadToolUtility(object):
         return {task_id: data_request}
 
     def datarequest_delete(self, task_id, user_id):
+        """ DatarequestDelete method
+        """
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -93,6 +101,8 @@ class DownloadToolUtility(object):
         return dataObject
 
     def datarequest_search(self, user_id, status):
+        """ DatarequestSearch method
+        """
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -123,6 +133,8 @@ class DownloadToolUtility(object):
         return dataObject
 
     def dataset_get(self, title):
+        """ DatasetGet method
+        """
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -148,6 +160,8 @@ class DownloadToolUtility(object):
         return search_list
 
     def datarequest_status_get(self, task_id):
+        """ DataRequestStatusGet method
+        """
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -156,6 +170,8 @@ class DownloadToolUtility(object):
         return registry.get(task_id)
 
     def datarequest_status_patch(self, data_object, task_id):
+        """ DatarequestStatusPatch method
+        """
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -179,13 +195,9 @@ class DownloadToolUtility(object):
         return tempObject
 
     def get_dataset_info(self):
-        from urllib.request import urlopen
-        import json
+        """ GetDatasetInfo method
+        """
         import requests
-
-        site = getSite()
-        annotations = IAnnotations(site)
-        task_id = random.randint(0, 99999999999)
 
         url = "https://clmsdemo.devel6cph.eea.europa.eu/api/"
         + "@search?portal_type=DataSet"
@@ -195,22 +207,9 @@ class DownloadToolUtility(object):
         return datasets["items"]
 
     def get_item(self, key):
+        """ GetItem method
+        """
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         return registry.get(key)
-
-    def save_login(self, username, date):
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        registry[username] = date
-        annotations[ANNOTATION_KEY] = registry
-        return {username: date}
-
-    def get_user(self, username):
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        log.info(registry)
-        return {username: registry.get(username)}
