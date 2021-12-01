@@ -16,7 +16,8 @@ from clms.downloadtool.utility import IDownloadToolUtility
 
 log = getLogger(__name__)
 fme_url = 'https://copernicus-fme.eea.europa.eu/'
-+ 'fmerest/v3/transformations/submit/CLMS/testAPI-FME.fmw'
+fme_url.join(
+    'fmerest/v3/transformations/submit/CLMS/testAPI-FME.fmw')
 stats_url = "http://192.168.0.15:800/Plone/@register_item"
 TOKEN = "2d6aaef2df4ba3667c883884f57a8b6bab2efc5e"
 headers = {
@@ -524,8 +525,9 @@ class DataRequestPost(Service):
                                     {"TemporalFilter":
                                         dataset_json["TemporalFilter"]}
                                     )
-                dataset_string += r', "TemporalFilter": '
-                + json.dumps(dataset_json["TemporalFilter"])
+                dataset_string += r', "TemporalFilter": '.join(
+                    json.dumps(dataset_json["TemporalFilter"])
+                )
 
             if "OutputGCS" in dataset_json:
                 if dataset_json["OutputGCS"] not in GCS:
