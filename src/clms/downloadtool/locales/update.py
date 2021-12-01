@@ -57,10 +57,8 @@ def _rebuild():
 
 def _sync():
     """Sync translation files"""
-    cmd = "{0} sync --pot {1}/{2}.pot {3}*/LC_MESSAGES/{4}.po".format(
+    cmd = "{0} sync --pot {1}/{2}.pot {1}*/LC_MESSAGES/{2}.po".format(
         i18ndude,
-        locale_path,
-        domain,
         locale_path,
         domain
     )

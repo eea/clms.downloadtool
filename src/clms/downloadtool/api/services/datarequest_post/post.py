@@ -597,20 +597,18 @@ class DataRequestPost(Service):
             ]
         }
 
-        
-        """ stats_params = {
-            "Start": "",
-            "User": str(user_id),
-            "Dataset": response_json["DatasetID"],
-            "TransformationData": datasets,
-            "TaskID": get_task_id(response_json),
-            "End": "",
-            "TransformationDuration": "",
-            "TransformationSize": "",
-            "TransformationResultData": "",
-            "Successful": ""
-        } """
-        
+        # stats_params = {
+        #    "Start": "",
+        #    "User": str(user_id),
+        #    "Dataset": response_json["DatasetID"],
+        #    "TransformationData": datasets,
+        #    "TaskID": get_task_id(response_json),
+        #    "End": "",
+        #    "TransformationDuration": "",
+        #    "TransformationSize": "",
+        #    "TransformationResultData": "",
+        #    "Successful": ""
+        #}
 
         # Statstool request
         # stats_body = json.loads(json.dumps(stats_params))

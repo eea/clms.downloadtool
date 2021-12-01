@@ -8,8 +8,7 @@ from clms.downloadtool.testing import (
 )
 from clms.downloadtool.interfaces import IClmsDownloadtoolLayer
 from plone.browserlayer import utils
-from clms.downloadtool.interfaces import IClmsDownloadtoolLayer
-from plone.browserlayer import utils
+
 try:
     from Products.CMFPlone.utils import get_installer
 except ImportError:
