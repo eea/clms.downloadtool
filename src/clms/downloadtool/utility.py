@@ -33,7 +33,6 @@ from clms.downloadtool.api.services.utils import ANNOTATION_KEY, STATUS_LIST
 log = getLogger(__name__)
 
 
-
 class IDownloadToolUtility(Interface):
     """ Downloadtool utility interface
     """
