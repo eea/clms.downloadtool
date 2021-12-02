@@ -15,7 +15,7 @@ with open("README.rst") as readme_file:
 with open(join("docs", "HISTORY.txt")) as history_file:
     history = history_file.read()
 with open(join(*PATH)) as version_file:
-    version = version_file. read().strip()
+    version = version_file.read().strip()
 
 setup(
     name=NAME,

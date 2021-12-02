@@ -8,7 +8,7 @@ from logging import getLogger
 
 from plone.restapi.services import Service
 from plone.restapi.deserializer import json_body
-
+from plone import api
 from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
 
@@ -23,7 +23,7 @@ class datarequest_delete(Service):
     def reply(self):
         """ JSON response """
         body = json_body(self.request)
-        user_id = str(body.get("UserID"))
+        user_id = api.user.get_current()
         task_id = str(body.get("TaskID"))
         response_json = None
         log.info("DATAREQUEST_DELETE")
@@ -31,20 +31,20 @@ class datarequest_delete(Service):
 
         if not task_id:
             self.request.response.setStatus(400)
-            return "Error, TaskID not defined"
+            return {"status": "error", "msg": "Error, TaskID not defined"}
         if not user_id:
             self.request.response.setStatus(400)
-            return "Error, UserID not defined"
+            return {"status": "error", "msg": "Error, UserID not defined"}
 
         response_json = utility.datarequest_delete(task_id, user_id)
 
         if "Error, TaskID not registered" in response_json:
             self.request.response.setStatus(403)
-            return response_json
+            return {"status": "error", "msg": response_json}
 
         if "Error, permission denied" in response_json:
             self.request.response.setStatus(404)
-            return response_json
+            return {"status": "error", "msg": response_json}
 
         self.request.response.setStatus(204)
         return response_json

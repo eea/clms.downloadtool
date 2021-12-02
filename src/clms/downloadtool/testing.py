@@ -24,6 +24,7 @@ class ClmsDownloadtoolLayer(PloneSandboxLayer):
         # Load any other ZCML that is required for your tests.
         # The z3c.autoinclude feature is disabled in the Plone fixture base
         # layer.
+
         self.loadZCML(package=plone.restapi)
         self.loadZCML(package=clms.downloadtool)
 

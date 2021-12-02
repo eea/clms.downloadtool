@@ -20,15 +20,14 @@ and call its method.
 We have to understand the utility as being a Singleton object.
 
 """
-import random
 from logging import getLogger
-
+import random
+import requests
 from persistent.mapping import PersistentMapping
 from zope.annotation.interfaces import IAnnotations
 from zope.interface import implementer
 from zope.interface import Interface
 from zope.site.hooks import getSite
-
 
 log = getLogger(__name__)
 
@@ -44,16 +43,17 @@ status_list = [
 
 
 class IDownloadToolUtility(Interface):
-    """Download interface
+    """ Downloadtool utility interface
     """
 
 
 @implementer(IDownloadToolUtility)
 class DownloadToolUtility():
-    """ Download utilites
+    """ Downloadtool request methods
     """
     def datarequest_post(self, data_request):
-        """ Add a new data request"""
+        """ DatarequestPost method
+        """
         site = getSite()
         annotations = IAnnotations(site)
         task_id = random.randint(0, 99999999999)
@@ -77,7 +77,8 @@ class DownloadToolUtility():
         return {task_id: data_request}
 
     def datarequest_delete(self, task_id, user_id):
-        """ Delete a data task """
+        """ DatarequestDelete method
+        """
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -98,20 +99,23 @@ class DownloadToolUtility():
         return dataObject
 
     def datarequest_search(self, user_id, status):
-        """ search user task """
+        """ DatarequestSearch method
+        """
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         dataObject = {}
 
+        log.info(type(registry))
+        log.info(registry)
         if not user_id:
             return "Error, UserID not defined"
 
         if not status:
             for key in registry.keys():
                 values = registry.get(key)
-                if str(user_id) == values.get("UserID"):
-                    dataObject[key] = values
+                # if str(user_id) == values.get("UserID"):
+                dataObject[key] = values
             return dataObject
 
         if status not in status_list:
@@ -119,22 +123,40 @@ class DownloadToolUtility():
 
         for key in registry.keys():
             values = registry.get(key)
-            if str(user_id) == values.get("UserID") and status == values.get(
+            if status == values.get(
                 "Status"
             ):
                 dataObject[key] = values
 
         return dataObject
 
-    def dataset_get(self, key):
-        """ Get dataset """
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        return registry.get(key)
+    def dataset_get(self, title):
+        """ DatasetGet method
+        """
+        log.info("Before the for")
+        datasets = self.get_dataset_info()
+
+        log.info(datasets)
+        # if "items" not in datasets:
+        #    return "Error, there are no datasets to query"
+
+        if not title:
+            return datasets
+
+        search_list = []
+
+        for i in datasets:
+            log.info(i)
+            log.info(i["title"])
+            if title in i["title"]:
+                search_list.append(i)
+        if not search_list:
+            return "Error, dataset not found"
+        return search_list
 
     def datarequest_status_get(self, task_id):
-        """ Get request status """
+        """ DataRequestStatusGet method
+        """
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -142,8 +164,9 @@ class DownloadToolUtility():
             return "Error, task not found"
         return registry.get(task_id)
 
-    def datarequest_status_patch(self, dataObject, task_id):
-        """ Update request status """
+    def datarequest_status_patch(self, data_object, task_id):
+        """ DatarequestStatusPatch method
+        """
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -152,22 +175,30 @@ class DownloadToolUtility():
         if task_id not in registry:
             return "Error, task_id not registered"
 
-        # Disable check because need python >= 3.5
-        # linter base image is based in 2-alpine which runs
-        # python 2.7
-        # pylint: disable=syntax-error
-        tempObject = {**registry[task_id], **dataObject}
+        for element in registry[task_id]:
+            element["Status"] = data_object["Status"]
+            element["DownloadURL"] = data_object["DownloadURL"]
+            element["FileSize"] = data_object["FileSize"]
 
-        if (
-            "NUTSID" in tempObject.keys() and
-            "BoundingBox" in
-            tempObject.keys()
-        ):
-            dataObject = {}
-            # pylint: disable=line-too-long
-            return "Error, NUTSID and BoundingBox can't be defined in the same task"  # noqa
-        registry[str(task_id)] = tempObject
-
+        tempObject = registry[task_id]
         annotations[ANNOTATION_KEY] = registry
 
         return tempObject
+
+    def get_dataset_info(self):
+        """ GetDatasetInfo method
+        """
+        url = "https://clmsdemo.devel6cph.eea.europa.eu/api/"
+        url.join("@search?portal_type=DataSet")
+        r = requests.get(url, headers={"Accept": "application/json"})
+
+        datasets = r.json()
+        return datasets["items"]
+
+    def get_item(self, key):
+        """ GetItem method
+        """
+        site = getSite()
+        annotations = IAnnotations(site)
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        return registry.get(key)
