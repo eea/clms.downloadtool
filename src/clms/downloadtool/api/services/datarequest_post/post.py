@@ -134,10 +134,8 @@ class DataRequestPost(Service):
                 or "OutputFormat" in dataset_json
             ):
                 if (
-                    "DatasetFormat" not in dataset_json
-                    and "OutputFormat" in dataset_json
-                    or "DatasetFormat" in dataset_json
-                    and "OutputFormat" not in dataset_json
+                    # pylint: disable=line-too-long
+                    "DatasetFormat" not in dataset_json and "OutputFormat" in dataset_json or "DatasetFormat" in dataset_json and "OutputFormat" not in dataset_json  # no-qa: E501
                 ):
                     self.request.response.setStatus(400)
                     return {
@@ -145,8 +143,8 @@ class DataRequestPost(Service):
                         "msg": "Error, you need to specify both formats",
                     }
                 if (
-                    dataset_json["DatasetFormat"] not in DATASET_FORMATS
-                    or dataset_json["OutputFormat"] not in DATASET_FORMATS
+                    # pylint: disable=line-too-long
+                    dataset_json["DatasetFormat"] not in DATASET_FORMATS or dataset_json["OutputFormat"] not in DATASET_FORMATS  # noqa: E501
                 ):
                     self.request.response.setStatus(400)
                     return {
@@ -162,7 +160,8 @@ class DataRequestPost(Service):
                     self.request.response.setStatus(400)
                     return {
                         "status": "error",
-                        "msg": "Error, specified data formats are not supported",
+                        "msg": "Error, specified data formats are "
+                        "not supported",
                     }
                 dataset_string += r', "DatasetFormat": "'.join(
                     dataset_json["DatasetFormat"] + r'"'
@@ -193,8 +192,8 @@ class DataRequestPost(Service):
                     # pylint: disable=line-too-long
                     return {
                         "status": "error",
-                        "msg": "Error, difference between StartDate"
-                        + " and EndDate is not coherent",
+                        "msg": "Error, difference between StartDate "
+                        " and EndDate is not coherent",
                     }
 
                 if len(dataset_json["TemporalFilter"].keys()) > 2:
@@ -205,8 +204,8 @@ class DataRequestPost(Service):
                     }
 
                 if (
-                    "StartDate" not in dataset_json["TemporalFilter"].keys()
-                    or "EndDate" not in dataset_json["TemporalFilter"].keys()
+                    # pylint: disable=line-too-long
+                    "StartDate" not in dataset_json["TemporalFilter"].keys() or "EndDate" not in dataset_json["TemporalFilter"].keys()  # noqa: E501
                 ):
                     self.request.response.setStatus(400)
                     return {
