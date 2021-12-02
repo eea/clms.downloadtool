@@ -5,6 +5,10 @@ through the URL)
 
 """
 from logging import getLogger
+import datetime
+import json
+import re
+import urllib.request
 from plone import api
 from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
@@ -17,10 +21,6 @@ from clms.downloadtool.api.services.utils import (
 )
 from clms.downloadtool.utility import IDownloadToolUtility
 
-import datetime
-import json
-import re
-import urllib.request
 
 
 log = getLogger(__name__)
