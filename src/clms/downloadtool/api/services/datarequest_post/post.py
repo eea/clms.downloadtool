@@ -130,12 +130,11 @@ class DataRequestPost(Service):
                 dataset_string += r"]"
 
             if (
-                "DatasetFormat" in dataset_json
-                or "OutputFormat" in dataset_json
+                "DatasetFormat" in dataset_json or "OutputFormat" in dataset_json  # noqa: W503
             ):
                 if (
                     # pylint: disable=line-too-long
-                    "DatasetFormat" not in dataset_json and "OutputFormat" in dataset_json or "DatasetFormat" in dataset_json and "OutputFormat" not in dataset_json  # no-qa: E501
+                    "DatasetFormat" not in dataset_json and "OutputFormat" in dataset_json or "DatasetFormat" in dataset_json and "OutputFormat" not in dataset_json  # noqa: E501
                 ):
                     self.request.response.setStatus(400)
                     return {
@@ -152,10 +151,8 @@ class DataRequestPost(Service):
                         "msg": "Error, specified formats are not in the list",
                     }
                 if (
-                    "GML" in dataset_json["DatasetFormat"]
-                    or not FORMAT_CONVERSION_TABLE[
-                        dataset_json["DatasetFormat"]
-                    ][dataset_json["OutputFormat"]]
+                    # pylint: disable=line-too-long
+                    "GML" in dataset_json["DatasetFormat"] or not FORMAT_CONVERSION_TABLE[dataset_json["DatasetFormat"]][dataset_json["OutputFormat"]]  # noqa: E501
                 ):
                     self.request.response.setStatus(400)
                     return {
@@ -210,8 +207,8 @@ class DataRequestPost(Service):
                     self.request.response.setStatus(400)
                     return {
                         "status": "error",
-                        "msg": "Error, TemporalFilter does"
-                        + " not have StartDate or EndDate",
+                        "msg": "Error, TemporalFilter does "
+                        " not have StartDate or EndDate",
                     }
 
                 response_json.update(
