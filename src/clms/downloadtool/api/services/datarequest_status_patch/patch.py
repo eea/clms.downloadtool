@@ -4,12 +4,12 @@ For HTTP GET operations we can use standard HTTP parameter passing
 (through the URL)
 
 """
-from clms.downloadtool.api.services.utils import STATUS_LIST
-from clms.downloadtool.utility import IDownloadToolUtility
 from logging import getLogger
 from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
 from zope.component import getUtility
+from clms.downloadtool.api.services.utils import STATUS_LIST
+from clms.downloadtool.utility import IDownloadToolUtility
 
 
 log = getLogger(__name__)

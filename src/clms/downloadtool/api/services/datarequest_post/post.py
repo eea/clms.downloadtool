@@ -4,6 +4,11 @@ For HTTP GET operations we can use standard HTTP parameter passing
 through the URL)
 
 """
+from logging import getLogger
+from plone import api
+from plone.restapi.deserializer import json_body
+from plone.restapi.services import Service
+from zope.component import getUtility
 from clms.downloadtool.api.services.utils import (
     COUNTRIES,
     DATASET_FORMATS,
@@ -11,11 +16,6 @@ from clms.downloadtool.api.services.utils import (
     GCS,
 )
 from clms.downloadtool.utility import IDownloadToolUtility
-from logging import getLogger
-from plone import api
-from plone.restapi.deserializer import json_body
-from plone.restapi.services import Service
-from zope.component import getUtility
 
 import datetime
 import json
@@ -130,7 +130,8 @@ class DataRequestPost(Service):
                 dataset_string += r"]"
 
             if (
-                "DatasetFormat" in dataset_json or "OutputFormat" in dataset_json  # noqa: W503
+                # pylint: disable=line-too-long
+                "DatasetFormat" in dataset_json or "OutputFormat" in dataset_json  # noqa
             ):
                 if (
                     # pylint: disable=line-too-long
