@@ -61,6 +61,7 @@ setup(
         "plone.api>=1.8.4",
         "plone.restapi",
         "plone.app.dexterity",
+        "clms.addon",
     ],
     extras_require={
         "test": [
