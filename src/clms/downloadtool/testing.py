@@ -45,5 +45,3 @@ CLMS_DOWNLOADTOOL_FUNCTIONAL_TESTING = FunctionalTesting(
     bases=(CLMS_DOWNLOADTOOL_FIXTURE,),
     name="ClmsDownloadtoolLayer:FunctionalTesting",
 )
-
-
