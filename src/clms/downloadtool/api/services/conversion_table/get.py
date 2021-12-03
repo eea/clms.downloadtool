@@ -4,7 +4,7 @@ Endpoint to return the information of the FORMAT_CONVERSION_TABLE
 """
 from plone.restapi.services import Service
 
-from clms.downloadtool.api.services.utils import FORMAT_CONVERSION_TABLE
+from clms.downloadtool.utils import FORMAT_CONVERSION_TABLE
 
 
 class GetFormatConversionTable(Service):
