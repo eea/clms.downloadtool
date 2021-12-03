@@ -1,12 +1,396 @@
 {
 	"info": {
-		"_postman_id": "0eb56d83-eb31-411a-9497-c8d76099b933",
-		"name": "PloneAPI",
+		"_postman_id": "9a2d649f-5ddf-4f42-be69-bc00918415a3",
+		"name": "PloneAPI Copy",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
+			"name": "Search API",
+			"item": [
+				{
+					"name": "@dataset_get",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"/* As the mandatory fields are filled in, it must return a code 200 */\r",
+									"pm.test(\"Test 1 (Status) --> @datarequest_get (dataset_title filled)\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"/* Mandatory fields: dataset_title*/\r",
+									"pm.test(\"Test 2 (Mantdatory fields) --> dataset_title not empty\",function(){\r",
+									"    const responseJson = pm.response.json();\r",
+									"    pm.expect(responseJson.dataset_title).not.equal(undefined);\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "admin",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "https://clmsdemo.devel6cph.eea.europa.eu/api/@search?portal_type=DataSet",
+							"protocol": "https",
+							"host": [
+								"clmsdemo",
+								"devel6cph",
+								"eea",
+								"europa",
+								"eu"
+							],
+							"path": [
+								"api",
+								"@search"
+							],
+							"query": [
+								{
+									"key": "portal_type",
+									"value": "DataSet"
+								},
+								{
+									"key": "fullobjects",
+									"value": "True",
+									"disabled": true
+								},
+								{
+									"key": "dataset_title",
+									"value": "Coastal Zones",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "@dataset_get (dataset_title blank)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"/* As the mandatory fields are not  filled in, it must return a code 400 */\r",
+									"pm.test(\"Test1 (Status Mandatory fields empty) --> @dataset_get  (dataset_title empty)\", function () {\r",
+									"    pm.response.to.have.status(400);\r",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "admin",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://127.0.0.1/Plone/@dataset_get?DatasetTitle=Coastal Zones",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"path": [
+								"Plone",
+								"@dataset_get"
+							],
+							"query": [
+								{
+									"key": "DatasetTitle",
+									"value": "Coastal Zones"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Download API",
+			"item": [
+				{
+					"name": "@datarequest_post",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"/* DEPRECATED\r",
+									"{\r",
+									"    \"user_id\":1,\r",
+									"    \"download_format\":2,\r",
+									"    \"dataset_id\":52,\r",
+									"    \"spatial_extent\":[15.23560, -15.38584, 30.65845,-30.42458],\r",
+									"    \"temporal_extent\":{\"start_date\":\"20-11-1952\", \"end_date\": \"4-13-2002\"}\r",
+									"} */\r",
+									"\r",
+									"/* As the mandatory fields are filled in, it must return a code 201 (POST) */\r",
+									"pm.test(\"Test1 (Status)--> @datarequest_search\",function(){ \r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"/* Mandatory fields: download format , dataset_id & user_id */\r",
+									"pm.test(\"Test2 (Mandatory fields) --> Download format user_id & dataset_id not emply\",function(){\r",
+									"    var req = JSON.parse(pm.request.body.raw);\r",
+									"    pm.expect(req.user_id).not.equal(undefined);\r",
+									"    pm.expect(req.dataset_id).not.equal(undefined);\r",
+									"    pm.expect(req.download_format).not.equal(undefined);\r",
+									"    //console.log ('test1 ' + req.user_id);\r",
+									"    //console.log ('test2 ' + req.dataset_id);\r",
+									"    //console.log ('test3 ' + req.download_format);\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "admin",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"Datasets\":[{\n        \n        \"DatasetID\": \"https://clmsdemo.devel6cph.eea.europa.eu/api/en/products/urban-atlas/building-height-2012\",\n        \"DatasetFormat\": \"WFS\",\n        \"DatasetPath\": \"cws-copernicus/shape.zip\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"BoundingBox\": [-33.2,5,62.5,-3],\n    \n        \"TemporalFilter\": {\n            \"StartDate\": \"2020-06-28\",\n            \"EndDate\": \"2021-09-24\"\n        }\n  }\n    ,\n    {\n        \n        \"DatasetID\": \"https://clmsdemo.devel6cph.eea.europa.eu/api/en/products/urban-atlas/building-height-2012\",\n        \"DatasetFormat\": \"WFS\",\n        \"DatasetPath\": \"cws-copernicus/noMasErrores.zip\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"BoundingBox\": [-33.2,5,62.5,-3],\n    \n        \"TemporalFilter\": {\n            \"StartDate\": \"2020-07-05\",\n            \"EndDate\": \"2021-11-20\"\n        }\n    }]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/Plone/@datarequest_post",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"Plone",
+								"@datarequest_post"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "@datarequest_post (ser_id, dataset_id & download format undefined)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"/* As the mandatory fields are not  filled in, it must return a code 400 */\r",
+									"pm.test(\"Test1 (Status) --> @datarequest_search (dowload_format, dataset_id & user_id undefined ({...}))\",function(){ \r",
+									"    pm.response.to.have.status(400);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "admin",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"Datasets\":[{\n        \n        \"DatasetID\": \"https://clmsdemo.devel6cph.eea.europa.eu/api/en/products/urban-atlas/building-height-2012\",\n        \"DatasetFormat\": \"WFS\",\n        \"DatasetPath\": \"cws-copernicus/shape.zip\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"FileID\": \"pre-packaged\",\n        \"BoundingBox\": [-33.2,5,62.5,-3],\n    \n        \"TemporalFilter\": {\n            \"StartDate\": \"2020-06-28\",\n            \"EndDate\": \"2021-09-24\"\n        }\n  }\n    ,\n    {\n        \n        \"DatasetID\": \"https://clmsdemo.devel6cph.eea.europa.eu/api/en/products/urban-atlas/building-height-2012\",\n        \"DatasetFormat\": \"WFS\",\n        \"DatasetPath\": \"cws-copernicus/noMasErrores.zip\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"FileID\":\"pre-packaged\",\n        \"BoundingBox\": [-33.2,5,62.5,-3],\n    \n        \"TemporalFilter\": {\n            \"StartDate\": \"2020-07-05\",\n            \"EndDate\": \"2021-11-20\"\n        }\n    }]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://csdo002.westeurope.cloudapp.azure.com/Plone/@datarequest_post",
+							"protocol": "http",
+							"host": [
+								"csdo002",
+								"westeurope",
+								"cloudapp",
+								"azure",
+								"com"
+							],
+							"path": [
+								"Plone",
+								"@datarequest_post"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "@datarequest_post (user_id, dataset_id & download format blank)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"/* As the mandatory fields are not  filled in, it must return a code 400 */\r",
+									"pm.test(\"Test1 (Status) --> @datarequest_search(dowload_format, dataset_id & user_id blank ({download_format=``, user_id=`` , dataset_id=``}))\",function(){ \r",
+									"    pm.response.to.have.status(400);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "admin",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_id\":\"\",\n    \"download_format\":\"\",\n    \"dataset_id\":\"\",\n    \"spatial_extent\":[15.23560, -15.38584, 30.65845,-30.42458],\n    \"temporal_extent\":{\"start_date\":\"20-11-1952\", \"end_date\": \"4-13-2002\"}\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/Plone2/@datarequest_post",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"Plone2",
+								"@datarequest_post"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
 			"name": "@datarequest_search",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"/* As the mandatory fields are filled in, it must return a code 200 */\r",
+							"pm.test(\"Test1 (Status) --> Tes@datarequest_search (user_id filled)\",function(){ \r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"/* Mandatory fields: user_id*/\r",
+							"pm.test(\"Test2 (Mandatory fields) --> user_id not emply\",function(){\r",
+							"    const responseJson = pm.response.json();\r",
+							"    pm.expect(responseJson.user_id).not.equal(undefined || null);\r",
+							"})\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -32,7 +416,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://localhost:8080/Plone2/@datarequest_search?user_id=3&status=In_progress",
+					"raw": "http://localhost:8080/Plone2/@datarequest_search?user_id=1&status=In_progress",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -45,7 +429,7 @@
 					"query": [
 						{
 							"key": "user_id",
-							"value": "3"
+							"value": "1"
 						},
 						{
 							"key": "status",
@@ -57,7 +441,21 @@
 			"response": []
 		},
 		{
-			"name": "@datarequest_post",
+			"name": "@datarequest_search (user_id undefined)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"/* As the mandatory fields are not  filled in, it must return a code 400 */\r",
+							"pm.test(\"Test1 (Mandatory fields empty) --> @datarequest_search(user_id undefined)\", function () {\r",
+							"    pm.response.to.have.status(400);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -74,7 +472,7 @@
 						}
 					]
 				},
-				"method": "POST",
+				"method": "GET",
 				"header": [
 					{
 						"key": "Accept",
@@ -82,17 +480,8 @@
 						"type": "text"
 					}
 				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"UserID\": \"3\",\n    \"DatasetID\": \"123\",\n    \"DatasetFormat\": \"Shape\",\n    \"DatasetPath\": \"\\\\cws-copernicus/shape.zip\",\n    \"OutputFormat\": \"GDB\",\n    \"OutputGCS\": \"EPGS:4326\",\n    \"NUTSID\": \"BE2\",\n    \"BoundingBox\": [\n        33,\n        5,\n        62,\n        -3\n    ],\n    \"TemporalFilter\": {\n        \"StartDate\": \"1989-1-25\",\n        \"EndDate\": \"1989-1-25\"\n    }\n}\n\n",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
 				"url": {
-					"raw": "http://localhost:8080/Plone2/@datarequest_post",
+					"raw": "http://localhost:8080/Plone2/@datarequest_search",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -100,7 +489,19 @@
 					"port": "8080",
 					"path": [
 						"Plone2",
-						"@datarequest_post"
+						"@datarequest_search"
+					],
+					"query": [
+						{
+							"key": "user_id",
+							"value": "",
+							"disabled": true
+						},
+						{
+							"key": "status",
+							"value": "In_progress",
+							"disabled": true
+						}
 					]
 				}
 			},
@@ -108,6 +509,28 @@
 		},
 		{
 			"name": "@datarequest_delete",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"/* As the mandatory fields are filled in, it must return a code 200 */\r",
+							"pm.test(\"Test1 (Status) --> @datarequest_search (task_id and user_id filled)\",function(){ \r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"/* Mandatory fields: task_id & user_id*/\r",
+							"pm.test(\"Test2 (Mandatory fields) --> task_id and user_id not emply\",function(){\r",
+							"    var req = JSON.parse(pm.request.body.raw);\r",
+							"    pm.expect(req.task_id).not.equal(undefined);\r",
+							"    pm.expect(req.user_id).not.equal(undefined);\r",
+							"    //console.log ('test3 ' + req.task_id);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -134,7 +557,87 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"task_id\": 62479036085,\n    \"user_id\": 3\n}",
+					"raw": "{\n\"task_id\":68896958760,\n\"user_id\":22\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/Plone2/@datarequest_delete?task_id=20714548153&user_id=5",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"Plone2",
+						"@datarequest_delete"
+					],
+					"query": [
+						{
+							"key": "task_id",
+							"value": "20714548153"
+						},
+						{
+							"key": "user_id",
+							"value": "5"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "@datarequest_delete  (task_id & user_id undefined)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"/* As the mandatory fields are not  filled in, it must return a code 400 */\r",
+							"pm.test(\"Test1 (Mandatory fields empty) --> @datarequest_search  (user_id and task_id undefined ({...}))\",function(){ \r",
+							"    pm.response.to.have.status(400);\r",
+							"});\r",
+							"    \r",
+							"  \r",
+							"\r",
+							"  \r",
+							"    \r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "admin",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "admin",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -169,7 +672,27 @@
 			"response": []
 		},
 		{
-			"name": "@dataset_get",
+			"name": "@datarequest_delete (task_id & user_id blank)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"/* As the mandatory fields are not  filled in, it must return a code 400 */\r",
+							"pm.test(\"Test1 (Mandatory fields blank) --> @datarequest_search (user_id and task_id empty ({task_id=``, user_id=``}))\",function(){ \r",
+							"    pm.response.to.have.status(400);\r",
+							"});\r",
+							"    \r",
+							"  \r",
+							"\r",
+							"  \r",
+							"    \r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -186,7 +709,7 @@
 						}
 					]
 				},
-				"method": "GET",
+				"method": "DELETE",
 				"header": [
 					{
 						"key": "Accept",
@@ -194,8 +717,17 @@
 						"type": "text"
 					}
 				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\"task_id\":\"\",\n\"user_id\":\"\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
 				"url": {
-					"raw": "http://localhost:8080/Plone2/@dataset_get?dataset_title=swafdg shstewg",
+					"raw": "http://localhost:8080/Plone2/@datarequest_delete",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -203,12 +735,18 @@
 					"port": "8080",
 					"path": [
 						"Plone2",
-						"@dataset_get"
+						"@datarequest_delete"
 					],
 					"query": [
 						{
-							"key": "dataset_title",
-							"value": "swafdg shstewg"
+							"key": "task_id",
+							"value": "5151",
+							"disabled": true
+						},
+						{
+							"key": "user_id",
+							"value": "123154",
+							"disabled": true
 						}
 					]
 				}
@@ -217,6 +755,27 @@
 		},
 		{
 			"name": "@datarequest_status_get",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"/* As the mandatory fields are filled in, it must return a code 200 */\r",
+							"pm.test(\"Test1 (Status) --> @datarequest_status_get(task_id filled)\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"/* Mandatory fields: user_id*/\r",
+							"pm.test(\"Test2 (Mandatory fields) --> task_id not emply\",function(){\r",
+							"    const responseJson = pm.response.json();\r",
+							"    pm.expect(responseJson.task_id).not.equal(undefined || null);\r",
+							"})\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -242,7 +801,67 @@
 					}
 				],
 				"url": {
-					"raw": "http://localhost:8080/Plone2/@datarequest_status_get?task_id=32628031400",
+					"raw": "http://localhost/Plone/@datarequest_status_get?TaskID=99552259185",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"Plone",
+						"@datarequest_status_get"
+					],
+					"query": [
+						{
+							"key": "TaskID",
+							"value": "99552259185"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "@datarequest_status_get (task_id blank)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"/* As the mandatory fields are not  filled in, it must return a code 400 */\r",
+							"pm.test(\"Test1 (Mandatory fields empty) --> @datarequest_status_get \", function () {\r",
+							"    pm.response.to.have.status(400);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "admin",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "admin",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/Plone2/@datarequest_status_get",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -255,7 +874,8 @@
 					"query": [
 						{
 							"key": "task_id",
-							"value": "32628031400"
+							"value": "",
+							"disabled": true
 						}
 					]
 				}
@@ -264,6 +884,37 @@
 		},
 		{
 			"name": "@datarequest_status_patch",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"/* As the mandatory fields are filled in, it must return a code 200 */\r",
+							"pm.test(\"Test1 (Status) --> @datarequest_status_patch)\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"/* Mandatory fields: task_id & status*/\r",
+							"pm.test(\"Test2 (Mandatory fields) --> task_id and user_id not emply\",function(){\r",
+							"    var req = JSON.parse(pm.request.body.raw);\r",
+							"    pm.expect(req.task_id).not.equal(undefined);\r",
+							"    pm.expect(req.status).not.equal(undefined);\r",
+							"    //console.log(req.task_id);\r",
+							"    //console.log(req.status);\r",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"user-agent": true,
+					"host": true,
+					"connection": true,
+					"accept-encoding": true,
+					"accept": true
+				}
+			},
 			"request": {
 				"auth": {
 					"type": "basic",
@@ -290,7 +941,198 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"dataset_id\": \"431411\",\n    \"download_format\": \"3\",\n    \"spatial_extent\": [\n        15.2356,\n        -15.38584,\n        30.65845,\n        -30.42458\n    ],\n    \"task_id\": 23235556259,\n    \"temporal_extent\": {\n        \"end_date\": \"4-13-2002\",\n        \"start_date\": \"20-11-1952\"\n    },\n    \"user_id\": \"3\"\n}",
+					"raw": "{\r\n    \"TaskID\":85109303270, \r\n    \"Status\":\"Finished_ok\",\r\n    \"DownloadURL\":\"dfasfaf\",\r\n    \"FileSize\":\"145\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost/Plone/@datarequest_status_patch",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"Plone",
+						"@datarequest_status_patch"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "@datarequest_status_patch (task_id & status undefined)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"/* As the mandatory fields are not  filled in, it must return a code 400 */\r",
+							"pm.test(\"Test1 (Mandatory fields empty) --> @datarequest_status_patch (status and task_id undefined ({...}))\",function(){ \r",
+							"    pm.response.to.have.status(400);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "admin",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "admin",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/Plone2/@datarequest_status_patch",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"Plone2",
+						"@datarequest_status_patch"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "@datarequest_status_patch (task_id & status blank)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"/* As the mandatory fields are not  filled in, it must return a code 400 */\r",
+							"pm.test(\"Test1 (Mandatory fields blank) --> @datarequest_status_patch (status and task_id blank ({task_id=``,status=``}))\",function(){ \r",
+							"    pm.response.to.have.status(400);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "admin",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "admin",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"task_id\":\"\", \"status\":\"\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/Plone2/@datarequest_status_patch",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"Plone2",
+						"@datarequest_status_patch"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "@datarequest_status_patch (invalid status)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"/* As the mandatory fields are filled in but with a not defined status, it must return a code 400 */\r",
+							"pm.test(\"Test1 (Invalid Status) --> @datarequest_status_patch)\", function () {\r",
+							"    pm.response.to.have.status(400);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "basic",
+					"basic": [
+						{
+							"key": "password",
+							"value": "admin",
+							"type": "string"
+						},
+						{
+							"key": "username",
+							"value": "admin",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"task_id\":1354, \"status\":\"4243\"}",
 					"options": {
 						"raw": {
 							"language": "json"
