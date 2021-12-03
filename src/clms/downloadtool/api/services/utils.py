@@ -266,6 +266,14 @@ DATASET_FORMATS = [
     "GML",
     "WFS",
 ]
+
+DATASET_SOURCES = [
+    "WEKEO",
+    "EEA",
+    "LANDCOVER",
+    "LEGACY"
+]
+
 FORMAT_CONVERSION_TABLE = {
     "Shapefile": {
         "Shapefile": False,
