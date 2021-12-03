@@ -23,13 +23,6 @@ from clms.downloadtool.utils import (
 
 
 log = getLogger(__name__)
-FME_URL = api.portal.get_registry_record('clms.addon.url')
-FME_TOKEN = api.portal.get_registry_record('clms.addon.fme_token')
-headers = {
-    "Content-Type": "application/json; charset=utf-8",
-    "Accept": "application/json",
-    "Authorization": "fmetoken token={0}".format(FME_TOKEN),
-}
 
 
 class DataRequestPost(Service):
@@ -297,6 +290,14 @@ class DataRequestPost(Service):
         #  json=stats_body, headers=headers)
 
         body = json.dumps(params).encode("utf-8")
+
+        FME_URL = api.portal.get_registry_record('clms.addon.url')
+        FME_TOKEN = api.portal.get_registry_record('clms.addon.fme_token')
+        headers = {
+            "Content-Type": "application/json; charset=utf-8",
+            "Accept": "application/json",
+            "Authorization": "fmetoken token={0}".format(FME_TOKEN),
+        }
 
         req = urllib.request.Request(FME_URL, data=body, headers=headers)
         with urllib.request.urlopen(req) as r:
