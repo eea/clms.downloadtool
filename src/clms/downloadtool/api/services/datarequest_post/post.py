@@ -23,15 +23,6 @@ from clms.downloadtool.utils import (
 
 
 log = getLogger(__name__)
-fme_url = "https://copernicus-fme.eea.europa.eu/"
-fme_url.join("fmerest/v3/transformations/submit/CLMS/testAPI-FME.fmw")
-stats_url = "http://192.168.0.15:800/Plone/@register_item"
-TOKEN = "2d6aaef2df4ba3667c883884f57a8b6bab2efc5e"
-headers = {
-    "Content-Type": "application/json; charset=utf-8",
-    "Accept": "application/json",
-    "Authorization": "fmetoken token={0}".format(TOKEN),
-}
 
 
 class DataRequestPost(Service):
@@ -300,7 +291,15 @@ class DataRequestPost(Service):
 
         body = json.dumps(params).encode("utf-8")
 
-        req = urllib.request.Request(fme_url, data=body, headers=headers)
+        FME_URL = api.portal.get_registry_record('clms.addon.url')
+        FME_TOKEN = api.portal.get_registry_record('clms.addon.fme_token')
+        headers = {
+            "Content-Type": "application/json; charset=utf-8",
+            "Accept": "application/json",
+            "Authorization": "fmetoken token={0}".format(FME_TOKEN),
+        }
+
+        req = urllib.request.Request(FME_URL, data=body, headers=headers)
         with urllib.request.urlopen(req) as r:
             resp = r.read()
             resp = resp.decode("utf-8")

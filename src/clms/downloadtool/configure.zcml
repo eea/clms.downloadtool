@@ -6,6 +6,7 @@
     i18n_domain="clms.downloadtool">
 
   <i18n:registerTranslations directory="locales" />
+  <include package="clms.addon" />
 
   <!--
     Be careful if you use general includeDependencies, it can have side effects!
