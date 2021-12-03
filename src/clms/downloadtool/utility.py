@@ -28,18 +28,9 @@ from zope.annotation.interfaces import IAnnotations
 from zope.interface import implementer
 from zope.interface import Interface
 from zope.site.hooks import getSite
+from clms.downloadtool.utils import ANNOTATION_KEY, STATUS_LIST
 
 log = getLogger(__name__)
-
-ANNOTATION_KEY = "clms.downloadtool"
-status_list = [
-    "Rejected",
-    "Queued",
-    "In_progress",
-    "Finished_ok",
-    "Finished_nok",
-    "Cancelled",
-]
 
 
 class IDownloadToolUtility(Interface):
@@ -118,7 +109,7 @@ class DownloadToolUtility():
                 dataObject[key] = values
             return dataObject
 
-        if status not in status_list:
+        if status not in STATUS_LIST:
             return "Error, status not recognized"
 
         for key in registry.keys():

@@ -13,5 +13,7 @@
 <include package=".dataset_get" />
 <include package=".datarequest_status_patch" />
 <include package=".datarequest_delete" />
+
+<include package=".conversion_table" />
 </configure>
 
