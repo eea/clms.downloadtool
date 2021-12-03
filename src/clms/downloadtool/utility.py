@@ -28,7 +28,7 @@ from zope.annotation.interfaces import IAnnotations
 from zope.interface import implementer
 from zope.interface import Interface
 from zope.site.hooks import getSite
-from clms.downloadtool.api.services.utils import ANNOTATION_KEY, STATUS_LIST
+from clms.downloadtool.utils import ANNOTATION_KEY, STATUS_LIST
 
 log = getLogger(__name__)
 
