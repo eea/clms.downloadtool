@@ -272,7 +272,6 @@ class DataRequestPost(Service):
                     {"DatasetOrigin": ""}
                 )
 
-
             data_object["Datasets"].append(response_json)
 
         response_json = utility.datarequest_post(data_object["Datasets"])
