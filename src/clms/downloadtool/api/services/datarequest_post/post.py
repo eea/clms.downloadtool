@@ -242,7 +242,7 @@ class DataRequestPost(Service):
                 )
                 if dataset_json is not None:
                     # pylint: disable=line-too-long
-                    dataset_string +=  r', "FileID": "' + dataset_json["FileID"] + r'"'  # noqa
+                    dataset_string += r', "FileID": "' + dataset_json["FileID"] + r'"'  # noqa
                     dataset_string += r', "FilePath": "' + file_path + r'"'
 
                     response_json.update({"FileID": dataset_json["FileID"]})

@@ -191,7 +191,8 @@ class DownloadToolUtility():
         # datasets = r.json()
         # return datasets["items"]
         brains = api.content.find(portal_type="DataSet")
-        items = getMultiAdapter((brains, getRequest()), ISerializeToJson)(fullobjects=True)
+        # pylint: disable=line-too-long
+        items = getMultiAdapter((brains, getRequest()), ISerializeToJson)(fullobjects=True)  # noqa
         return items.get('items', [])
 
     def get_item(self, key):
