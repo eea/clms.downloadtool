@@ -132,15 +132,11 @@ class DataRequestPost(Service):
 
             if (
                 # pylint: disable=line-too-long
-                "DatasetFormat" in dataset_json
-                or "OutputFormat" in dataset_json  # noqa
+                "DatasetFormat" in dataset_json or "OutputFormat" in dataset_json  # noqa
             ):
                 if (
                     # pylint: disable=line-too-long
-                    "DatasetFormat" not in dataset_json
-                    and "OutputFormat" in dataset_json
-                    or "DatasetFormat" in dataset_json
-                    and "OutputFormat" not in dataset_json  # noqa: E501
+                    "DatasetFormat" not in dataset_json and "OutputFormat" in dataset_json or "DatasetFormat" in dataset_json and "OutputFormat" not in dataset_json  # noqa: E501
                 ):
                     self.request.response.setStatus(400)
                     return {
@@ -149,9 +145,7 @@ class DataRequestPost(Service):
                     }
                 if (
                     # pylint: disable=line-too-long
-                    dataset_json["DatasetFormat"] not in DATASET_FORMATS
-                    or dataset_json["OutputFormat"]
-                    not in DATASET_FORMATS  # noqa: E501
+                    dataset_json["DatasetFormat"] not in DATASET_FORMATS or dataset_json["OutputFormat"] not in DATASET_FORMATS  # noqa: E501
                 ):
                     self.request.response.setStatus(400)
                     return {
@@ -160,12 +154,7 @@ class DataRequestPost(Service):
                     }
                 if (
                     # pylint: disable=line-too-long
-                    "GML" in dataset_json["DatasetFormat"]
-                    or not FORMAT_CONVERSION_TABLE[
-                        dataset_json["DatasetFormat"]
-                    ][
-                        dataset_json["OutputFormat"]
-                    ]  # noqa: E501
+                    "GML" in dataset_json["DatasetFormat"] or not FORMAT_CONVERSION_TABLE[dataset_json["DatasetFormat"]][dataset_json["OutputFormat"]]  # noqa: E501
                 ):
                     self.request.response.setStatus(400)
                     return {
@@ -173,16 +162,10 @@ class DataRequestPost(Service):
                         "msg": "Error, specified data formats are "
                         "not supported",
                     }
-                dataset_string += (
-                    r', "DatasetFormat": "'
-                    + dataset_json["DatasetFormat"]
-                    + r'"'
-                )
-                dataset_string += (
-                    r', "OutputFormat": "'
-                    + dataset_json["OutputFormat"]
-                    + r'"'
-                )
+                # pylint: disable=line-too-long
+                dataset_string += r', "DatasetFormat": "' + dataset_json["DatasetFormat"] + r'"'  # noqa
+                # pylint: disable=line-too-long
+                dataset_string += r', "OutputFormat": "' + dataset_json["OutputFormat"] + r'"'  # noqa
                 response_json.update(
                     {
                         "DatasetFormat": dataset_json["DatasetFormat"],
@@ -192,9 +175,8 @@ class DataRequestPost(Service):
 
             if "TemporalFilter" in dataset_json:
                 log.info(validateDate1(dataset_json["TemporalFilter"]))
-                if not validateDate1(
-                    dataset_json["TemporalFilter"]
-                ) and not validateDate2(dataset_json["TemporalFilter"]):
+                # pylint: disable=line-too-long
+                if not validateDate1(dataset_json["TemporalFilter"]) and not validateDate2(dataset_json["TemporalFilter"]):  # noqa
                     self.request.response.setStatus(400)
                     return {
                         "status": "error",
@@ -219,9 +201,7 @@ class DataRequestPost(Service):
 
                 if (
                     # pylint: disable=line-too-long
-                    "StartDate" not in dataset_json["TemporalFilter"].keys()
-                    or "EndDate"
-                    not in dataset_json["TemporalFilter"].keys()  # noqa: E501
+                    "StartDate" not in dataset_json["TemporalFilter"].keys() or "EndDate" not in dataset_json["TemporalFilter"].keys()  # noqa: E501
                 ):
                     self.request.response.setStatus(400)
                     return {
@@ -261,9 +241,8 @@ class DataRequestPost(Service):
                     dataset_object, dataset_json["FileID"]
                 )
                 if dataset_json is not None:
-                    dataset_string += (
-                        r', "FileID": "' + dataset_json["FileID"] + r'"'
-                    )
+                    # pylint: disable=line-too-long
+                    dataset_string +=  r', "FileID": "' + dataset_json["FileID"] + r'"'  # noqa
                     dataset_string += r', "FilePath": "' + file_path + r'"'
 
                     response_json.update({"FileID": dataset_json["FileID"]})
@@ -276,9 +255,8 @@ class DataRequestPost(Service):
                     }
 
             # In any case, get the dataset_full_path and use it.
-            dataset_string += (
-                r', "DatasetPath": "' + dataset_object.dataset_full_path + r'"'
-            )
+            # pylint: disable=line-too-long
+            dataset_string += r', "DatasetPath": "' + dataset_object.dataset_full_path + r'"'  # noqa
             response_json.update(
                 {"DatasetPath": dataset_object.dataset_full_path}
             )
