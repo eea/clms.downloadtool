@@ -28,6 +28,23 @@ log = getLogger(__name__)
 class DataRequestPost(Service):
     """Set Data"""
 
+    def get_dataset_by_uid(self, uid):
+        """ get the dataset by UID"""
+        brains = api.content.find(UID=uid)
+        if brains:
+            return brains[0].getObject()
+
+        return None
+
+    def get_dataset_file_path_from_file_id(self, dataset_object, file_id):
+        """ get the dataset file path from the file id"""
+        downloadable_files_json = dataset_object.downloadable_files
+        for file_object in downloadable_files_json.get("items", []):
+            if file_object.get("@id") == file_id:
+                return file_object.get("file_path", "")
+
+        return None
+
     def reply(self):
         """ JSON response """
         body = json_body(self.request)
@@ -44,9 +61,6 @@ class DataRequestPost(Service):
         valid_dataset = False
 
         utility = getUtility(IDownloadToolUtility)
-        datasets = utility.get_dataset_info()
-
-        log.info(datasets_json)
 
         for dataset_json in datasets_json:
 
@@ -59,13 +73,10 @@ class DataRequestPost(Service):
                     "msg": "Error, DatasetID is not defined",
                 }
             valid_dataset = False
-            dataset_download = []
 
-            for dataset in datasets:
-                if dataset_json["DatasetID"] == dataset["@id"]:
-                    log.info(dataset)
-                    valid_dataset = True
-                    dataset_download.append(dataset_json["DatasetID"])
+            dataset_object = self.get_dataset_by_uid(dataset_json["DatasetID"])
+            if dataset_object is not None:
+                valid_dataset = True
 
             if not valid_dataset:
                 self.request.response.setStatus(400)
@@ -77,12 +88,12 @@ class DataRequestPost(Service):
             response_json.update({"DatasetID": dataset_json["DatasetID"]})
 
             if len(dataset_string) == 1:
-                dataset_string += r'"DatasetID": "'.join(
-                    dataset_json["DatasetID"] + r'"'
+                dataset_string += (
+                    r'"DatasetID": "' + dataset_json["DatasetID"] + r'"'
                 )
             else:
-                dataset_string += r'},{"DatasetID": "'.join(
-                    dataset_json["DatasetID"] + r'"'
+                dataset_string += (
+                    r'},{"DatasetID": "' + dataset_json["DatasetID"] + r'"'
                 )
 
             if "NUTSID" in dataset_json:
@@ -90,8 +101,8 @@ class DataRequestPost(Service):
                     self.request.response.setStatus(400)
                     return {"status": "error", "msg": "NUTSID country error"}
                 response_json.update({"NUTSID": dataset_json["NUTSID"]})
-                dataset_string += r', "NUTSID": "'.join(
-                    dataset_json["NUTSID"] + r'"'
+                dataset_string += (
+                    r', "NUTSID": "' + dataset_json["NUTSID"] + r'"'
                 )
 
             if "BoundingBox" in dataset_json:
@@ -151,12 +162,10 @@ class DataRequestPost(Service):
                         "msg": "Error, specified data formats are "
                         "not supported",
                     }
-                dataset_string += r', "DatasetFormat": "'.join(
-                    dataset_json["DatasetFormat"] + r'"'
-                )
-                dataset_string += r', "OutputFormat": "'.join(
-                    dataset_json["OutputFormat"] + r'"'
-                )
+                # pylint: disable=line-too-long
+                dataset_string += r', "DatasetFormat": "' + dataset_json["DatasetFormat"] + r'"'  # noqa
+                # pylint: disable=line-too-long
+                dataset_string += r', "OutputFormat": "' + dataset_json["OutputFormat"] + r'"'  # noqa
                 response_json.update(
                     {
                         "DatasetFormat": dataset_json["DatasetFormat"],
@@ -166,9 +175,8 @@ class DataRequestPost(Service):
 
             if "TemporalFilter" in dataset_json:
                 log.info(validateDate1(dataset_json["TemporalFilter"]))
-                if not validateDate1(
-                    dataset_json["TemporalFilter"]
-                ) and not validateDate2(dataset_json["TemporalFilter"]):
+                # pylint: disable=line-too-long
+                if not validateDate1(dataset_json["TemporalFilter"]) and not validateDate2(dataset_json["TemporalFilter"]):  # noqa
                     self.request.response.setStatus(400)
                     return {
                         "status": "error",
@@ -205,8 +213,8 @@ class DataRequestPost(Service):
                 response_json.update(
                     {"TemporalFilter": dataset_json["TemporalFilter"]}
                 )
-                dataset_string += r', "TemporalFilter": '.join(
-                    json.dumps(dataset_json["TemporalFilter"])
+                dataset_string += r', "TemporalFilter": ' + json.dumps(
+                    dataset_json["TemporalFilter"]
                 )
 
             if "OutputGCS" in dataset_json:
@@ -217,26 +225,52 @@ class DataRequestPost(Service):
                         "msg": "Error, defined GCS not in the list",
                     }
                 response_json.update({"OutputGCS": dataset_json["OutputGCS"]})
-                dataset_string += r', "OutputGCS": "'.join(
-                    dataset_json["OutputGCS"] + r'"'
+                dataset_string += (
+                    r', "OutputGCS": "' + dataset_json["OutputGCS"] + r'"'
                 )
 
             response_json["Status"] = "In_progress"
 
-            endpoint_data = getPathUID(response_json["DatasetID"])
-            dataset_string += r', "FileID": "'.join(
-                endpoint_data["FileID"] + r'"'
-            )
-            dataset_string += r', "FilePath": "'.join(
-                endpoint_data["FilePath"] + r'"'
-            )
-            dataset_string += r', "DatasetPath": "'.join(
-                endpoint_data["DatasetPath"] + r'"'
+            # Handle FileID requests:
+            # - get first the file_path from the dataset using the file_id
+            # - if something is returned use it as FileID and FilePath
+            # - if not return an error stating that the requested FileID is
+            #   not valid
+            if "FileID" in dataset_json:
+                file_path = self.get_dataset_file_path_from_file_id(
+                    dataset_object, dataset_json["FileID"]
+                )
+                if dataset_json is not None:
+                    # pylint: disable=line-too-long
+                    dataset_string += r', "FileID": "' + dataset_json["FileID"] + r'"'  # noqa
+                    dataset_string += r', "FilePath": "' + file_path + r'"'
+
+                    response_json.update({"FileID": dataset_json["FileID"]})
+                    response_json.update({"FilePath": file_path})
+                else:
+                    self.request.response.setStatus(400)
+                    return {
+                        "status": "error",
+                        "msg": "Error, the FileID is not valid",
+                    }
+
+            # In any case, get the dataset_full_path and use it.
+            # pylint: disable=line-too-long
+            dataset_string += r', "DatasetPath": "' + dataset_object.dataset_full_path + r'"'  # noqa
+            response_json.update(
+                {"DatasetPath": dataset_object.dataset_full_path}
             )
 
-            response_json.update({"DatasetPath": endpoint_data["DatasetPath"]})
-            response_json.update({"FilePath": endpoint_data["FilePath"]})
-            response_json.update({"FileID": endpoint_data["FileID"]})
+            if dataset_object.dataset_full_source is not None:
+                dataset_string += r', "DatasetOrigin": "' + dataset_object.dataset_full_source + r'"'  # noqa
+                response_json.update(
+                    {"DatasetOrigin": dataset_object.dataset_full_source}
+                )
+            else:
+                dataset_string += r', "DatasetOrigin": "' + "" + r'"'  # noqa
+                response_json.update(
+                    {"DatasetOrigin": ""}
+                )
 
             data_object["Datasets"].append(response_json)
 
@@ -291,8 +325,12 @@ class DataRequestPost(Service):
 
         body = json.dumps(params).encode("utf-8")
 
-        FME_URL = api.portal.get_registry_record('clms.addon.url')
-        FME_TOKEN = api.portal.get_registry_record('clms.addon.fme_token')
+        FME_URL = api.portal.get_registry_record(
+            "clms.addon.fme_config_controlpanel.url"
+        )
+        FME_TOKEN = api.portal.get_registry_record(
+            "clms.addon.fme_config_controlpanel.fme_token"
+        )
         headers = {
             "Content-Type": "application/json; charset=utf-8",
             "Accept": "application/json",
@@ -381,35 +419,3 @@ def get_task_id(params):
     """GetTaskID Method"""
     for item in params:
         return item
-
-
-def getPathUID(dataset_id):
-    """GetPathUID Method"""
-    url = "https://clmsdemo.devel6cph.eea.europa.eu/".join(
-        "api/@search?portal_type=DataSet&fullobjects=True"
-    )
-
-    request_headers = {
-        "Content-Type": "application/json; charset=utf-8",
-        "Accept": "application/json",
-        "Authorization": "Basic YWRtaW46YWRtaW4=",
-    }
-
-    req = urllib.request.Request(url, headers=request_headers)
-
-    with urllib.request.urlopen(req) as r:
-        read_request = r.read()
-        resp = read_request.decode("utf-8")
-        resp = json.loads(resp)
-        value = {}
-        file_values = {}
-        for element in resp["items"]:
-            if dataset_id == element["@id"]:
-                value = element
-                for index in value["downloadable_files"]["items"]:
-                    file_values = {"FileID": index["@id"]}
-                    file_values["FilePath"] = index["path"]
-
-        file_values["UID"] = value["UID"]
-        file_values["DatasetPath"] = value["dataset_full_path"]
-        return file_values
