@@ -22,14 +22,13 @@ We have to understand the utility as being a Singleton object.
 """
 from logging import getLogger
 import random
-import requests
 
 from plone import api
-from zope.component import getMultiAdapter
-from zope.globalrequest import getRequest
 from plone.restapi.interfaces import ISerializeToJson
 from persistent.mapping import PersistentMapping
 from zope.annotation.interfaces import IAnnotations
+from zope.component import getMultiAdapter
+from zope.globalrequest import getRequest
 from zope.interface import implementer
 from zope.interface import Interface
 from zope.site.hooks import getSite
@@ -184,12 +183,6 @@ class DownloadToolUtility():
     def get_dataset_info(self):
         """ GetDatasetInfo method
         """
-        # url = "https://clmsdemo.devel6cph.eea.europa.eu/api/en/"
-        # url.join("@search?portal_type=DataSet")
-        # r = requests.get(url, headers={"Accept": "application/json"})
-
-        # datasets = r.json()
-        # return datasets["items"]
         brains = api.content.find(portal_type="DataSet")
         # pylint: disable=line-too-long
         items = getMultiAdapter((brains, getRequest()), ISerializeToJson)(fullobjects=True)  # noqa
