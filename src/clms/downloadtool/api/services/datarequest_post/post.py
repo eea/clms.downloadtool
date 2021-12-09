@@ -261,6 +261,18 @@ class DataRequestPost(Service):
                 {"DatasetPath": dataset_object.dataset_full_path}
             )
 
+            if dataset_object.dataset_full_source is not None:
+                dataset_string += r', "DatasetOrigin": "' + dataset_object.dataset_full_source + r'"'  # noqa
+                response_json.update(
+                    {"DatasetOrigin": dataset_object.dataset_full_source}
+                )
+            else:
+                dataset_string += r', "DatasetOrigin": "' + "" + r'"'  # noqa
+                response_json.update(
+                    {"DatasetOrigin": ""}
+                )
+
+
             data_object["Datasets"].append(response_json)
 
         response_json = utility.datarequest_post(data_object["Datasets"])
