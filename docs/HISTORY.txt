@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.4 - (2021-12-09)
+---------------------------
+* Change: changes in downloadtool
+  [erral]
+
 0.3 - (2021-12-03)
 ---------------------------
 * Change: Develop
