@@ -15,5 +15,6 @@
 <include package=".datarequest_delete" />
 
 <include package=".conversion_table" />
+<include package=".projections" />
 </configure>
 
