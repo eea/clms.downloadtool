@@ -13,6 +13,8 @@ from plone import api
 from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
 from zope.component import getUtility
+from clms.statstool.utility import IDownloadStatsUtility
+from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import (
     COUNTRIES,
@@ -30,7 +32,9 @@ class DataRequestPost(Service):
 
     def get_dataset_by_uid(self, uid):
         """ get the dataset by UID"""
-        brains = api.content.find(UID=uid)
+        log.info(api.content)
+        brains = api.content.get(UID=uid)
+        log.info(brains)
         if brains:
             return brains[0].getObject()
 
@@ -77,7 +81,7 @@ class DataRequestPost(Service):
             dataset_object = self.get_dataset_by_uid(dataset_json["DatasetID"])
             if dataset_object is not None:
                 valid_dataset = True
-
+            log.info(dataset_json["DatasetID"])
             if not valid_dataset:
                 self.request.response.setStatus(400)
                 return {
@@ -129,49 +133,6 @@ class DataRequestPost(Service):
                 )
                 dataset_string = dataset_string[:-2]
                 dataset_string += r"]"
-
-            if (
-                # pylint: disable=line-too-long
-                "DatasetFormat" in dataset_json or "OutputFormat" in dataset_json  # noqa
-            ):
-                if (
-                    # pylint: disable=line-too-long
-                    "DatasetFormat" not in dataset_json and "OutputFormat" in dataset_json or "DatasetFormat" in dataset_json and "OutputFormat" not in dataset_json  # noqa: E501
-                ):
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, you need to specify both formats",
-                    }
-                if (
-                    # pylint: disable=line-too-long
-                    dataset_json["DatasetFormat"] not in DATASET_FORMATS or dataset_json["OutputFormat"] not in DATASET_FORMATS  # noqa: E501
-                ):
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, specified formats are not in the list",
-                    }
-                if (
-                    # pylint: disable=line-too-long
-                    "GML" in dataset_json["DatasetFormat"] or not FORMAT_CONVERSION_TABLE[dataset_json["DatasetFormat"]][dataset_json["OutputFormat"]]  # noqa: E501
-                ):
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, specified data formats are "
-                        "not supported",
-                    }
-                # pylint: disable=line-too-long
-                dataset_string += r', "DatasetFormat": "' + dataset_json["DatasetFormat"] + r'"'  # noqa
-                # pylint: disable=line-too-long
-                dataset_string += r', "OutputFormat": "' + dataset_json["OutputFormat"] + r'"'  # noqa
-                response_json.update(
-                    {
-                        "DatasetFormat": dataset_json["DatasetFormat"],
-                        "OutputFormat": dataset_json["OutputFormat"],
-                    }
-                )
 
             if "TemporalFilter" in dataset_json:
                 log.info(validateDate1(dataset_json["TemporalFilter"]))
@@ -256,20 +217,29 @@ class DataRequestPost(Service):
 
             # In any case, get the dataset_full_path and use it.
             # pylint: disable=line-too-long
+            dataset_string += r', "DatasetFormat": "' + dataset_object.dataset_full_format + r'"'  # noqa
+            # pylint: disable=line-too-long
+            dataset_string += r', "OutputFormat": "' + dataset_json["OutputFormat"] + r'"'  # noqa
+            response_json.update(
+                {
+                    "DatasetFormat": dataset_object.dataset_full_format,
+                    "OutputFormat": dataset_json["OutputFormat"],
+                }
+            )
             dataset_string += r', "DatasetPath": "' + dataset_object.dataset_full_path + r'"'  # noqa
             response_json.update(
                 {"DatasetPath": dataset_object.dataset_full_path}
             )
 
             if dataset_object.dataset_full_source is not None:
-                dataset_string += r', "DatasetOrigin": "' + dataset_object.dataset_full_source + r'"'  # noqa
+                dataset_string += r', "DatasetSource": "' + dataset_object.dataset_full_source + r'"'  # noqa
                 response_json.update(
-                    {"DatasetOrigin": dataset_object.dataset_full_source}
+                    {"DatasetSource": dataset_object.dataset_full_source}
                 )
             else:
-                dataset_string += r', "DatasetOrigin": "' + "" + r'"'  # noqa
+                dataset_string += r', "DatasetSource": "' + "" + r'"'  # noqa
                 response_json.update(
-                    {"DatasetOrigin": ""}
+                    {"DatasetSource": ""}
                 )
 
             data_object["Datasets"].append(response_json)
@@ -302,26 +272,20 @@ class DataRequestPost(Service):
             ]
         }
 
-        # stats_params = {
-        #    "Start": "",
-        #    "User": str(user_id),
-        #    "Dataset": response_json["DatasetID"],
-        #    "TransformationData": datasets,
-        #    "TaskID": get_task_id(response_json),
-        #    "End": "",
-        #    "TransformationDuration": "",
-        #    "TransformationSize": "",
-        #    "TransformationResultData": "",
-        #    "Successful": ""
-        # }
+        stats_params = {
+            "Start": "",
+            "User": str(user_id),
+            "Dataset": response_json["DatasetID"],
+            "TransformationData": datasets,
+            "TaskID": get_task_id(response_json),
+            "End": "",
+            "TransformationDuration": "",
+            "TransformationSize": "",
+            "TransformationResultData": "",
+            "Successful": ""
+         }
+        save_stats(stats_params)
 
-        # Statstool request
-        # stats_body = json.loads(json.dumps(stats_params))
-        # headers = {"Content-Type": "application/json; charset=utf-8",
-        #  "Accept": "application/json" }
-        # import requests
-        # req = requests.post(stats_url, auth=('admin','admin'),
-        #  json=stats_body, headers=headers)
 
         body = json.dumps(params).encode("utf-8")
 
@@ -343,7 +307,7 @@ class DataRequestPost(Service):
             resp = resp.decode("utf-8")
             resp = json.loads(resp)
             self.request.response.setStatus(201)
-            return resp
+            return resp 
 
 
 def validateDate1(temporal_filter):
@@ -419,3 +383,8 @@ def get_task_id(params):
     """GetTaskID Method"""
     for item in params:
         return item
+
+
+def save_stats(stats_json):
+    utility = getUtility(IDownloadStatsUtility)
+    utility.register_item(stats_json)
