@@ -265,7 +265,8 @@ class DataRequestPost(Service):
         stats_params = {
             "Start": "",
             "User": str(user_id),
-            "Dataset": [item['DatasetID'] for item in response_json.get(get_task_id(response_json), [])],
+            # pylint: disable=line-too-long
+            "Dataset": [item['DatasetID'] for item in response_json.get(get_task_id(response_json), [])],  # noqa
             "TransformationData": datasets,
             "TaskID": get_task_id(response_json),
             "End": "",
@@ -302,7 +303,7 @@ class DataRequestPost(Service):
             from logging import getLogger
             log = getLogger(__name__)
             # pylint: disable=line-too-long
-            log.info('There was an error registering the download request in FME: %s' % (json.dumps(body))) # noqa
+            log.info('There was an error registering the download request in FME: %s' % (json.dumps(body)))  # noqa
             self.request.response.setStatus(500)
             return {}
 
@@ -386,4 +387,5 @@ def save_stats(stats_json):
     except:
         from logging import getLogger
         log = getLogger(__name__)
-        log.info("There was an error saving the stats: %s" % json.dumps(stats_json))
+        # pylint: disable=line-too-long
+        log.info("There was an error saving the stats: %s" % json.dumps(stats_json))  # noqa
