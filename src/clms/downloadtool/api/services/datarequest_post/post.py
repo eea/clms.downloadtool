@@ -13,11 +13,10 @@ from plone import api
 from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
 from zope.component import getUtility
+from clms.statstool.utility import IDownloadStatsUtility
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import (
     COUNTRIES,
-    DATASET_FORMATS,
-    FORMAT_CONVERSION_TABLE,
     GCS,
 )
 
@@ -63,9 +62,6 @@ class DataRequestPost(Service):
         utility = getUtility(IDownloadToolUtility)
 
         for dataset_json in datasets_json:
-
-            log.info(user_id)
-            log.info(dataset_json)
             if not dataset_json["DatasetID"]:
                 self.request.response.setStatus(400)
                 return {
@@ -96,141 +92,6 @@ class DataRequestPost(Service):
                     r'},{"DatasetID": "' + dataset_json["DatasetID"] + r'"'
                 )
 
-            if "NUTSID" in dataset_json:
-                if not validateNuts(dataset_json["NUTSID"]):
-                    self.request.response.setStatus(400)
-                    return {"status": "error", "msg": "NUTSID country error"}
-                response_json.update({"NUTSID": dataset_json["NUTSID"]})
-                dataset_string += (
-                    r', "NUTSID": "' + dataset_json["NUTSID"] + r'"'
-                )
-
-            if "BoundingBox" in dataset_json:
-                if "NUTSID" in dataset_json:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, NUTSID is also defined",
-                    }
-
-                if not validateSpatialExtent(dataset_json["BoundingBox"]):
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, BoundingBox is not valid",
-                    }
-
-                response_json.update(
-                    {"BoundingBox": dataset_json["BoundingBox"]}
-                )
-                dataset_string += r', "BoundingBox":['
-                dataset_string += r"".join(
-                    str(e) + ", " for e in dataset_json["BoundingBox"]
-                )
-                dataset_string = dataset_string[:-2]
-                dataset_string += r"]"
-
-            if (
-                # pylint: disable=line-too-long
-                "DatasetFormat" in dataset_json or "OutputFormat" in dataset_json  # noqa
-            ):
-                if (
-                    # pylint: disable=line-too-long
-                    "DatasetFormat" not in dataset_json and "OutputFormat" in dataset_json or "DatasetFormat" in dataset_json and "OutputFormat" not in dataset_json  # noqa: E501
-                ):
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, you need to specify both formats",
-                    }
-                if (
-                    # pylint: disable=line-too-long
-                    dataset_json["DatasetFormat"] not in DATASET_FORMATS or dataset_json["OutputFormat"] not in DATASET_FORMATS  # noqa: E501
-                ):
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, specified formats are not in the list",
-                    }
-                if (
-                    # pylint: disable=line-too-long
-                    "GML" in dataset_json["DatasetFormat"] or not FORMAT_CONVERSION_TABLE[dataset_json["DatasetFormat"]][dataset_json["OutputFormat"]]  # noqa: E501
-                ):
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, specified data formats are "
-                        "not supported",
-                    }
-                # pylint: disable=line-too-long
-                dataset_string += r', "DatasetFormat": "' + dataset_json["DatasetFormat"] + r'"'  # noqa
-                # pylint: disable=line-too-long
-                dataset_string += r', "OutputFormat": "' + dataset_json["OutputFormat"] + r'"'  # noqa
-                response_json.update(
-                    {
-                        "DatasetFormat": dataset_json["DatasetFormat"],
-                        "OutputFormat": dataset_json["OutputFormat"],
-                    }
-                )
-
-            if "TemporalFilter" in dataset_json:
-                log.info(validateDate1(dataset_json["TemporalFilter"]))
-                # pylint: disable=line-too-long
-                if not validateDate1(dataset_json["TemporalFilter"]) and not validateDate2(dataset_json["TemporalFilter"]):  # noqa
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, date format is not correct",
-                    }
-
-                if not checkDateDifference(dataset_json["TemporalFilter"]):
-                    self.request.response.setStatus(400)
-                    # pylint: disable=line-too-long
-                    return {
-                        "status": "error",
-                        "msg": "Error, difference between StartDate "
-                        " and EndDate is not coherent",
-                    }
-
-                if len(dataset_json["TemporalFilter"].keys()) > 2:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, TemporalFilter has too many fields",
-                    }
-
-                if (
-                    # pylint: disable=line-too-long
-                    "StartDate" not in dataset_json["TemporalFilter"].keys() or "EndDate" not in dataset_json["TemporalFilter"].keys()  # noqa: E501
-                ):
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, TemporalFilter does "
-                        " not have StartDate or EndDate",
-                    }
-
-                response_json.update(
-                    {"TemporalFilter": dataset_json["TemporalFilter"]}
-                )
-                dataset_string += r', "TemporalFilter": ' + json.dumps(
-                    dataset_json["TemporalFilter"]
-                )
-
-            if "OutputGCS" in dataset_json:
-                if dataset_json["OutputGCS"] not in GCS:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, defined GCS not in the list",
-                    }
-                response_json.update({"OutputGCS": dataset_json["OutputGCS"]})
-                dataset_string += (
-                    r', "OutputGCS": "' + dataset_json["OutputGCS"] + r'"'
-                )
-
-            response_json["Status"] = "In_progress"
-
             # Handle FileID requests:
             # - get first the file_path from the dataset using the file_id
             # - if something is returned use it as FileID and FilePath
@@ -242,7 +103,9 @@ class DataRequestPost(Service):
                 )
                 if dataset_json is not None:
                     # pylint: disable=line-too-long
-                    dataset_string += r', "FileID": "' + dataset_json["FileID"] + r'"'  # noqa
+                    dataset_string += (
+                        r', "FileID": "' + dataset_json["FileID"] + r'"'
+                    )  # noqa
                     dataset_string += r', "FilePath": "' + file_path + r'"'
 
                     response_json.update({"FileID": dataset_json["FileID"]})
@@ -253,40 +116,155 @@ class DataRequestPost(Service):
                         "status": "error",
                         "msg": "Error, the FileID is not valid",
                     }
+            else:
 
-            # In any case, get the dataset_full_path and use it.
+                if "NUTSID" in dataset_json:
+                    if not validateNuts(dataset_json["NUTSID"]):
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": "NUTSID country error",
+                        }
+                    response_json.update({"NUTSID": dataset_json["NUTSID"]})
+                    dataset_string += (
+                        r', "NUTSID": "' + dataset_json["NUTSID"] + r'"'
+                    )
+
+                if "BoundingBox" in dataset_json:
+                    if "NUTSID" in dataset_json:
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": "Error, NUTSID is also defined",
+                        }
+
+                    if not validateSpatialExtent(dataset_json["BoundingBox"]):
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": "Error, BoundingBox is not valid",
+                        }
+
+                    response_json.update(
+                        {"BoundingBox": dataset_json["BoundingBox"]}
+                    )
+                    dataset_string += r', "BoundingBox":['
+                    dataset_string += r"".join(
+                        str(e) + ", " for e in dataset_json["BoundingBox"]
+                    )
+                    dataset_string = dataset_string[:-2]
+                    dataset_string += r"]"
+
+                if "TemporalFilter" in dataset_json:
+                    # pylint: disable=line-too-long
+                    if not validateDate1(
+                        dataset_json["TemporalFilter"]
+                    ) and not validateDate2(
+                        dataset_json["TemporalFilter"]
+                    ):  # noqa
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": "Error, date format is not correct",
+                        }
+
+                    if not checkDateDifference(dataset_json["TemporalFilter"]):
+                        self.request.response.setStatus(400)
+                        # pylint: disable=line-too-long
+                        return {
+                            "status": "error",
+                            "msg": (
+                                "Error, difference between StartDate "
+                                " and EndDate is not coherent"
+                            ),
+                        }
+
+                    if len(dataset_json["TemporalFilter"].keys()) > 2:
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": "Error, TemporalFilter has too many fields",
+                        }
+
+                    if (
+                        # pylint: disable=line-too-long
+                        "StartDate" not in dataset_json["TemporalFilter"].keys() or "EndDate" not in dataset_json["TemporalFilter"].keys()  # noqa: E501
+                    ):
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": (
+                                "Error, TemporalFilter does "
+                                " not have StartDate or EndDate"
+                            ),
+                        }
+
+                    response_json.update(
+                        {"TemporalFilter": dataset_json["TemporalFilter"]}
+                    )
+                    dataset_string += r', "TemporalFilter": ' + json.dumps(
+                        dataset_json["TemporalFilter"]
+                    )
+
+                if "OutputGCS" in dataset_json:
+                    if dataset_json["OutputGCS"] not in GCS:
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": "Error, defined GCS not in the list",
+                        }
+                    response_json.update(
+                        {"OutputGCS": dataset_json["OutputGCS"]}
+                    )
+                    dataset_string += (
+                        r', "OutputGCS": "' + dataset_json["OutputGCS"] + r'"'
+                    )
+
+            response_json["Status"] = "In_progress"
+
+            # Quick check if the dataset format value is None
+            dataset_full_format = dataset_object.dataset_full_format
+            if dataset_full_format is None:
+                dataset_full_format = ""
             # pylint: disable=line-too-long
-            dataset_string += r', "DatasetPath": "' + dataset_object.dataset_full_path + r'"'  # noqa
+            dataset_string += (
+                r', "DatasetFormat": "' + dataset_full_format + r'"'
+            )  # noqa
+            # pylint: disable=line-too-long
+            dataset_string += r', "OutputFormat": "' + dataset_json.get("OutputFormat", "") + r'"'  # noqa
+            response_json.update(
+                {
+                    "DatasetFormat": dataset_object.dataset_full_format,
+                    "OutputFormat": dataset_json.get("OutputFormat", ""),
+                }
+            )
+            # In any case, get the dataset_full_path and use it.
+            dataset_string += (
+                r', "DatasetPath": "' + dataset_object.dataset_full_path + r'"'
+            )  # noqa
             response_json.update(
                 {"DatasetPath": dataset_object.dataset_full_path}
             )
 
             if dataset_object.dataset_full_source is not None:
-                dataset_string += r', "DatasetOrigin": "' + dataset_object.dataset_full_source + r'"'  # noqa
+                dataset_string += r', "DatasetSource": "' + dataset_object.dataset_full_source + r'"'  # noqa
                 response_json.update(
-                    {"DatasetOrigin": dataset_object.dataset_full_source}
+                    {"DatasetSource": dataset_object.dataset_full_source}
                 )
             else:
-                dataset_string += r', "DatasetOrigin": "' + "" + r'"'  # noqa
-                response_json.update(
-                    {"DatasetOrigin": ""}
-                )
+                dataset_string += r', "DatasetSource": "' + "" + r'"'  # noqa
+                response_json.update({"DatasetSource": ""})
 
             data_object["Datasets"].append(response_json)
 
         response_json = utility.datarequest_post(data_object["Datasets"])
 
-        log.info(response_json)
         dataset_string += r"}"
-        log.info(dataset_string)
 
         datasets = r"{"
         datasets += r'    "Datasets": [' + dataset_string + "]"
         datasets += r"}"
 
-        log.info(user_id)
-        log.info(str(user_id))
-        log.info(datasets)
         params = {
             "publishedParameters": [
                 {
@@ -302,26 +280,23 @@ class DataRequestPost(Service):
             ]
         }
 
-        # stats_params = {
-        #    "Start": "",
-        #    "User": str(user_id),
-        #    "Dataset": response_json["DatasetID"],
-        #    "TransformationData": datasets,
-        #    "TaskID": get_task_id(response_json),
-        #    "End": "",
-        #    "TransformationDuration": "",
-        #    "TransformationSize": "",
-        #    "TransformationResultData": "",
-        #    "Successful": ""
-        # }
-
-        # Statstool request
-        # stats_body = json.loads(json.dumps(stats_params))
-        # headers = {"Content-Type": "application/json; charset=utf-8",
-        #  "Accept": "application/json" }
-        # import requests
-        # req = requests.post(stats_url, auth=('admin','admin'),
-        #  json=stats_body, headers=headers)
+        stats_params = {
+            "Start": "",
+            "User": str(user_id),
+            # pylint: disable=line-too-long
+            "Dataset": [
+                item["DatasetID"]
+                for item in response_json.get(get_task_id(response_json), [])
+            ],  # noqa
+            "TransformationData": datasets,
+            "TaskID": get_task_id(response_json),
+            "End": "",
+            "TransformationDuration": "",
+            "TransformationSize": "",
+            "TransformationResultData": "",
+            "Successful": "",
+        }
+        save_stats(stats_params)
 
         body = json.dumps(params).encode("utf-8")
 
@@ -337,13 +312,22 @@ class DataRequestPost(Service):
             "Authorization": "fmetoken token={0}".format(FME_TOKEN),
         }
 
-        req = urllib.request.Request(FME_URL, data=body, headers=headers)
-        with urllib.request.urlopen(req) as r:
-            resp = r.read()
-            resp = resp.decode("utf-8")
-            resp = json.loads(resp)
-            self.request.response.setStatus(201)
-            return resp
+        try:
+            req = urllib.request.Request(FME_URL, data=body, headers=headers)
+            with urllib.request.urlopen(req) as r:
+                resp = r.read()
+                resp = resp.decode("utf-8")
+                resp = json.loads(resp)
+                self.request.response.setStatus(201)
+                return resp
+        except Exception:
+            # pylint: disable=line-too-long
+            log.info(
+                "There was an error registering the download request in"
+                " FME: %s", json.dumps(body)
+            )  # noqa
+            self.request.response.setStatus(500)
+            return {}
 
 
 def validateDate1(temporal_filter):
@@ -355,9 +339,7 @@ def validateDate1(temporal_filter):
     try:
         if start_date is not None and end_date is not None:
             date_obj1 = datetime.datetime.strptime(start_date, date_format)
-            log.info(date_obj1)
             date_obj2 = datetime.datetime.strptime(end_date, date_format)
-            log.info(date_obj2)
             return {"StartDate": date_obj1, "EndDate": date_obj2}
     except ValueError:
         log.info("Incorrect data format, should be YYYY-MM-DD")
@@ -374,9 +356,7 @@ def validateDate2(temporal_filter):
     try:
         if start_date and end_date:
             date_obj1 = datetime.datetime.strptime(start_date, date_format)
-            log.info(date_obj1)
             date_obj2 = datetime.datetime.strptime(end_date, date_format)
-            log.info(date_obj2)
             return {"StartDate": date_obj1, "EndDate": date_obj2}
     except ValueError:
         log.info("Incorrect data format, should be DD-MM-YYYY")
@@ -419,3 +399,15 @@ def get_task_id(params):
     """GetTaskID Method"""
     for item in params:
         return item
+
+
+def save_stats(stats_json):
+    """ save the stats in the download stats utility"""
+    try:
+        utility = getUtility(IDownloadStatsUtility)
+        utility.register_item(stats_json)
+    except Exception:
+        # pylint: disable=line-too-long
+        log.info(
+            "There was an error saving the stats: %s", json.dumps(stats_json)
+        )  # noqa

@@ -1,4 +1,4 @@
-FROM eeacms/plonesaas:5.2.2-2
+FROM eeacms/clms-backend:1.0.49
 
 RUN mkdir -p /plone/instance/src/clms.downloadtool/src
 COPY . /plone/instance/src/clms.downloadtool/
