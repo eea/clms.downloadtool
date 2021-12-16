@@ -274,7 +274,7 @@ class DataRequestPost(Service):
         stats_params = {
             "Start": "",
             "User": str(user_id),
-            "Dataset": response_json["DatasetID"],
+            "Dataset": [item['DatasetID'] for item in response_json.get(get_task_id(response_json), [])],
             "TransformationData": datasets,
             "TaskID": get_task_id(response_json),
             "End": "",
