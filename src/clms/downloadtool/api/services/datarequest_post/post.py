@@ -62,9 +62,6 @@ class DataRequestPost(Service):
         utility = getUtility(IDownloadToolUtility)
 
         for dataset_json in datasets_json:
-
-            log.info(user_id)
-            log.info(dataset_json)
             if not dataset_json["DatasetID"]:
                 self.request.response.setStatus(400)
                 return {
@@ -76,7 +73,7 @@ class DataRequestPost(Service):
             dataset_object = self.get_dataset_by_uid(dataset_json["DatasetID"])
             if dataset_object is not None:
                 valid_dataset = True
-            log.info(dataset_json["DatasetID"])
+
             if not valid_dataset:
                 self.request.response.setStatus(400)
                 return {
@@ -130,7 +127,6 @@ class DataRequestPost(Service):
                 dataset_string += r"]"
 
             if "TemporalFilter" in dataset_json:
-                log.info(validateDate1(dataset_json["TemporalFilter"]))
                 # pylint: disable=line-too-long
                 if not validateDate1(dataset_json["TemporalFilter"]) and not validateDate2(dataset_json["TemporalFilter"]):  # noqa
                     self.request.response.setStatus(400)
@@ -245,17 +241,12 @@ class DataRequestPost(Service):
 
         response_json = utility.datarequest_post(data_object["Datasets"])
 
-        log.info(response_json)
         dataset_string += r"}"
-        log.info(dataset_string)
 
         datasets = r"{"
         datasets += r'    "Datasets": [' + dataset_string + "]"
         datasets += r"}"
 
-        log.info(user_id)
-        log.info(str(user_id))
-        log.info(datasets)
         params = {
             "publishedParameters": [
                 {
@@ -325,9 +316,7 @@ def validateDate1(temporal_filter):
     try:
         if start_date is not None and end_date is not None:
             date_obj1 = datetime.datetime.strptime(start_date, date_format)
-            log.info(date_obj1)
             date_obj2 = datetime.datetime.strptime(end_date, date_format)
-            log.info(date_obj2)
             return {"StartDate": date_obj1, "EndDate": date_obj2}
     except ValueError:
         log.info("Incorrect data format, should be YYYY-MM-DD")
@@ -344,9 +333,7 @@ def validateDate2(temporal_filter):
     try:
         if start_date and end_date:
             date_obj1 = datetime.datetime.strptime(start_date, date_format)
-            log.info(date_obj1)
             date_obj2 = datetime.datetime.strptime(end_date, date_format)
-            log.info(date_obj2)
             return {"StartDate": date_obj1, "EndDate": date_obj2}
     except ValueError:
         log.info("Incorrect data format, should be DD-MM-YYYY")
