@@ -103,7 +103,9 @@ class DataRequestPost(Service):
                 )
                 if dataset_json is not None:
                     # pylint: disable=line-too-long
-                    dataset_string += r', "FileID": "' + dataset_json["FileID"] + r'"'  # noqa
+                    dataset_string += (
+                        r', "FileID": "' + dataset_json["FileID"] + r'"'
+                    )  # noqa
                     dataset_string += r', "FilePath": "' + file_path + r'"'
 
                     response_json.update({"FileID": dataset_json["FileID"]})
@@ -119,7 +121,10 @@ class DataRequestPost(Service):
                 if "NUTSID" in dataset_json:
                     if not validateNuts(dataset_json["NUTSID"]):
                         self.request.response.setStatus(400)
-                        return {"status": "error", "msg": "NUTSID country error"}
+                        return {
+                            "status": "error",
+                            "msg": "NUTSID country error",
+                        }
                     response_json.update({"NUTSID": dataset_json["NUTSID"]})
                     dataset_string += (
                         r', "NUTSID": "' + dataset_json["NUTSID"] + r'"'
@@ -152,7 +157,11 @@ class DataRequestPost(Service):
 
                 if "TemporalFilter" in dataset_json:
                     # pylint: disable=line-too-long
-                    if not validateDate1(dataset_json["TemporalFilter"]) and not validateDate2(dataset_json["TemporalFilter"]):  # noqa
+                    if not validateDate1(
+                        dataset_json["TemporalFilter"]
+                    ) and not validateDate2(
+                        dataset_json["TemporalFilter"]
+                    ):  # noqa
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
@@ -164,8 +173,10 @@ class DataRequestPost(Service):
                         # pylint: disable=line-too-long
                         return {
                             "status": "error",
-                            "msg": "Error, difference between StartDate "
-                            " and EndDate is not coherent",
+                            "msg": (
+                                "Error, difference between StartDate "
+                                " and EndDate is not coherent"
+                            ),
                         }
 
                     if len(dataset_json["TemporalFilter"].keys()) > 2:
@@ -177,13 +188,20 @@ class DataRequestPost(Service):
 
                     if (
                         # pylint: disable=line-too-long
-                        "StartDate" not in dataset_json["TemporalFilter"].keys() or "EndDate" not in dataset_json["TemporalFilter"].keys()  # noqa: E501
+                        "StartDate"
+                        not in dataset_json["TemporalFilter"].keys()
+                        or "EndDate"
+                        not in dataset_json[
+                            "TemporalFilter"
+                        ].keys()  # noqa: E501
                     ):
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
-                            "msg": "Error, TemporalFilter does "
-                            " not have StartDate or EndDate",
+                            "msg": (
+                                "Error, TemporalFilter does "
+                                " not have StartDate or EndDate"
+                            ),
                         }
 
                     response_json.update(
@@ -200,7 +218,9 @@ class DataRequestPost(Service):
                             "status": "error",
                             "msg": "Error, defined GCS not in the list",
                         }
-                    response_json.update({"OutputGCS": dataset_json["OutputGCS"]})
+                    response_json.update(
+                        {"OutputGCS": dataset_json["OutputGCS"]}
+                    )
                     dataset_string += (
                         r', "OutputGCS": "' + dataset_json["OutputGCS"] + r'"'
                     )
@@ -210,11 +230,17 @@ class DataRequestPost(Service):
             # Quick check if the dataset format value is None
             dataset_full_format = dataset_object.dataset_full_format
             if dataset_full_format is None:
-                dataset_full_format = ''
+                dataset_full_format = ""
             # pylint: disable=line-too-long
-            dataset_string += r', "DatasetFormat": "' + dataset_full_format + r'"'  # noqa
+            dataset_string += (
+                r', "DatasetFormat": "' + dataset_full_format + r'"'
+            )  # noqa
             # pylint: disable=line-too-long
-            dataset_string += r', "OutputFormat": "' + dataset_json.get("OutputFormat", "") + r'"'  # noqa
+            dataset_string += (
+                r', "OutputFormat": "'
+                + dataset_json.get("OutputFormat", "")
+                + r'"'
+            )  # noqa
             response_json.update(
                 {
                     "DatasetFormat": dataset_object.dataset_full_format,
@@ -222,21 +248,25 @@ class DataRequestPost(Service):
                 }
             )
             # In any case, get the dataset_full_path and use it.
-            dataset_string += r', "DatasetPath": "' + dataset_object.dataset_full_path + r'"'  # noqa
+            dataset_string += (
+                r', "DatasetPath": "' + dataset_object.dataset_full_path + r'"'
+            )  # noqa
             response_json.update(
                 {"DatasetPath": dataset_object.dataset_full_path}
             )
 
             if dataset_object.dataset_full_source is not None:
-                dataset_string += r', "DatasetSource": "' + dataset_object.dataset_full_source + r'"'  # noqa
+                dataset_string += (
+                    r', "DatasetSource": "'
+                    + dataset_object.dataset_full_source
+                    + r'"'
+                )  # noqa
                 response_json.update(
                     {"DatasetSource": dataset_object.dataset_full_source}
                 )
             else:
                 dataset_string += r', "DatasetSource": "' + "" + r'"'  # noqa
-                response_json.update(
-                    {"DatasetSource": ""}
-                )
+                response_json.update({"DatasetSource": ""})
 
             data_object["Datasets"].append(response_json)
 
@@ -267,15 +297,18 @@ class DataRequestPost(Service):
             "Start": "",
             "User": str(user_id),
             # pylint: disable=line-too-long
-            "Dataset": [item['DatasetID'] for item in response_json.get(get_task_id(response_json), [])],  # noqa
+            "Dataset": [
+                item["DatasetID"]
+                for item in response_json.get(get_task_id(response_json), [])
+            ],  # noqa
             "TransformationData": datasets,
             "TaskID": get_task_id(response_json),
             "End": "",
             "TransformationDuration": "",
             "TransformationSize": "",
             "TransformationResultData": "",
-            "Successful": ""
-         }
+            "Successful": "",
+        }
         save_stats(stats_params)
 
         body = json.dumps(params).encode("utf-8")
@@ -302,9 +335,14 @@ class DataRequestPost(Service):
                 return resp
         except:
             from logging import getLogger
+
             log = getLogger(__name__)
             # pylint: disable=line-too-long
-            log.info('There was an error registering the download request in FME: %s' % (json.dumps(body)))  # noqa
+            log.info(
+                "There was an error registering the download request in"
+                " FME: %s"
+                % (json.dumps(body))
+            )  # noqa
             self.request.response.setStatus(500)
             return {}
 
@@ -387,6 +425,9 @@ def save_stats(stats_json):
         utility.register_item(stats_json)
     except:
         from logging import getLogger
+
         log = getLogger(__name__)
         # pylint: disable=line-too-long
-        log.info("There was an error saving the stats: %s" % json.dumps(stats_json))  # noqa
+        log.info(
+            "There was an error saving the stats: %s" % json.dumps(stats_json)
+        )  # noqa
