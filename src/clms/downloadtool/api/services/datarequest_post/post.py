@@ -210,9 +210,12 @@ class DataRequestPost(Service):
                         "msg": "Error, the FileID is not valid",
                     }
 
-            # In any case, get the dataset_full_path and use it.
+            # Quick check if the dataset format value is None
+            dataset_full_format = dataset_object.dataset_full_format
+            if dataset_full_format is None:
+                dataset_full_format = ''
             # pylint: disable=line-too-long
-            dataset_string += r', "DatasetFormat": "' + dataset_object.dataset_full_format + r'"'  # noqa
+            dataset_string += r', "DatasetFormat": "' + dataset_full_format + r'"'  # noqa
             # pylint: disable=line-too-long
             dataset_string += r', "OutputFormat": "' + dataset_json["OutputFormat"] + r'"'  # noqa
             response_json.update(
@@ -221,6 +224,7 @@ class DataRequestPost(Service):
                     "OutputFormat": dataset_json["OutputFormat"],
                 }
             )
+            # In any case, get the dataset_full_path and use it.
             dataset_string += r', "DatasetPath": "' + dataset_object.dataset_full_path + r'"'  # noqa
             response_json.update(
                 {"DatasetPath": dataset_object.dataset_full_path}
