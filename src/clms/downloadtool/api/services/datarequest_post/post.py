@@ -382,5 +382,6 @@ def get_task_id(params):
 
 
 def save_stats(stats_json):
+    """ save the stats in the download stats utility"""
     utility = getUtility(IDownloadStatsUtility)
     utility.register_item(stats_json)
