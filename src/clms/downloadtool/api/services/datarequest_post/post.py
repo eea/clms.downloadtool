@@ -299,13 +299,21 @@ class DataRequestPost(Service):
             "Authorization": "fmetoken token={0}".format(FME_TOKEN),
         }
 
-        req = urllib.request.Request(FME_URL, data=body, headers=headers)
-        with urllib.request.urlopen(req) as r:
-            resp = r.read()
-            resp = resp.decode("utf-8")
-            resp = json.loads(resp)
-            self.request.response.setStatus(201)
-            return resp
+        try:
+            req = urllib.request.Request(FME_URL, data=body, headers=headers)
+            with urllib.request.urlopen(req) as r:
+                resp = r.read()
+                resp = resp.decode("utf-8")
+                resp = json.loads(resp)
+                self.request.response.setStatus(201)
+                return resp
+        except:
+            from logging import getLogger
+            log = getLogger(__name__)
+            # pylint: disable=line-too-long
+            log.info('There was an error registering the download request in FME: %s' % (json.dumps(body))) # noqa
+            self.request.response.setStatus(500)
+            return {}
 
 
 def validateDate1(temporal_filter):
