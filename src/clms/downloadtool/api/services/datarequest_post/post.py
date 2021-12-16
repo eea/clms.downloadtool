@@ -29,9 +29,7 @@ class DataRequestPost(Service):
 
     def get_dataset_by_uid(self, uid):
         """ get the dataset by UID"""
-        log.info(api.content)
-        brains = api.content.get(UID=uid)
-        log.info(brains)
+        brains = api.content.find(UID=uid)
         if brains:
             return brains[0].getObject()
 
