@@ -320,7 +320,7 @@ class DataRequestPost(Service):
                 resp = json.loads(resp)
                 self.request.response.setStatus(201)
                 return resp
-        except:
+        except Exception:
             # pylint: disable=line-too-long
             log.info(
                 "There was an error registering the download request in"
@@ -406,7 +406,7 @@ def save_stats(stats_json):
     try:
         utility = getUtility(IDownloadStatsUtility)
         utility.register_item(stats_json)
-    except:
+    except Exception:
         # pylint: disable=line-too-long
         log.info(
             "There was an error saving the stats: %s", json.dumps(stats_json)
