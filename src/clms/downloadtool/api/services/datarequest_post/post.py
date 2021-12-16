@@ -319,7 +319,7 @@ class DataRequestPost(Service):
                 resp = resp.decode("utf-8")
                 resp = json.loads(resp)
                 self.request.response.setStatus(201)
-                return resp
+                return {"TaskID": get_task_id(response_json)}
         except Exception:
             # pylint: disable=line-too-long
             log.info(
