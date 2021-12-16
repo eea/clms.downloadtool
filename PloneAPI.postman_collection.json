@@ -714,7 +714,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"Datasets\":[\n      {\n        \"DatasetID\": \"9b64a56b49f74f458aa401ad7809af16\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\"\n    },\n    {\n        \"DatasetID\": \"e27dbc8330084b58bb5e282231fca74d\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\"\n    }\n  ]\n}",
+							"raw": "{\n  \"Datasets\":[\n      {\n        \"DatasetID\": \"9b64a56b49f74f458aa401ad7809af16\",\n        \"FileID\": \"5aecd390-c529-49ea-af70-9309f39dcf19\"\n    },\n    {\n        \"DatasetID\": \"e27dbc8330084b58bb5e282231fca74d\",\n        \"FileID\": \"6ce015be-c2a1-45c7-8ab8-9c57eaff1ddc\"\n    }\n  ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
