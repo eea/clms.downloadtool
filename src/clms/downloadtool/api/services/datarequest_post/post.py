@@ -188,12 +188,7 @@ class DataRequestPost(Service):
 
                     if (
                         # pylint: disable=line-too-long
-                        "StartDate"
-                        not in dataset_json["TemporalFilter"].keys()
-                        or "EndDate"
-                        not in dataset_json[
-                            "TemporalFilter"
-                        ].keys()  # noqa: E501
+                        "StartDate" not in dataset_json["TemporalFilter"].keys() or "EndDate" not in dataset_json["TemporalFilter"].keys()  # noqa: E501
                     ):
                         self.request.response.setStatus(400)
                         return {
@@ -236,11 +231,7 @@ class DataRequestPost(Service):
                 r', "DatasetFormat": "' + dataset_full_format + r'"'
             )  # noqa
             # pylint: disable=line-too-long
-            dataset_string += (
-                r', "OutputFormat": "'
-                + dataset_json.get("OutputFormat", "")
-                + r'"'
-            )  # noqa
+            dataset_string += r', "OutputFormat": "' + dataset_json.get("OutputFormat", "") + r'"'  # noqa
             response_json.update(
                 {
                     "DatasetFormat": dataset_object.dataset_full_format,
@@ -256,11 +247,7 @@ class DataRequestPost(Service):
             )
 
             if dataset_object.dataset_full_source is not None:
-                dataset_string += (
-                    r', "DatasetSource": "'
-                    + dataset_object.dataset_full_source
-                    + r'"'
-                )  # noqa
+                dataset_string += r', "DatasetSource": "' + dataset_object.dataset_full_source + r'"'  # noqa
                 response_json.update(
                     {"DatasetSource": dataset_object.dataset_full_source}
                 )
