@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "9a2d649f-5ddf-4f42-be69-bc00918415a3",
+		"_postman_id": "4fd3af04-3607-4bba-bc90-c038fbbcdd70",
 		"name": "PloneAPI Copy",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -156,7 +156,7 @@
 			"name": "Download API",
 			"item": [
 				{
-					"name": "@datarequest_post",
+					"name": "POST - Conversion: Simple conversion",
 					"event": [
 						{
 							"listen": "test",
@@ -216,7 +216,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"Datasets\":[{\n        \n        \"DatasetID\": \"https://clmsdemo.devel6cph.eea.europa.eu/api/en/products/urban-atlas/building-height-2012\",\n        \"DatasetFormat\": \"WFS\",\n        \"DatasetPath\": \"cws-copernicus/shape.zip\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"BoundingBox\": [-33.2,5,62.5,-3],\n    \n        \"TemporalFilter\": {\n            \"StartDate\": \"2020-06-28\",\n            \"EndDate\": \"2021-09-24\"\n        }\n  }\n    ,\n    {\n        \n        \"DatasetID\": \"https://clmsdemo.devel6cph.eea.europa.eu/api/en/products/urban-atlas/building-height-2012\",\n        \"DatasetFormat\": \"WFS\",\n        \"DatasetPath\": \"cws-copernicus/noMasErrores.zip\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"BoundingBox\": [-33.2,5,62.5,-3],\n    \n        \"TemporalFilter\": {\n            \"StartDate\": \"2020-07-05\",\n            \"EndDate\": \"2021-11-20\"\n        }\n    }]\n}",
+							"raw": "{\n  \"Datasets\":[\n      {\n        \"DatasetID\": \"9b64a56b49f74f458aa401ad7809af16\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\"\n    },\n    {\n        \"DatasetID\": \"e27dbc8330084b58bb5e282231fca74d\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\"\n    }\n  ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -239,17 +239,35 @@
 					"response": []
 				},
 				{
-					"name": "@datarequest_post (ser_id, dataset_id & download format undefined)",
+					"name": "POST - Conversion: TemporalFilter",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"/* As the mandatory fields are not  filled in, it must return a code 400 */\r",
-									"pm.test(\"Test1 (Status) --> @datarequest_search (dowload_format, dataset_id & user_id undefined ({...}))\",function(){ \r",
-									"    pm.response.to.have.status(400);\r",
+									"/* DEPRECATED\r",
+									"{\r",
+									"    \"user_id\":1,\r",
+									"    \"download_format\":2,\r",
+									"    \"dataset_id\":52,\r",
+									"    \"spatial_extent\":[15.23560, -15.38584, 30.65845,-30.42458],\r",
+									"    \"temporal_extent\":{\"start_date\":\"20-11-1952\", \"end_date\": \"4-13-2002\"}\r",
+									"} */\r",
+									"\r",
+									"/* As the mandatory fields are filled in, it must return a code 201 (POST) */\r",
+									"pm.test(\"Test1 (Status)--> @datarequest_search\",function(){ \r",
+									"    pm.response.to.have.status(201);\r",
 									"});\r",
-									""
+									"/* Mandatory fields: download format , dataset_id & user_id */\r",
+									"pm.test(\"Test2 (Mandatory fields) --> Download format user_id & dataset_id not emply\",function(){\r",
+									"    var req = JSON.parse(pm.request.body.raw);\r",
+									"    pm.expect(req.user_id).not.equal(undefined);\r",
+									"    pm.expect(req.dataset_id).not.equal(undefined);\r",
+									"    pm.expect(req.download_format).not.equal(undefined);\r",
+									"    //console.log ('test1 ' + req.user_id);\r",
+									"    //console.log ('test2 ' + req.dataset_id);\r",
+									"    //console.log ('test3 ' + req.download_format);\r",
+									"})"
 								],
 								"type": "text/javascript"
 							}
@@ -281,7 +299,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"Datasets\":[{\n        \n        \"DatasetID\": \"https://clmsdemo.devel6cph.eea.europa.eu/api/en/products/urban-atlas/building-height-2012\",\n        \"DatasetFormat\": \"WFS\",\n        \"DatasetPath\": \"cws-copernicus/shape.zip\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"FileID\": \"pre-packaged\",\n        \"BoundingBox\": [-33.2,5,62.5,-3],\n    \n        \"TemporalFilter\": {\n            \"StartDate\": \"2020-06-28\",\n            \"EndDate\": \"2021-09-24\"\n        }\n  }\n    ,\n    {\n        \n        \"DatasetID\": \"https://clmsdemo.devel6cph.eea.europa.eu/api/en/products/urban-atlas/building-height-2012\",\n        \"DatasetFormat\": \"WFS\",\n        \"DatasetPath\": \"cws-copernicus/noMasErrores.zip\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"FileID\":\"pre-packaged\",\n        \"BoundingBox\": [-33.2,5,62.5,-3],\n    \n        \"TemporalFilter\": {\n            \"StartDate\": \"2020-07-05\",\n            \"EndDate\": \"2021-11-20\"\n        }\n    }]\n}",
+							"raw": "{\n  \"Datasets\":[\n      {\n        \"DatasetID\": \"9b64a56b49f74f458aa401ad7809af16\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"TemporalFilter\": {\n            \"StartDate\": \"2020-06-28\",\n            \"EndDate\": \"2021-09-24\"\n        }        \n    },\n    {\n        \"DatasetID\": \"e27dbc8330084b58bb5e282231fca74d\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"TemporalFilter\": {\n            \"StartDate\": \"2020-06-28\",\n            \"EndDate\": \"2021-09-24\"\n        }        \n    }\n  ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -289,15 +307,12 @@
 							}
 						},
 						"url": {
-							"raw": "http://csdo002.westeurope.cloudapp.azure.com/Plone/@datarequest_post",
+							"raw": "http://localhost:8080/Plone/@datarequest_post",
 							"protocol": "http",
 							"host": [
-								"csdo002",
-								"westeurope",
-								"cloudapp",
-								"azure",
-								"com"
+								"localhost"
 							],
+							"port": "8080",
 							"path": [
 								"Plone",
 								"@datarequest_post"
@@ -307,17 +322,35 @@
 					"response": []
 				},
 				{
-					"name": "@datarequest_post (user_id, dataset_id & download format blank)",
+					"name": "POST - Conversion: Bounding Box",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"/* As the mandatory fields are not  filled in, it must return a code 400 */\r",
-									"pm.test(\"Test1 (Status) --> @datarequest_search(dowload_format, dataset_id & user_id blank ({download_format=``, user_id=`` , dataset_id=``}))\",function(){ \r",
-									"    pm.response.to.have.status(400);\r",
+									"/* DEPRECATED\r",
+									"{\r",
+									"    \"user_id\":1,\r",
+									"    \"download_format\":2,\r",
+									"    \"dataset_id\":52,\r",
+									"    \"spatial_extent\":[15.23560, -15.38584, 30.65845,-30.42458],\r",
+									"    \"temporal_extent\":{\"start_date\":\"20-11-1952\", \"end_date\": \"4-13-2002\"}\r",
+									"} */\r",
+									"\r",
+									"/* As the mandatory fields are filled in, it must return a code 201 (POST) */\r",
+									"pm.test(\"Test1 (Status)--> @datarequest_search\",function(){ \r",
+									"    pm.response.to.have.status(201);\r",
 									"});\r",
-									""
+									"/* Mandatory fields: download format , dataset_id & user_id */\r",
+									"pm.test(\"Test2 (Mandatory fields) --> Download format user_id & dataset_id not emply\",function(){\r",
+									"    var req = JSON.parse(pm.request.body.raw);\r",
+									"    pm.expect(req.user_id).not.equal(undefined);\r",
+									"    pm.expect(req.dataset_id).not.equal(undefined);\r",
+									"    pm.expect(req.download_format).not.equal(undefined);\r",
+									"    //console.log ('test1 ' + req.user_id);\r",
+									"    //console.log ('test2 ' + req.dataset_id);\r",
+									"    //console.log ('test3 ' + req.download_format);\r",
+									"})"
 								],
 								"type": "text/javascript"
 							}
@@ -349,17 +382,354 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"user_id\":\"\",\n    \"download_format\":\"\",\n    \"dataset_id\":\"\",\n    \"spatial_extent\":[15.23560, -15.38584, 30.65845,-30.42458],\n    \"temporal_extent\":{\"start_date\":\"20-11-1952\", \"end_date\": \"4-13-2002\"}\n}"
+							"raw": "{\n  \"Datasets\":[\n      {\n        \"DatasetID\": \"9b64a56b49f74f458aa401ad7809af16\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"BoundingBox\": [-33.2,5,62.5,-3],\n    },\n    {\n        \"DatasetID\": \"e27dbc8330084b58bb5e282231fca74d\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"BoundingBox\": [-33.2,5,62.5,-3],    \n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
-							"raw": "http://localhost:8080/Plone2/@datarequest_post",
+							"raw": "http://localhost:8080/Plone/@datarequest_post",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "8080",
 							"path": [
-								"Plone2",
+								"Plone",
+								"@datarequest_post"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST - Conversion: NUTS",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"/* DEPRECATED\r",
+									"{\r",
+									"    \"user_id\":1,\r",
+									"    \"download_format\":2,\r",
+									"    \"dataset_id\":52,\r",
+									"    \"spatial_extent\":[15.23560, -15.38584, 30.65845,-30.42458],\r",
+									"    \"temporal_extent\":{\"start_date\":\"20-11-1952\", \"end_date\": \"4-13-2002\"}\r",
+									"} */\r",
+									"\r",
+									"/* As the mandatory fields are filled in, it must return a code 201 (POST) */\r",
+									"pm.test(\"Test1 (Status)--> @datarequest_search\",function(){ \r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"/* Mandatory fields: download format , dataset_id & user_id */\r",
+									"pm.test(\"Test2 (Mandatory fields) --> Download format user_id & dataset_id not emply\",function(){\r",
+									"    var req = JSON.parse(pm.request.body.raw);\r",
+									"    pm.expect(req.user_id).not.equal(undefined);\r",
+									"    pm.expect(req.dataset_id).not.equal(undefined);\r",
+									"    pm.expect(req.download_format).not.equal(undefined);\r",
+									"    //console.log ('test1 ' + req.user_id);\r",
+									"    //console.log ('test2 ' + req.dataset_id);\r",
+									"    //console.log ('test3 ' + req.download_format);\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "admin",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"Datasets\":[\n      {\n        \"DatasetID\": \"9b64a56b49f74f458aa401ad7809af16\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"NUTSID\": \"ES1\"\n    },\n    {\n        \"DatasetID\": \"e27dbc8330084b58bb5e282231fca74d\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"NUTSID\": \"FR1\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/Plone/@datarequest_post",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"Plone",
+								"@datarequest_post"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST - Conversion: Bounding Box, TemporalFilter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"/* DEPRECATED\r",
+									"{\r",
+									"    \"user_id\":1,\r",
+									"    \"download_format\":2,\r",
+									"    \"dataset_id\":52,\r",
+									"    \"spatial_extent\":[15.23560, -15.38584, 30.65845,-30.42458],\r",
+									"    \"temporal_extent\":{\"start_date\":\"20-11-1952\", \"end_date\": \"4-13-2002\"}\r",
+									"} */\r",
+									"\r",
+									"/* As the mandatory fields are filled in, it must return a code 201 (POST) */\r",
+									"pm.test(\"Test1 (Status)--> @datarequest_search\",function(){ \r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"/* Mandatory fields: download format , dataset_id & user_id */\r",
+									"pm.test(\"Test2 (Mandatory fields) --> Download format user_id & dataset_id not emply\",function(){\r",
+									"    var req = JSON.parse(pm.request.body.raw);\r",
+									"    pm.expect(req.user_id).not.equal(undefined);\r",
+									"    pm.expect(req.dataset_id).not.equal(undefined);\r",
+									"    pm.expect(req.download_format).not.equal(undefined);\r",
+									"    //console.log ('test1 ' + req.user_id);\r",
+									"    //console.log ('test2 ' + req.dataset_id);\r",
+									"    //console.log ('test3 ' + req.download_format);\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "admin",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"Datasets\":[\n      {\n        \"DatasetID\": \"9b64a56b49f74f458aa401ad7809af16\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"BoundingBox\": [-33.2,5,62.5,-3],\n        \"TemporalFilter\": {\n            \"StartDate\": \"2020-06-28\",\n            \"EndDate\": \"2021-09-24\"\n        }\n    },\n    {\n        \"DatasetID\": \"e27dbc8330084b58bb5e282231fca74d\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"BoundingBox\": [-33.2,5,62.5,-3],    \n        \"TemporalFilter\": {\n            \"StartDate\": \"2020-06-28\",\n            \"EndDate\": \"2021-09-24\"\n        }\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/Plone/@datarequest_post",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"Plone",
+								"@datarequest_post"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST - Conversion: NUTS, TemporalFilter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"/* DEPRECATED\r",
+									"{\r",
+									"    \"user_id\":1,\r",
+									"    \"download_format\":2,\r",
+									"    \"dataset_id\":52,\r",
+									"    \"spatial_extent\":[15.23560, -15.38584, 30.65845,-30.42458],\r",
+									"    \"temporal_extent\":{\"start_date\":\"20-11-1952\", \"end_date\": \"4-13-2002\"}\r",
+									"} */\r",
+									"\r",
+									"/* As the mandatory fields are filled in, it must return a code 201 (POST) */\r",
+									"pm.test(\"Test1 (Status)--> @datarequest_search\",function(){ \r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"/* Mandatory fields: download format , dataset_id & user_id */\r",
+									"pm.test(\"Test2 (Mandatory fields) --> Download format user_id & dataset_id not emply\",function(){\r",
+									"    var req = JSON.parse(pm.request.body.raw);\r",
+									"    pm.expect(req.user_id).not.equal(undefined);\r",
+									"    pm.expect(req.dataset_id).not.equal(undefined);\r",
+									"    pm.expect(req.download_format).not.equal(undefined);\r",
+									"    //console.log ('test1 ' + req.user_id);\r",
+									"    //console.log ('test2 ' + req.dataset_id);\r",
+									"    //console.log ('test3 ' + req.download_format);\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "admin",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"Datasets\":[\n      {\n        \"DatasetID\": \"9b64a56b49f74f458aa401ad7809af16\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"NUTSID\": \"ES1\",\n        \"TemporalFilter\": {\n            \"StartDate\": \"2020-06-28\",\n            \"EndDate\": \"2021-09-24\"\n        }        \n    },\n    {\n        \"DatasetID\": \"e27dbc8330084b58bb5e282231fca74d\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\",\n        \"NUTSID\": \"FR1\",\n        \"TemporalFilter\": {\n            \"StartDate\": \"2020-06-28\",\n            \"EndDate\": \"2021-09-24\"\n        }        \n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/Plone/@datarequest_post",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"Plone",
+								"@datarequest_post"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST - Conversion: File Simple download",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"/* DEPRECATED\r",
+									"{\r",
+									"    \"user_id\":1,\r",
+									"    \"download_format\":2,\r",
+									"    \"dataset_id\":52,\r",
+									"    \"spatial_extent\":[15.23560, -15.38584, 30.65845,-30.42458],\r",
+									"    \"temporal_extent\":{\"start_date\":\"20-11-1952\", \"end_date\": \"4-13-2002\"}\r",
+									"} */\r",
+									"\r",
+									"/* As the mandatory fields are filled in, it must return a code 201 (POST) */\r",
+									"pm.test(\"Test1 (Status)--> @datarequest_search\",function(){ \r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"/* Mandatory fields: download format , dataset_id & user_id */\r",
+									"pm.test(\"Test2 (Mandatory fields) --> Download format user_id & dataset_id not emply\",function(){\r",
+									"    var req = JSON.parse(pm.request.body.raw);\r",
+									"    pm.expect(req.user_id).not.equal(undefined);\r",
+									"    pm.expect(req.dataset_id).not.equal(undefined);\r",
+									"    pm.expect(req.download_format).not.equal(undefined);\r",
+									"    //console.log ('test1 ' + req.user_id);\r",
+									"    //console.log ('test2 ' + req.dataset_id);\r",
+									"    //console.log ('test3 ' + req.download_format);\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "basic",
+							"basic": [
+								{
+									"key": "password",
+									"value": "admin",
+									"type": "string"
+								},
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"Datasets\":[\n      {\n        \"DatasetID\": \"9b64a56b49f74f458aa401ad7809af16\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\"\n    },\n    {\n        \"DatasetID\": \"e27dbc8330084b58bb5e282231fca74d\",\n        \"OutputFormat\": \"Shapefile\",\n        \"OutputGCS\": \"EPGS:4326\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/Plone/@datarequest_post",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"Plone",
 								"@datarequest_post"
 							]
 						}
