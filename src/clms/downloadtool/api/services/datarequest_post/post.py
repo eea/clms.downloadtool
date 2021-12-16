@@ -286,7 +286,6 @@ class DataRequestPost(Service):
          }
         save_stats(stats_params)
 
-
         body = json.dumps(params).encode("utf-8")
 
         FME_URL = api.portal.get_registry_record(
@@ -307,7 +306,7 @@ class DataRequestPost(Service):
             resp = resp.decode("utf-8")
             resp = json.loads(resp)
             self.request.response.setStatus(201)
-            return resp 
+            return resp
 
 
 def validateDate1(temporal_filter):
