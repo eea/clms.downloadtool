@@ -393,5 +393,10 @@ def get_task_id(params):
 
 def save_stats(stats_json):
     """ save the stats in the download stats utility"""
-    utility = getUtility(IDownloadStatsUtility)
-    utility.register_item(stats_json)
+    try:
+        utility = getUtility(IDownloadStatsUtility)
+        utility.register_item(stats_json)
+    except:
+        from logging import getLogger
+        log = getLogger(__name__)
+        log.info("There was an error saving the stats: %s" % json.dumps(stats_json))
