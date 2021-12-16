@@ -14,12 +14,9 @@ from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
 from zope.component import getUtility
 from clms.statstool.utility import IDownloadStatsUtility
-from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import (
     COUNTRIES,
-    DATASET_FORMATS,
-    FORMAT_CONVERSION_TABLE,
     GCS,
 )
 
