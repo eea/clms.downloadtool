@@ -324,7 +324,7 @@ class DataRequestPost(Service):
             # pylint: disable=line-too-long
             log.info(
                 "There was an error registering the download request in"
-                " FME: %s", json.dumps(body)
+                " FME: %s", body
             )  # noqa
             self.request.response.setStatus(500)
             return {}
