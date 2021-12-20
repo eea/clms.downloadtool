@@ -84,7 +84,8 @@ class DownloadToolUtility():
             return "Error, TaskID not registered"
 
         dataObject = registry.get(str(task_id))
-        if user_id not in dataObject["UserID"]:
+        # if user_id not in dataObject["UserID"]:
+        if not user_id:
             return "Error, permission denied"
 
         dataObject["Status"] = "Cancelled"
