@@ -18,12 +18,13 @@ log = getLogger(__name__)
 
 
 class datarequest_delete(Service):
-    """Delete data
-    """
+    """Delete data"""
+
     def reply(self):
         """ JSON response """
         body = json_body(self.request)
-        user_id = api.user.get_current()
+        user = api.user.get_current()
+        user_id = user.getId()
         task_id = str(body.get("TaskID"))
         response_json = None
         log.info("DATAREQUEST_DELETE")
