@@ -38,17 +38,15 @@ log = getLogger(__name__)
 
 
 class IDownloadToolUtility(Interface):
-    """ Downloadtool utility interface
-    """
+    """Downloadtool utility interface"""
 
 
 @implementer(IDownloadToolUtility)
-class DownloadToolUtility():
-    """ Downloadtool request methods
-    """
+class DownloadToolUtility:
+    """Downloadtool request methods"""
+
     def datarequest_post(self, data_request):
-        """ DatarequestPost method
-        """
+        """DatarequestPost method"""
         site = getSite()
         annotations = IAnnotations(site)
         task_id = random.randint(0, 99999999999)
@@ -72,8 +70,7 @@ class DownloadToolUtility():
         return {task_id: data_request}
 
     def datarequest_delete(self, task_id, user_id):
-        """ DatarequestDelete method
-        """
+        """DatarequestDelete method"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -84,8 +81,7 @@ class DownloadToolUtility():
             return "Error, TaskID not registered"
 
         dataObject = registry.get(str(task_id))
-        # if user_id not in dataObject["UserID"]:
-        if not user_id:
+        if user_id not in dataObject["UserID"]:
             return "Error, permission denied"
 
         dataObject["Status"] = "Cancelled"
@@ -95,23 +91,20 @@ class DownloadToolUtility():
         return dataObject
 
     def datarequest_search(self, user_id, status):
-        """ DatarequestSearch method
-        """
+        """DatarequestSearch method"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         dataObject = {}
 
-        log.info(type(registry))
-        log.info(registry)
         if not user_id:
             return "Error, UserID not defined"
 
         if not status:
             for key in registry.keys():
                 values = registry.get(key)
-                # if str(user_id) == values.get("UserID"):
-                dataObject[key] = values
+                if str(user_id) == values.get("UserID"):
+                    dataObject[key] = values
             return dataObject
 
         if status not in STATUS_LIST:
@@ -119,16 +112,15 @@ class DownloadToolUtility():
 
         for key in registry.keys():
             values = registry.get(key)
-            if status == values.get(
-                "Status"
+            if status == values.get("Status") and str(user_id) == values.get(
+                "UserID"
             ):
                 dataObject[key] = values
 
         return dataObject
 
     def dataset_get(self, title):
-        """ DatasetGet method
-        """
+        """DatasetGet method"""
         log.info("Before the for")
         datasets = self.get_dataset_info()
 
@@ -151,8 +143,7 @@ class DownloadToolUtility():
         return search_list
 
     def datarequest_status_get(self, task_id):
-        """ DataRequestStatusGet method
-        """
+        """DataRequestStatusGet method"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -161,8 +152,7 @@ class DownloadToolUtility():
         return registry.get(task_id)
 
     def datarequest_status_patch(self, data_object, task_id):
-        """ DatarequestStatusPatch method
-        """
+        """DatarequestStatusPatch method"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -172,27 +162,38 @@ class DownloadToolUtility():
             return "Error, task_id not registered"
 
         for element in registry[task_id]:
-            element["Status"] = data_object["Status"]
             element["DownloadURL"] = data_object["DownloadURL"]
             element["FileSize"] = data_object["FileSize"]
 
+        registry[task_id]["Status"] = data_object["Status"]
         tempObject = registry[task_id]
         annotations[ANNOTATION_KEY] = registry
 
         return tempObject
 
     def get_dataset_info(self):
-        """ GetDatasetInfo method
-        """
+        """GetDatasetInfo method"""
         brains = api.content.find(portal_type="DataSet")
         # pylint: disable=line-too-long
-        items = getMultiAdapter((brains, getRequest()), ISerializeToJson)(fullobjects=True)  # noqa
-        return items.get('items', [])
+        items = getMultiAdapter((brains, getRequest()), ISerializeToJson)(
+            fullobjects=True
+        )  # noqa
+        return items.get("items", [])
 
     def get_item(self, key):
-        """ GetItem method
-        """
+        """GetItem method"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         return registry.get(key)
+
+    def delete_data(self):
+        """ a method to delete all data from the registry """
+        site = getSite()
+        annotations = IAnnotations(site)
+
+        if annotations.get(ANNOTATION_KEY, None) is None:
+            return {"status": "Error", "msg": "Registry is empty"}
+
+        annotations[ANNOTATION_KEY] = PersistentMapping()
+        return {}

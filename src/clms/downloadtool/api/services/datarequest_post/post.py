@@ -10,16 +10,14 @@ import json
 import re
 import urllib.request
 from plone import api
+from plone.protect.interfaces import IDisableCSRFProtection
 from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
 from zope.component import getUtility
+from zope.interface import alsoProvides
 from clms.statstool.utility import IDownloadStatsUtility
 from clms.downloadtool.utility import IDownloadToolUtility
-from clms.downloadtool.utils import (
-    COUNTRIES,
-    GCS,
-)
-
+from clms.downloadtool.utils import COUNTRIES, GCS, FORMAT_CONVERSION_TABLE
 
 log = getLogger(__name__)
 
@@ -44,11 +42,28 @@ class DataRequestPost(Service):
 
         return None
 
+    def get_dataset_file_format_from_file_id(self, dataset_object, file_id):
+        """ get the dataset file format from the file id"""
+        downloadable_files_json = dataset_object.downloadable_files
+        for file_object in downloadable_files_json.get("items", []):
+            if file_object.get("@id") == file_id:
+                return file_object.get("file_format", "")
+
+        return None
+
     def reply(self):
         """ JSON response """
+        alsoProvides(self.request, IDisableCSRFProtection)
         body = json_body(self.request)
 
-        user_id = api.user.get_current()
+        user = api.user.get_current()
+        if not user:
+            return {
+                "status": "error",
+                "msg": "You need to be logged in to use this service",
+            }
+
+        user_id = user.getId()
         datasets_json = body.get("Datasets")
         mail = ""
         # mail = user.getProperty('mail')
@@ -101,15 +116,24 @@ class DataRequestPost(Service):
                 file_path = self.get_dataset_file_path_from_file_id(
                     dataset_object, dataset_json["FileID"]
                 )
+                file_format = self.get_dataset_file_format_from_file_id(
+                    dataset_object, dataset_json["FileID"]
+                )
                 if dataset_json is not None:
                     # pylint: disable=line-too-long
                     dataset_string += (
                         r', "FileID": "' + dataset_json["FileID"] + r'"'
                     )  # noqa
-                    dataset_string += r', "FilePath": "' + file_path + r'"'
+                    dataset_string += r', "DatasetPath": "' + file_path + r'"'
+                    dataset_string += r', "FilePath": "PREPACKAGE"'
+                    dataset_string += (
+                        r', "OutputFormat": "' + file_format + r'"'
+                    )
 
                     response_json.update({"FileID": dataset_json["FileID"]})
-                    response_json.update({"FilePath": file_path})
+                    response_json.update({"DatasetPath": file_path})
+                    response_json.update({"FilePath": "PREPACKAGE"})
+                    response_json.update({"OutputFormat": file_format})
                 else:
                     self.request.response.setStatus(400)
                     return {
@@ -117,7 +141,6 @@ class DataRequestPost(Service):
                         "msg": "Error, the FileID is not valid",
                     }
             else:
-
                 if "NUTSID" in dataset_json:
                     if not validateNuts(dataset_json["NUTSID"]):
                         self.request.response.setStatus(400)
@@ -220,44 +243,48 @@ class DataRequestPost(Service):
                         r', "OutputGCS": "' + dataset_json["OutputGCS"] + r'"'
                     )
 
-            response_json["Status"] = "In_progress"
-
-            # Quick check if the dataset format value is None
-            dataset_full_format = dataset_object.dataset_full_format
-            if dataset_full_format is None:
-                dataset_full_format = ""
-            # pylint: disable=line-too-long
-            dataset_string += (
-                r', "DatasetFormat": "' + dataset_full_format + r'"'
-            )  # noqa
-            # pylint: disable=line-too-long
-            dataset_string += r', "OutputFormat": "' + dataset_json.get("OutputFormat", "") + r'"'  # noqa
-            response_json.update(
-                {
-                    "DatasetFormat": dataset_object.dataset_full_format,
-                    "OutputFormat": dataset_json.get("OutputFormat", ""),
-                }
-            )
-            # In any case, get the dataset_full_path and use it.
-            dataset_string += (
-                r', "DatasetPath": "' + dataset_object.dataset_full_path + r'"'
-            )  # noqa
-            response_json.update(
-                {"DatasetPath": dataset_object.dataset_full_path}
-            )
-
-            if dataset_object.dataset_full_source is not None:
-                dataset_string += r', "DatasetSource": "' + dataset_object.dataset_full_source + r'"'  # noqa
+                # Quick check if the dataset format value is None
+                dataset_full_format = dataset_object.dataset_full_format
+                if dataset_full_format is None:
+                    dataset_full_format = ""
+                # pylint: disable=line-too-long
+                dataset_string += (r', "DatasetFormat": "' + dataset_full_format + r'"')  # noqa
+                # pylint: disable=line-too-long
+                dataset_string += (r', "OutputFormat": "' + dataset_json.get("OutputFormat", "") + r'"')  # noqa
                 response_json.update(
-                    {"DatasetSource": dataset_object.dataset_full_source}
+                    {
+                        "DatasetFormat": dataset_object.dataset_full_format,
+                        "OutputFormat": dataset_json.get("OutputFormat", ""),
+                    }
                 )
-            else:
-                dataset_string += r', "DatasetSource": "' + "" + r'"'  # noqa
-                response_json.update({"DatasetSource": ""})
+
+                if not FORMAT_CONVERSION_TABLE[
+                    dataset_object.dataset_full_format
+                ][dataset_json.get("OutputFormat", "")]:
+                    self.request.response.setStatus(400)
+                    return {
+                        "status": "error",
+                        "msg": "Error, specified formats are not compatible",
+                    }
+                # In any case, get the dataset_full_path and use it.
+                dataset_string += (r', "DatasetPath": "' + dataset_object.dataset_full_path + r'"')  # noqa
+                response_json.update(
+                    {"DatasetPath": dataset_object.dataset_full_path}
+                )
+
+                if dataset_object.dataset_full_source is not None:
+                    dataset_string += (r', "DatasetSource": "' + dataset_object.dataset_full_source + r'"')  # noqa
+                    response_json.update(
+                        {"DatasetSource": dataset_object.dataset_full_source}
+                    )
+                else:
+                    dataset_string += (r', "DatasetSource": "' + "" + r'"')  # noqa
+                    response_json.update({"DatasetSource": ""})
 
             data_object["Datasets"].append(response_json)
-
-        response_json = utility.datarequest_post(data_object["Datasets"])
+        data_object["Status"] = "In_progress"
+        data_object["UserID"] = user_id
+        response_json = utility.datarequest_post(data_object)
 
         dataset_string += r"}"
 
@@ -286,7 +313,9 @@ class DataRequestPost(Service):
             # pylint: disable=line-too-long
             "Dataset": [
                 item["DatasetID"]
-                for item in response_json.get(get_task_id(response_json), [])
+                for item in response_json.get(
+                    get_task_id(response_json), {}
+                ).get("Datasets", [])
             ],  # noqa
             "TransformationData": datasets,
             "TaskID": get_task_id(response_json),
@@ -324,7 +353,8 @@ class DataRequestPost(Service):
             # pylint: disable=line-too-long
             log.info(
                 "There was an error registering the download request in"
-                " FME: %s", body
+                " FME: %s",
+                body,
             )  # noqa
             self.request.response.setStatus(500)
             return {}

@@ -275,7 +275,7 @@ DATASET_SOURCES = [
 
 FORMAT_CONVERSION_TABLE = {
     "Shapefile": {
-        "Shapefile": False,
+        "Shapefile": True,
         "GDB": True,
         "GPKG": True,
         "Geojson": True,
@@ -286,7 +286,7 @@ FORMAT_CONVERSION_TABLE = {
     },
     "GDB": {
         "Shapefile": True,
-        "GDB": False,
+        "GDB": True,
         "GPKG": True,
         "Geojson": True,
         "Geotiff": False,
@@ -297,7 +297,7 @@ FORMAT_CONVERSION_TABLE = {
     "GPKG": {
         "Shapefile": True,
         "GDB": True,
-        "GPKG": False,
+        "GPKG": True,
         "Geojson": True,
         "Geotiff": False,
         "Netcdf": False,
@@ -308,7 +308,7 @@ FORMAT_CONVERSION_TABLE = {
         "Shapefile": True,
         "GDB": True,
         "GPKG": True,
-        "Geojson": False,
+        "Geojson": True,
         "Geotiff": False,
         "Netcdf": False,
         "GML": True,
@@ -319,7 +319,7 @@ FORMAT_CONVERSION_TABLE = {
         "GDB": False,
         "GPKG": False,
         "Geojson": False,
-        "Geotiff": False,
+        "Geotiff": True,
         "Netcdf": False,
         "GML": False,
         "WFS": False,
@@ -330,7 +330,7 @@ FORMAT_CONVERSION_TABLE = {
         "GPKG": False,
         "Geojson": False,
         "Geotiff": True,
-        "Netcdf": False,
+        "Netcdf": True,
         "GML": False,
         "WFS": False,
     },
@@ -342,7 +342,7 @@ FORMAT_CONVERSION_TABLE = {
         "Geotiff": False,
         "Netcdf": False,
         "GML": True,
-        "WFS": False,
+        "WFS": True
     },
 }
 

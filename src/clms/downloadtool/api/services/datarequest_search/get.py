@@ -23,10 +23,16 @@ class datarequest_search(Service):
         """ JSON endpoint """
         log.info("DATAREQUEST_SEARCH")
         utility = getUtility(IDownloadToolUtility)
-        status = self.request.get("Status")
-        user_id = api.user.get_current()
+        status = self.request.get("status")
+        user = api.user.get_current()
+        if not user:
+            return {
+                "status": "error",
+                "msg": "You need to be logged in to use this service",
+            }
 
-        self.request.response.setStatus(200)
+        user_id = user.getId()
+
         response_json = utility.datarequest_search(user_id, status)
 
         if "Error, UserID not defined" in response_json:
@@ -37,4 +43,5 @@ class datarequest_search(Service):
             self.request.response.setStatus(400)
             return {"status": "error", "msg": response_json}
 
+        self.request.response.setStatus(200)
         return response_json
