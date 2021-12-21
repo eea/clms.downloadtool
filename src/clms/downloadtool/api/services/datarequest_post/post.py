@@ -10,17 +10,14 @@ import json
 import re
 import urllib.request
 from plone import api
+from plone.protect.interfaces import IDisableCSRFProtection
 from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
 from zope.component import getUtility
+from zope.interface import alsoProvides
 from clms.statstool.utility import IDownloadStatsUtility
 from clms.downloadtool.utility import IDownloadToolUtility
-from clms.downloadtool.utils import (
-    COUNTRIES,
-    GCS,
-    FORMAT_CONVERSION_TABLE
-)
-
+from clms.downloadtool.utils import COUNTRIES, GCS, FORMAT_CONVERSION_TABLE
 
 log = getLogger(__name__)
 
@@ -47,9 +44,17 @@ class DataRequestPost(Service):
 
     def reply(self):
         """ JSON response """
+        alsoProvides(self.request, IDisableCSRFProtection)
         body = json_body(self.request)
 
-        user_id = api.user.get_current()
+        user = api.user.get_current()
+        if not user:
+            return {
+                "status": "error",
+                "msg": "You need to be logged in to use this service",
+            }
+
+        user_id = user.getId()
         datasets_json = body.get("Datasets")
         mail = ""
         # mail = user.getProperty('mail')
