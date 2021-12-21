@@ -1,0 +1,13 @@
+<configure
+  xmlns="http://namespaces.zope.org/zope"
+  xmlns:plone="http://namespaces.plone.org/plone">
+
+  <plone:service
+    method="DELETE"
+    for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+    factory=".delete.delete_data"
+    name="@delete_data"
+    permission="zope2.View"
+    />
+
+</configure>

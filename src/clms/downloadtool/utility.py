@@ -84,8 +84,7 @@ class DownloadToolUtility():
             return "Error, TaskID not registered"
 
         dataObject = registry.get(str(task_id))
-        # if user_id not in dataObject["UserID"]:
-        if not user_id:
+        if user_id not in dataObject["UserID"]:
             return "Error, permission denied"
 
         dataObject["Status"] = "Cancelled"
@@ -110,8 +109,8 @@ class DownloadToolUtility():
         if not status:
             for key in registry.keys():
                 values = registry.get(key)
-                # if str(user_id) == values.get("UserID"):
-                dataObject[key] = values
+                if str(user_id) == values.get("UserID"):
+                    dataObject[key] = values
             return dataObject
 
         if status not in STATUS_LIST:
@@ -121,6 +120,8 @@ class DownloadToolUtility():
             values = registry.get(key)
             if status == values.get(
                 "Status"
+            ) and str(user_id) == values.get(
+                "UserID"
             ):
                 dataObject[key] = values
 
@@ -172,10 +173,10 @@ class DownloadToolUtility():
             return "Error, task_id not registered"
 
         for element in registry[task_id]:
-            element["Status"] = data_object["Status"]
             element["DownloadURL"] = data_object["DownloadURL"]
             element["FileSize"] = data_object["FileSize"]
 
+        registry[task_id]["Status"] = data_object["Status"]
         tempObject = registry[task_id]
         annotations[ANNOTATION_KEY] = registry
 
@@ -196,3 +197,18 @@ class DownloadToolUtility():
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         return registry.get(key)
+
+    def delete_data(self):
+        site = getSite()
+        annotations = IAnnotations(site)
+
+        if annotations.get(ANNOTATION_KEY, None) is None:
+            self.request.response.setStatus(400)    
+            return {"status": "Error", "msg": "Registry is empty"}
+            
+        else:
+            registry = None
+            annotations[ANNOTATION_KEY] = registry
+
+        self.request.response.setStatus(200)
+        return {"status": "OK", "msg": "Registry deleted successfully"}
