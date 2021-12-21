@@ -24,4 +24,8 @@ class delete_data(Service):
         log.info("DELETE_DATA")
         utility = getUtility(IDownloadToolUtility)
         response_json = utility.delete_data()
+        if response_json.get('status', "") == 'Error':
+            self.request.response.setStatus(400)
+        else:
+            self.request.response.setStatus(204)
         return response_json
