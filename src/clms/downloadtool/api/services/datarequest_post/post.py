@@ -42,6 +42,15 @@ class DataRequestPost(Service):
 
         return None
 
+    def get_dataset_file_format_from_file_id(self, dataset_object, file_id):
+        """ get the dataset file format from the file id"""
+        downloadable_files_json = dataset_object.downloadable_files
+        for file_object in downloadable_files_json.get("items", []):
+            if file_object.get("@id") == file_id:
+                return file_object.get("file_format", "")
+
+        return None
+
     def reply(self):
         """ JSON response """
         alsoProvides(self.request, IDisableCSRFProtection)
@@ -107,6 +116,9 @@ class DataRequestPost(Service):
                 file_path = self.get_dataset_file_path_from_file_id(
                     dataset_object, dataset_json["FileID"]
                 )
+                file_format = self.get_dataset_file_format_from_file_id(
+                    dataset_object, dataset_json["FileID"]
+                )
                 if dataset_json is not None:
                     # pylint: disable=line-too-long
                     dataset_string += (
@@ -114,10 +126,14 @@ class DataRequestPost(Service):
                     )  # noqa
                     dataset_string += r', "DatasetPath": "' + file_path + r'"'
                     dataset_string += r', "FilePath": "PREPACKAGE"'
+                    dataset_string += (
+                        r', "OutputFormat": "' + file_format + r'"'
+                    )
 
                     response_json.update({"FileID": dataset_json["FileID"]})
                     response_json.update({"DatasetPath": file_path})
                     response_json.update({"FilePath": "PREPACKAGE"})
+                    response_json.update({"OutputFormat": file_format})
                 else:
                     self.request.response.setStatus(400)
                     return {
