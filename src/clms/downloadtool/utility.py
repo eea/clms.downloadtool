@@ -188,6 +188,7 @@ class DownloadToolUtility:
         return registry.get(key)
 
     def delete_data(self):
+        """ a method to delete all data from the registry """
         site = getSite()
         annotations = IAnnotations(site)
 
