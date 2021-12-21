@@ -248,13 +248,9 @@ class DataRequestPost(Service):
                 if dataset_full_format is None:
                     dataset_full_format = ""
                 # pylint: disable=line-too-long
-                dataset_string += (
-                    r', "DatasetFormat": "' + dataset_full_format + r'"'
-                )  # noqa
+                dataset_string += (r', "DatasetFormat": "' + dataset_full_format + r'"')  # noqa
                 # pylint: disable=line-too-long
-                dataset_string += (
-                    r', "OutputFormat": "' + dataset_json.get("OutputFormat", "") + r'"'
-                )  # noqa
+                dataset_string += (r', "OutputFormat": "' + dataset_json.get("OutputFormat", "") + r'"')  # noqa
                 response_json.update(
                     {
                         "DatasetFormat": dataset_object.dataset_full_format,
@@ -271,24 +267,18 @@ class DataRequestPost(Service):
                         "msg": "Error, specified formats are not compatible",
                     }
                 # In any case, get the dataset_full_path and use it.
-                dataset_string += (
-                    r', "DatasetPath": "' + dataset_object.dataset_full_path + r'"'
-                )  # noqa
+                dataset_string += (r', "DatasetPath": "' + dataset_object.dataset_full_path + r'"')  # noqa
                 response_json.update(
                     {"DatasetPath": dataset_object.dataset_full_path}
                 )
 
                 if dataset_object.dataset_full_source is not None:
-                    dataset_string += (
-                        r', "DatasetSource": "' + dataset_object.dataset_full_source + r'"'
-                    )  # noqa
+                    dataset_string += (r', "DatasetSource": "' + dataset_object.dataset_full_source + r'"')  # noqa
                     response_json.update(
                         {"DatasetSource": dataset_object.dataset_full_source}
                     )
                 else:
-                    dataset_string += (
-                        r', "DatasetSource": "' + "" + r'"'
-                    )  # noqa
+                    dataset_string += (r', "DatasetSource": "' + "" + r'"')  # noqa
                     response_json.update({"DatasetSource": ""})
 
             data_object["Datasets"].append(response_json)
