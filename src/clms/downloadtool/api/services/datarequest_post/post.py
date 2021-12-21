@@ -211,12 +211,7 @@ class DataRequestPost(Service):
 
                     if (
                         # pylint: disable=line-too-long
-                        "StartDate"
-                        not in dataset_json["TemporalFilter"].keys()
-                        or "EndDate"
-                        not in dataset_json[
-                            "TemporalFilter"
-                        ].keys()  # noqa: E501
+                        "StartDate" not in dataset_json["TemporalFilter"].keys() or "EndDate" not in dataset_json["TemporalFilter"].keys()  # noqa: E501
                     ):
                         self.request.response.setStatus(400)
                         return {
@@ -258,9 +253,7 @@ class DataRequestPost(Service):
                 )  # noqa
                 # pylint: disable=line-too-long
                 dataset_string += (
-                    r', "OutputFormat": "'
-                    + dataset_json.get("OutputFormat", "")
-                    + r'"'
+                    r', "OutputFormat": "' + dataset_json.get("OutputFormat", "") + r'"'
                 )  # noqa
                 response_json.update(
                     {
@@ -279,9 +272,7 @@ class DataRequestPost(Service):
                     }
                 # In any case, get the dataset_full_path and use it.
                 dataset_string += (
-                    r', "DatasetPath": "'
-                    + dataset_object.dataset_full_path
-                    + r'"'
+                    r', "DatasetPath": "' + dataset_object.dataset_full_path + r'"'
                 )  # noqa
                 response_json.update(
                     {"DatasetPath": dataset_object.dataset_full_path}
@@ -289,9 +280,7 @@ class DataRequestPost(Service):
 
                 if dataset_object.dataset_full_source is not None:
                     dataset_string += (
-                        r', "DatasetSource": "'
-                        + dataset_object.dataset_full_source
-                        + r'"'
+                        r', "DatasetSource": "' + dataset_object.dataset_full_source + r'"'
                     )  # noqa
                     response_json.update(
                         {"DatasetSource": dataset_object.dataset_full_source}
