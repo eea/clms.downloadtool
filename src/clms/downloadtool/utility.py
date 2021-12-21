@@ -203,12 +203,11 @@ class DownloadToolUtility():
         annotations = IAnnotations(site)
 
         if annotations.get(ANNOTATION_KEY, None) is None:
-            self.request.response.setStatus(400)    
+            self.request.response.setStatus(400)
             return {"status": "Error", "msg": "Registry is empty"}
-            
+
         else:
-            registry = None
-            annotations[ANNOTATION_KEY] = registry
+            annotations[ANNOTATION_KEY] = PersistentMapping()
 
         self.request.response.setStatus(200)
         return {"status": "OK", "msg": "Registry deleted successfully"}
