@@ -7,7 +7,7 @@
     for="Products.CMFPlone.interfaces.IPloneSiteRoot"
     factory=".post.DataRequestPost"
     name="@datarequest_post"
-    permission="zope2.View"
+    permission="clms.downloadtool.usedownloadtool"
     />
 
 </configure>
