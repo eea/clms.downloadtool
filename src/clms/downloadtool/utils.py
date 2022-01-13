@@ -253,7 +253,7 @@ COUNTRIES = {
     "MZ": "MOZ",
 }
 
-GCS = ["EPGS:4326", "EPGS:3035", "EPGS:3857", "EPGS:4258"]
+GCS = ["EPSG:4326", "EPSG:3035", "EPSG:3857", "EPSG:4258"]
 
 DATASET_FORMATS = [
     "Shapefile",
