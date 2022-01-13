@@ -266,12 +266,7 @@ DATASET_FORMATS = [
     "WFS",
 ]
 
-DATASET_SOURCES = [
-    "WEKEO",
-    "EEA",
-    "LANDCOVER",
-    "LEGACY"
-]
+DATASET_SOURCES = ["WEKEO", "EEA", "LANDCOVER", "LEGACY"]
 
 FORMAT_CONVERSION_TABLE = {
     "Shapefile": {
@@ -342,7 +337,7 @@ FORMAT_CONVERSION_TABLE = {
         "Geotiff": False,
         "Netcdf": False,
         "GML": True,
-        "WFS": True
+        "WFS": True,
     },
 }
 
