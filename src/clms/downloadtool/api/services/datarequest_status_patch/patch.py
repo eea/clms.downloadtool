@@ -10,6 +10,7 @@ from plone.restapi.services import Service
 from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import STATUS_LIST
+from datetime import datetime
 
 
 log = getLogger(__name__)
@@ -53,6 +54,8 @@ class datarequest_status_patch(Service):
             response_json.update({"DownloadURL": download_url})
 
         log.info(response_json)
+        response_json["FinalizationDateTime"] = datetime.utcnow().isoformat()
+
         response_json = utility.datarequest_status_patch(
             response_json, task_id
         )
