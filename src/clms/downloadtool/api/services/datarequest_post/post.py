@@ -295,7 +295,7 @@ class DataRequestPost(Service):
         data_object["RegistrationDateTime"] = datetime.utcnow().isoformat()
         utility_response_json = utility.datarequest_post(data_object)
 
-        new_datasets = {"Datasets": response_json}
+        new_datasets = {"Datasets": data_object['Datasets']}
 
         params = {
             "publishedParameters": [
