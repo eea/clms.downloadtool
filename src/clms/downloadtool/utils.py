@@ -253,7 +253,7 @@ COUNTRIES = {
     "MZ": "MOZ",
 }
 
-GCS = ["EPGS:4326", "EPGS:3035", "EPGS:3857", "EPGS:4258"]
+GCS = ["EPSG:4326", "EPSG:3035", "EPSG:3857", "EPSG:4258"]
 
 DATASET_FORMATS = [
     "Shapefile",
@@ -266,12 +266,7 @@ DATASET_FORMATS = [
     "WFS",
 ]
 
-DATASET_SOURCES = [
-    "WEKEO",
-    "EEA",
-    "LANDCOVER",
-    "LEGACY"
-]
+DATASET_SOURCES = ["WEKEO", "EEA", "LANDCOVER", "LEGACY"]
 
 FORMAT_CONVERSION_TABLE = {
     "Shapefile": {
@@ -342,7 +337,7 @@ FORMAT_CONVERSION_TABLE = {
         "Geotiff": False,
         "Netcdf": False,
         "GML": True,
-        "WFS": True
+        "WFS": True,
     },
 }
 

@@ -4,6 +4,7 @@ For HTTP GET operations we can use standard HTTP parameter passing
 (through the URL)
 
 """
+from datetime import datetime
 from logging import getLogger
 from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
@@ -53,6 +54,8 @@ class datarequest_status_patch(Service):
             response_json.update({"DownloadURL": download_url})
 
         log.info(response_json)
+        response_json["FinalizationDateTime"] = datetime.utcnow().isoformat()
+
         response_json = utility.datarequest_status_patch(
             response_json, task_id
         )

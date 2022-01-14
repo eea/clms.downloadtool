@@ -4,22 +4,46 @@ For HTTP GET operations we can use standard HTTP parameter passing
 through the URL)
 
 """
-from logging import getLogger
-import datetime
+import base64
 import json
 import re
-import urllib.request
+
+from datetime import datetime
+from logging import getLogger
+from clms.downloadtool.utility import IDownloadToolUtility
+from clms.downloadtool.utils import COUNTRIES
+from clms.downloadtool.utils import FORMAT_CONVERSION_TABLE
+from clms.downloadtool.utils import GCS
+from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
 from plone.protect.interfaces import IDisableCSRFProtection
 from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
 from zope.component import getUtility
 from zope.interface import alsoProvides
-from clms.statstool.utility import IDownloadStatsUtility
-from clms.downloadtool.utility import IDownloadToolUtility
-from clms.downloadtool.utils import COUNTRIES, GCS, FORMAT_CONVERSION_TABLE
+
+import requests
+
 
 log = getLogger(__name__)
+
+
+EEA_GEONETWORK_BASE_URL = (
+    "https://sdi.eea.europa.eu/catalogue/copernicus/"
+    "api/records/{uid}/formatters/xml?approved=true"
+)
+VITO_GEONETWORK_BASE_URL = (
+    "https://land.copernicus.vgt.vito.be/geonetwork/"
+    "srv/api/records/{uid}/formatters/xml?approved=true"
+)
+
+
+def base64_encode_path(path):
+    """ encode the given path as base64"""
+    if isinstance(path, str):
+        return base64.urlsafe_b64encode(path.encode("utf-8")).decode("utf-8")
+
+    return base64.urlsafe_b64encode(path).decode("utf-8")
 
 
 class DataRequestPost(Service):
@@ -65,12 +89,11 @@ class DataRequestPost(Service):
 
         user_id = user.getId()
         datasets_json = body.get("Datasets")
-        mail = ""
-        # mail = user.getProperty('mail')
+
+        mail = user.getProperty("email")
         response_json = {}
         data_object = {}
         data_object["Datasets"] = []
-        dataset_string = r"{"
 
         valid_dataset = False
 
@@ -98,15 +121,6 @@ class DataRequestPost(Service):
 
             response_json.update({"DatasetID": dataset_json["DatasetID"]})
 
-            if len(dataset_string) == 1:
-                dataset_string += (
-                    r'"DatasetID": "' + dataset_json["DatasetID"] + r'"'
-                )
-            else:
-                dataset_string += (
-                    r'},{"DatasetID": "' + dataset_json["DatasetID"] + r'"'
-                )
-
             # Handle FileID requests:
             # - get first the file_path from the dataset using the file_id
             # - if something is returned use it as FileID and FilePath
@@ -120,18 +134,10 @@ class DataRequestPost(Service):
                     dataset_object, dataset_json["FileID"]
                 )
                 if dataset_json is not None:
-                    # pylint: disable=line-too-long
-                    dataset_string += (
-                        r', "FileID": "' + dataset_json["FileID"] + r'"'
-                    )  # noqa
-                    dataset_string += r', "DatasetPath": "' + file_path + r'"'
-                    dataset_string += r', "FilePath": "PREPACKAGE"'
-                    dataset_string += (
-                        r', "OutputFormat": "' + file_format + r'"'
-                    )
-
                     response_json.update({"FileID": dataset_json["FileID"]})
-                    response_json.update({"DatasetPath": file_path})
+                    response_json.update(
+                        {"DatasetPath": base64_encode_path(file_path)}
+                    )
                     response_json.update({"FilePath": "PREPACKAGE"})
                     response_json.update({"OutputFormat": file_format})
                 else:
@@ -141,24 +147,21 @@ class DataRequestPost(Service):
                         "msg": "Error, the FileID is not valid",
                     }
             else:
-                if "NUTSID" in dataset_json:
-                    if not validateNuts(dataset_json["NUTSID"]):
+                if "NUTS" in dataset_json:
+                    if not validateNuts(dataset_json["NUTS"]):
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
-                            "msg": "NUTSID country error",
+                            "msg": "NUTS country error",
                         }
-                    response_json.update({"NUTSID": dataset_json["NUTSID"]})
-                    dataset_string += (
-                        r', "NUTSID": "' + dataset_json["NUTSID"] + r'"'
-                    )
+                    response_json.update({"NUTSID": dataset_json["NUTS"]})
 
                 if "BoundingBox" in dataset_json:
-                    if "NUTSID" in dataset_json:
+                    if "NUTS" in dataset_json:
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
-                            "msg": "Error, NUTSID is also defined",
+                            "msg": "Error, NUTS is also defined",
                         }
 
                     if not validateSpatialExtent(dataset_json["BoundingBox"]):
@@ -171,12 +174,6 @@ class DataRequestPost(Service):
                     response_json.update(
                         {"BoundingBox": dataset_json["BoundingBox"]}
                     )
-                    dataset_string += r', "BoundingBox":['
-                    dataset_string += r"".join(
-                        str(e) + ", " for e in dataset_json["BoundingBox"]
-                    )
-                    dataset_string = dataset_string[:-2]
-                    dataset_string += r"]"
 
                 if "TemporalFilter" in dataset_json:
                     # pylint: disable=line-too-long
@@ -225,9 +222,6 @@ class DataRequestPost(Service):
                     response_json.update(
                         {"TemporalFilter": dataset_json["TemporalFilter"]}
                     )
-                    dataset_string += r', "TemporalFilter": ' + json.dumps(
-                        dataset_json["TemporalFilter"]
-                    )
 
                 if "OutputGCS" in dataset_json:
                     if dataset_json["OutputGCS"] not in GCS:
@@ -239,18 +233,12 @@ class DataRequestPost(Service):
                     response_json.update(
                         {"OutputGCS": dataset_json["OutputGCS"]}
                     )
-                    dataset_string += (
-                        r', "OutputGCS": "' + dataset_json["OutputGCS"] + r'"'
-                    )
 
                 # Quick check if the dataset format value is None
                 dataset_full_format = dataset_object.dataset_full_format
                 if dataset_full_format is None:
                     dataset_full_format = ""
-                # pylint: disable=line-too-long
-                dataset_string += (r', "DatasetFormat": "' + dataset_full_format + r'"')  # noqa
-                # pylint: disable=line-too-long
-                dataset_string += (r', "OutputFormat": "' + dataset_json.get("OutputFormat", "") + r'"')  # noqa
+
                 response_json.update(
                     {
                         "DatasetFormat": dataset_object.dataset_full_format,
@@ -267,30 +255,47 @@ class DataRequestPost(Service):
                         "msg": "Error, specified formats are not compatible",
                     }
                 # In any case, get the dataset_full_path and use it.
-                dataset_string += (r', "DatasetPath": "' + dataset_object.dataset_full_path + r'"')  # noqa
                 response_json.update(
-                    {"DatasetPath": dataset_object.dataset_full_path}
+                    {
+                        "DatasetPath": base64_encode_path(
+                            dataset_object.dataset_full_path
+                        )
+                    }
                 )
 
                 if dataset_object.dataset_full_source is not None:
-                    dataset_string += (r', "DatasetSource": "' + dataset_object.dataset_full_source + r'"')  # noqa
                     response_json.update(
                         {"DatasetSource": dataset_object.dataset_full_source}
                     )
                 else:
-                    dataset_string += (r', "DatasetSource": "' + "" + r'"')  # noqa
                     response_json.update({"DatasetSource": ""})
 
+                metadata = []
+                for meta in dataset_object.geonetwork_identifiers.get(
+                    "items", []
+                ):
+                    if meta.get("type", "") == "EEA":
+                        metadata_url = EEA_GEONETWORK_BASE_URL.format(
+                            uid=meta.get("id")
+                        )
+                    elif meta.get("type", "") == "VITO":
+                        metadata_url = VITO_GEONETWORK_BASE_URL.format(
+                            uid=meta.get("id")
+                        )
+                    else:
+                        metadata_url = meta.get("id")
+                    metadata.append(metadata_url)
+
+                response_json["Metadata"] = metadata
+
             data_object["Datasets"].append(response_json)
+
         data_object["Status"] = "In_progress"
         data_object["UserID"] = user_id
-        response_json = utility.datarequest_post(data_object)
+        data_object["RegistrationDateTime"] = datetime.utcnow().isoformat()
+        utility_response_json = utility.datarequest_post(data_object)
 
-        dataset_string += r"}"
-
-        datasets = r"{"
-        datasets += r'    "Datasets": [' + dataset_string + "]"
-        datasets += r"}"
+        new_datasets = {"Datasets": response_json}
 
         params = {
             "publishedParameters": [
@@ -298,27 +303,39 @@ class DataRequestPost(Service):
                     "name": "UserID",
                     "value": str(user_id),
                 },
-                {"name": "TaskID", "value": get_task_id(response_json)},
+                {
+                    "name": "TaskID",
+                    "value": get_task_id(utility_response_json),
+                },
                 {
                     "name": "UserMail",
                     "value": mail,
                 },
-                {"name": "json", "value": datasets},
+                {
+                    "name": "CallbackUrl",
+                    "value": "{}/{}".format(
+                        api.portal.get().absolute_url(),
+                        "@datarequest_status_patch",
+                    ),
+                },
+                # dump the json into a string for FME
+                {"name": "json", "value": json.dumps(new_datasets)},
             ]
         }
 
+        # build the stat params and save them
         stats_params = {
             "Start": "",
             "User": str(user_id),
             # pylint: disable=line-too-long
             "Dataset": [
                 item["DatasetID"]
-                for item in response_json.get(
-                    get_task_id(response_json), {}
+                for item in utility_response_json.get(
+                    get_task_id(utility_response_json), {}
                 ).get("Datasets", [])
             ],  # noqa
-            "TransformationData": datasets,
-            "TaskID": get_task_id(response_json),
+            "TransformationData": new_datasets,
+            "TaskID": get_task_id(utility_response_json),
             "End": "",
             "TransformationDuration": "",
             "TransformationSize": "",
@@ -326,9 +343,6 @@ class DataRequestPost(Service):
             "Successful": "",
         }
         save_stats(stats_params)
-
-        body = json.dumps(params).encode("utf-8")
-
         FME_URL = api.portal.get_registry_record(
             "clms.addon.fme_config_controlpanel.url"
         )
@@ -340,24 +354,20 @@ class DataRequestPost(Service):
             "Accept": "application/json",
             "Authorization": "fmetoken token={0}".format(FME_TOKEN),
         }
+        resp = requests.post(FME_URL, json=params, headers=headers)
+        if resp.ok:
+            self.request.response.setStatus(201)
+            return {"TaskID": get_task_id(response_json)}
 
-        try:
-            req = urllib.request.Request(FME_URL, data=body, headers=headers)
-            with urllib.request.urlopen(req) as r:
-                resp = r.read()
-                resp = resp.decode("utf-8")
-                resp = json.loads(resp)
-                self.request.response.setStatus(201)
-                return {"TaskID": get_task_id(response_json)}
-        except Exception:
-            # pylint: disable=line-too-long
-            log.info(
-                "There was an error registering the download request in"
-                " FME: %s",
-                body,
-            )  # noqa
-            self.request.response.setStatus(500)
-            return {}
+        body = json.dumps(params)
+        # pylint: disable=line-too-long
+        log.info(
+            "There was an error registering the download request in"
+            " FME: %s",
+            body,
+        )  # noqa
+        self.request.response.setStatus(500)
+        return {}
 
 
 def validateDate1(temporal_filter):
@@ -368,7 +378,7 @@ def validateDate1(temporal_filter):
     date_format = "%Y-%m-%d"
     try:
         if start_date is not None and end_date is not None:
-            date_obj1 = datetime.datetime.strptime(start_date, date_format)
+            date_obj1 = datetime.strptime(start_date, date_format)
             date_obj2 = datetime.datetime.strptime(end_date, date_format)
             return {"StartDate": date_obj1, "EndDate": date_obj2}
     except ValueError:
@@ -385,8 +395,8 @@ def validateDate2(temporal_filter):
     date_format = "%d-%m-%Y"
     try:
         if start_date and end_date:
-            date_obj1 = datetime.datetime.strptime(start_date, date_format)
-            date_obj2 = datetime.datetime.strptime(end_date, date_format)
+            date_obj1 = datetime.strptime(start_date, date_format)
+            date_obj2 = datetime.strptime(end_date, date_format)
             return {"StartDate": date_obj1, "EndDate": date_obj2}
     except ValueError:
         log.info("Incorrect data format, should be DD-MM-YYYY")
@@ -417,10 +427,12 @@ def checkDateDifference(temporal_filter):
 
 def validateNuts(nuts_id):
     """ validate nuts """
-    match = re.match(r"([a-z]+)([0-9]+)", nuts_id, re.I)
+    match = re.match(r"([A-Z]+)([0-9]*)", nuts_id, re.I)
     if match:
         items = match.groups()
-        valid_nuts = items[0] in COUNTRIES.keys()
+        # Only the first 2 chars represent the country
+        # french NUTS codes have 3 alphanumeric chars and then numbers
+        valid_nuts = items[0][:2] in COUNTRIES.keys()
         return valid_nuts
     return None
 
