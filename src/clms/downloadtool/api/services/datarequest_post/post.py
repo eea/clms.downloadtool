@@ -4,13 +4,13 @@ For HTTP GET operations we can use standard HTTP parameter passing
 through the URL)
 
 """
+from datetime import datetime
+from logging import getLogger
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import COUNTRIES
 from clms.downloadtool.utils import FORMAT_CONVERSION_TABLE
 from clms.downloadtool.utils import GCS
 from clms.statstool.utility import IDownloadStatsUtility
-from datetime import datetime
-from logging import getLogger
 from plone import api
 from plone.protect.interfaces import IDisableCSRFProtection
 from plone.restapi.deserializer import json_body
@@ -38,6 +38,7 @@ VITO_GEONETWORK_BASE_URL = (
 
 
 def base64_encode_path(path):
+    """ encode the given path as base64"""
     if isinstance(path, str):
         return base64.urlsafe_b64encode(path.encode("utf-8")).decode("utf-8")
 
@@ -206,12 +207,7 @@ class DataRequestPost(Service):
 
                     if (
                         # pylint: disable=line-too-long
-                        "StartDate"
-                        not in dataset_json["TemporalFilter"].keys()
-                        or "EndDate"
-                        not in dataset_json[
-                            "TemporalFilter"
-                        ].keys()  # noqa: E501
+                        "StartDate" not in dataset_json["TemporalFilter"].keys() or "EndDate" not in dataset_json["TemporalFilter"].keys()  # noqa: E501
                     ):
                         self.request.response.setStatus(400)
                         return {
@@ -361,16 +357,16 @@ class DataRequestPost(Service):
         if resp.ok:
             self.request.response.setStatus(201)
             return {"TaskID": get_task_id(response_json)}
-        else:
-            body = json.dumps(params)
-            # pylint: disable=line-too-long
-            log.info(
-                "There was an error registering the download request in"
-                " FME: %s",
-                body,
-            )  # noqa
-            self.request.response.setStatus(500)
-            return {}
+
+        body = json.dumps(params)
+        # pylint: disable=line-too-long
+        log.info(
+            "There was an error registering the download request in"
+            " FME: %s",
+            body,
+        )  # noqa
+        self.request.response.setStatus(500)
+        return {}
 
 
 def validateDate1(temporal_filter):
