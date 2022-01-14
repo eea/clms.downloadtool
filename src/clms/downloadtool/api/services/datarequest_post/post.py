@@ -4,6 +4,10 @@ For HTTP GET operations we can use standard HTTP parameter passing
 through the URL)
 
 """
+import base64
+import json
+import re
+
 from datetime import datetime
 from logging import getLogger
 from clms.downloadtool.utility import IDownloadToolUtility
@@ -18,9 +22,6 @@ from plone.restapi.services import Service
 from zope.component import getUtility
 from zope.interface import alsoProvides
 
-import base64
-import json
-import re
 import requests
 
 
