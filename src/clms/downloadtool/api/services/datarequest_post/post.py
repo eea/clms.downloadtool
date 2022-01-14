@@ -18,12 +18,23 @@ from plone.restapi.services import Service
 from zope.component import getUtility
 from zope.interface import alsoProvides
 
+import base64
 import json
 import re
-import base64
 import requests
 
+
 log = getLogger(__name__)
+
+
+EEA_GEONETWORK_BASE_URL = (
+    "https://sdi.eea.europa.eu/catalogue/copernicus/"
+    "api/records/{uid}/formatters/xml?approved=true"
+)
+VITO_GEONETWORK_BASE_URL = (
+    "https://land.copernicus.vgt.vito.be/geonetwork/"
+    "srv/api/records/{uid}/formatters/xml?approved=true"
+)
 
 
 def base64_encode_path(path):
@@ -121,7 +132,6 @@ class DataRequestPost(Service):
                     dataset_object, dataset_json["FileID"]
                 )
                 if dataset_json is not None:
-                    # pylint: disable=line-too-long
                     response_json.update({"FileID": dataset_json["FileID"]})
                     response_json.update(
                         {"DatasetPath": base64_encode_path(file_path)}
@@ -267,7 +277,17 @@ class DataRequestPost(Service):
                 for meta in dataset_object.geonetwork_identifiers.get(
                     "items", []
                 ):
-                    metadata.append(meta.get("id"))
+                    if meta.get("type", "") == "EEA":
+                        metadata_url = EEA_GEONETWORK_BASE_URL.format(
+                            uid=meta.get("id")
+                        )
+                    elif meta.get("type", "") == "VITO":
+                        metadata_url = VITO_GEONETWORK_BASE_URL.format(
+                            uid=meta.get("id")
+                        )
+                    else:
+                        metadata_url = meta.get("id")
+                    metadata.append(metadata_url)
 
                 response_json["Metadata"] = metadata
 
@@ -337,7 +357,6 @@ class DataRequestPost(Service):
             "Accept": "application/json",
             "Authorization": "fmetoken token={0}".format(FME_TOKEN),
         }
-
         resp = requests.post(FME_URL, json=params, headers=headers)
         if resp.ok:
             self.request.response.setStatus(201)
