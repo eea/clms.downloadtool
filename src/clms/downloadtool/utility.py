@@ -156,20 +156,21 @@ class DownloadToolUtility:
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        tempObject = {}
 
         if task_id not in registry:
             return "Error, task_id not registered"
 
-        for element in registry[task_id]:
-            element["DownloadURL"] = data_object["DownloadURL"]
-            element["FileSize"] = data_object["FileSize"]
+        registry_item = registry.get(task_id, None)
 
-        registry[task_id]["Status"] = data_object["Status"]
-        tempObject = registry[task_id]
+        registry_item["DownloadURL"] = data_object["DownloadURL"]
+        registry_item["FileSize"] = data_object["FileSize"]
+        registry_item["Status"] = data_object["Status"]
+        registry_item["FinalizationDateTime"] = data_object[
+            "FinalizationDateTime"
+        ]
+        registry[task_id] = registry_item
         annotations[ANNOTATION_KEY] = registry
-
-        return tempObject
+        return registry_item
 
     def get_dataset_info(self):
         """GetDatasetInfo method"""
