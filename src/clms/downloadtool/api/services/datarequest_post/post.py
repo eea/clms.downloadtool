@@ -357,7 +357,7 @@ class DataRequestPost(Service):
         resp = requests.post(FME_URL, json=params, headers=headers)
         if resp.ok:
             self.request.response.setStatus(201)
-            log.info('Datarequest created: "{}"'.format(params))
+            log.info('Datarequest created: "%s"' % params)
             return {"TaskID": get_task_id(response_json)}
 
         body = json.dumps(params)
