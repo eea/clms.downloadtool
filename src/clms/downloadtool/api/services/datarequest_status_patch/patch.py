@@ -53,14 +53,11 @@ class datarequest_status_patch(Service):
         if download_url:
             response_json.update({"DownloadURL": download_url})
 
-        log.info(response_json)
         response_json["FinalizationDateTime"] = datetime.utcnow().isoformat()
 
         response_json = utility.datarequest_status_patch(
             response_json, task_id
         )
-
-        log.info(response_json)
 
         if "Error, task_id not registered" in response_json:
             self.request.response.setStatus(404)
