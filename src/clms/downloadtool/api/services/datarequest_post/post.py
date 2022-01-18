@@ -91,7 +91,6 @@ class DataRequestPost(Service):
         datasets_json = body.get("Datasets")
 
         mail = user.getProperty("email")
-        response_json = {}
         data_object = {}
         data_object["Datasets"] = []
 
@@ -100,6 +99,7 @@ class DataRequestPost(Service):
         utility = getUtility(IDownloadToolUtility)
 
         for dataset_json in datasets_json:
+            response_json = {}
             if not dataset_json["DatasetID"]:
                 self.request.response.setStatus(400)
                 return {
