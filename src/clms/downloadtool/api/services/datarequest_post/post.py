@@ -119,7 +119,12 @@ class DataRequestPost(Service):
                     "msg": "Error, the DatasetID is not valid",
                 }
 
-            response_json.update({"DatasetID": dataset_json["DatasetID"]})
+            response_json.update(
+                {
+                    "DatasetID": dataset_json["DatasetID"],
+                    "DatasetTitle": dataset_object.Title(),
+                }
+            )
 
             # Handle FileID requests:
             # - get first the file_path from the dataset using the file_id
