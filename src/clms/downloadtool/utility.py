@@ -165,9 +165,10 @@ class DownloadToolUtility:
         registry_item["DownloadURL"] = data_object["DownloadURL"]
         registry_item["FileSize"] = data_object["FileSize"]
         registry_item["Status"] = data_object["Status"]
-        registry_item["FinalizationDateTime"] = data_object[
-            "FinalizationDateTime"
-        ]
+        if data_object["Status"] != "In_progress":
+            registry_item["FinalizationDateTime"] = data_object[
+                "FinalizationDateTime"
+            ]
         registry[task_id] = registry_item
         annotations[ANNOTATION_KEY] = registry
         return registry_item
