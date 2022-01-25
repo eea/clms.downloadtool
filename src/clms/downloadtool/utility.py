@@ -36,7 +36,6 @@ from zope.interface import implementer
 from zope.interface import Interface
 
 
-
 log = getLogger(__name__)
 
 
