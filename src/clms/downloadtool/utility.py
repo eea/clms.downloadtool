@@ -20,19 +20,21 @@ and call its method.
 We have to understand the utility as being a Singleton object.
 
 """
+from clms.downloadtool.utils import ANNOTATION_KEY
+from clms.downloadtool.utils import STATUS_LIST
 from logging import getLogger
-import random
-
+from persistent.mapping import PersistentMapping
 from plone import api
 from plone.restapi.interfaces import ISerializeToJson
-from persistent.mapping import PersistentMapping
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getMultiAdapter
+from zope.component.hooks import getSite
 from zope.globalrequest import getRequest
 from zope.interface import implementer
 from zope.interface import Interface
-from zope.site.hooks import getSite
-from clms.downloadtool.utils import ANNOTATION_KEY, STATUS_LIST
+
+import random
+
 
 log = getLogger(__name__)
 

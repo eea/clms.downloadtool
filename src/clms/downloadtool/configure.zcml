@@ -14,9 +14,13 @@
   -->
   <!--<includeDependencies package="." />-->
 
-  <include package=".browser" />
-
   <include file="permissions.zcml" />
+  <include package=".api" />
+  <include package=".browser" />
+  <include package=".controlpanels" />
+  <include package=".restapi" />
+  <include package=".upgrades" />
+
 
   <genericsetup:registerProfile
       name="default"
@@ -43,7 +47,6 @@
 
   <!-- -*- extra stuff goes here -*- -->
 
-  <include package=".api" />
   <utility
     provides=".utility.IDownloadToolUtility"
     factory=".utility.DownloadToolUtility"
