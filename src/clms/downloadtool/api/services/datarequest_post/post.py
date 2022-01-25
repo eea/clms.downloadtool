@@ -299,7 +299,7 @@ class DataRequestPost(Service):
         data_object["UserID"] = user_id
         data_object["RegistrationDateTime"] = datetime.utcnow().isoformat()
         utility_response_json = utility.datarequest_post(data_object)
-
+        utility_task_id = get_task_id(utility_response_json)
         new_datasets = {"Datasets": data_object['Datasets']}
 
         params = {
@@ -310,7 +310,7 @@ class DataRequestPost(Service):
                 },
                 {
                     "name": "TaskID",
-                    "value": get_task_id(utility_response_json),
+                    "value": utility_task_id,
                 },
                 {
                     "name": "UserMail",
@@ -318,11 +318,11 @@ class DataRequestPost(Service):
                 },
                 {
                     "name": "CallbackUrl",
-                    # "value": "{}/{}".format(
-                    #     api.portal.get().absolute_url(),
-                    #     "@datarequest_status_patch",
-                    # ),
-                    "value": "https://webhook.site/e9ef932f-d2ef-4d22-9417-adfdd026df9e"
+                    "value": "{}/{}".format(
+                        api.portal.get().absolute_url(),
+                        "@datarequest_status_patch",
+                    ),
+
                 },
                 # dump the json into a string for FME
                 {"name": "json", "value": json.dumps(new_datasets)},
@@ -334,14 +334,9 @@ class DataRequestPost(Service):
             "Start": "",
             "User": str(user_id),
             # pylint: disable=line-too-long
-            "Dataset": [
-                item["DatasetID"]
-                for item in utility_response_json.get(
-                    get_task_id(utility_response_json), {}
-                ).get("Datasets", [])
-            ],  # noqa
+            "Dataset": [item["DatasetID"] for item in data_object.get("Datasets", [])],  # noqa: E501
             "TransformationData": new_datasets,
-            "TaskID": get_task_id(utility_response_json),
+            "TaskID": utility_task_id,
             "End": "",
             "TransformationDuration": "",
             "TransformationSize": "",
@@ -362,9 +357,6 @@ class DataRequestPost(Service):
         }
         resp = requests.post(FME_URL, json=params, headers=headers)
         if resp.ok:
-            import pdb; pdb.set_trace()
-            a = 1
-
             self.request.response.setStatus(201)
             log.info('Datarequest created: "%s"', params)
             fme_task_id = resp.json().get('id', None)
