@@ -299,7 +299,7 @@ class DataRequestPost(Service):
         data_object["UserID"] = user_id
         data_object["RegistrationDateTime"] = datetime.utcnow().isoformat()
         utility_response_json = utility.datarequest_post(data_object)
-
+        utility_task_id = get_task_id(utility_response_json)
         new_datasets = {"Datasets": data_object['Datasets']}
 
         params = {
@@ -310,7 +310,7 @@ class DataRequestPost(Service):
                 },
                 {
                     "name": "TaskID",
-                    "value": get_task_id(utility_response_json),
+                    "value": utility_task_id,
                 },
                 {
                     "name": "UserMail",
@@ -322,6 +322,7 @@ class DataRequestPost(Service):
                         api.portal.get().absolute_url(),
                         "@datarequest_status_patch",
                     ),
+
                 },
                 # dump the json into a string for FME
                 {"name": "json", "value": json.dumps(new_datasets)},
@@ -333,14 +334,9 @@ class DataRequestPost(Service):
             "Start": "",
             "User": str(user_id),
             # pylint: disable=line-too-long
-            "Dataset": [
-                item["DatasetID"]
-                for item in utility_response_json.get(
-                    get_task_id(utility_response_json), {}
-                ).get("Datasets", [])
-            ],  # noqa
+            "Dataset": [item["DatasetID"] for item in data_object.get("Datasets", [])],  # noqa: E501
             "TransformationData": new_datasets,
-            "TaskID": get_task_id(utility_response_json),
+            "TaskID": utility_task_id,
             "End": "",
             "TransformationDuration": "",
             "TransformationSize": "",
@@ -349,10 +345,10 @@ class DataRequestPost(Service):
         }
         save_stats(stats_params)
         FME_URL = api.portal.get_registry_record(
-            "clms.addon.fme_config_controlpanel.url"
+            "clms.downloadtool.fme_config_controlpanel.url"
         )
         FME_TOKEN = api.portal.get_registry_record(
-            "clms.addon.fme_config_controlpanel.fme_token"
+            "clms.downloadtool.fme_config_controlpanel.fme_token"
         )
         headers = {
             "Content-Type": "application/json; charset=utf-8",
@@ -363,7 +359,12 @@ class DataRequestPost(Service):
         if resp.ok:
             self.request.response.setStatus(201)
             log.info('Datarequest created: "%s"', params)
-            return {"TaskID": get_task_id(response_json)}
+            fme_task_id = resp.json().get('id', None)
+            if fme_task_id is not None:
+                data_object["FMETaskId"] = fme_task_id
+                utility.datarequest_status_patch(data_object, utility_task_id)
+
+            return {"TaskID": utility_task_id}
 
         body = json.dumps(params)
         # pylint: disable=line-too-long
