@@ -56,10 +56,10 @@ class datarequest_delete(Service):
 
     def signal_finalization_to_fme(self, task_id):
         FME_DELETE_URL = api.portal.get_registry_record(
-            "clms.addon.fme_config_controlpanel.delete_url"
+            "clms.downloadtool.fme_config_controlpanel.delete_url"
         )
         FME_TOKEN = api.portal.get_registry_record(
-            "clms.addon.fme_config_controlpanel.fme_token"
+            "clms.downloadtool.fme_config_controlpanel.fme_token"
         )
         headers = {
             "Content-Type": "application/json; charset=utf-8",

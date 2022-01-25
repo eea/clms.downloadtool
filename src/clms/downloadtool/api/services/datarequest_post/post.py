@@ -345,10 +345,10 @@ class DataRequestPost(Service):
         }
         save_stats(stats_params)
         FME_URL = api.portal.get_registry_record(
-            "clms.addon.fme_config_controlpanel.url"
+            "clms.downloadtool.fme_config_controlpanel.url"
         )
         FME_TOKEN = api.portal.get_registry_record(
-            "clms.addon.fme_config_controlpanel.fme_token"
+            "clms.downloadtool.fme_config_controlpanel.fme_token"
         )
         headers = {
             "Content-Type": "application/json; charset=utf-8",
