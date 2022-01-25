@@ -20,9 +20,10 @@ and call its method.
 We have to understand the utility as being a Singleton object.
 
 """
+from logging import getLogger
+
 from clms.downloadtool.utils import ANNOTATION_KEY
 from clms.downloadtool.utils import STATUS_LIST
-from logging import getLogger
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.restapi.interfaces import ISerializeToJson
@@ -123,12 +124,7 @@ class DownloadToolUtility:
 
     def dataset_get(self, title):
         """DatasetGet method"""
-        log.info("Before the for")
         datasets = self.get_dataset_info()
-
-        log.info(datasets)
-        # if "items" not in datasets:
-        #    return "Error, there are no datasets to query"
 
         if not title:
             return datasets
@@ -136,8 +132,6 @@ class DownloadToolUtility:
         search_list = []
 
         for i in datasets:
-            log.info(i)
-            log.info(i["title"])
             if title in i["title"]:
                 search_list.append(i)
         if not search_list:

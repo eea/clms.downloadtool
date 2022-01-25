@@ -29,7 +29,8 @@ class IFMEConfigControlPanel(Interface):
 
     delete_url = schema.TextLine(
         title=_(
-            "Enter the URL of the FME server where DELETE requests will be sent",
+            "Enter the URL of the FME server where DELETE requests "
+            "will be sent",
         ),
         description=_(
             "This url will be used to signal the deletion of a given "

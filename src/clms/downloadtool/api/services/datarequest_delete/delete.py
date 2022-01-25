@@ -49,12 +49,13 @@ class datarequest_delete(Service):
         if fme_task_id:
             self.signal_finalization_to_fme(fme_task_id)
         else:
-            log.info('No FME task id found for task: {0}'.format(task_id))
+            log.info('No FME task id found for task: %s', task_id)
 
         self.request.response.setStatus(204)
         return _no_content_marker
 
     def signal_finalization_to_fme(self, task_id):
+        """ Signal finalization to FME """
         FME_DELETE_URL = api.portal.get_registry_record(
             "clms.downloadtool.fme_config_controlpanel.delete_url"
         )
@@ -74,6 +75,6 @@ class datarequest_delete(Service):
 
         resp = requests.delete(fme_url, headers=headers)
         if resp.ok:
-            log.info('Task finalized in FME: {0}'.format(task_id))
+            log.info('Task finalized in FME: %s', task_id)
         else:
-            log.info('Error finalizing task in FME: {0}'.format(task_id))
+            log.info('Error finalizing task in FME: %s', task_id)
