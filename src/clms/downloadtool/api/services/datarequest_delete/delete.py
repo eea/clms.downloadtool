@@ -70,10 +70,10 @@ class datarequest_delete(Service):
         if FME_DELETE_URL.endswith('/'):
             FME_DELETE_URL = FME_DELETE_URL[:-1]
 
-        fme_url = FME_DELETE_URL + '/' + task_id
+        fme_url = '{}/{}'.format(FME_DELETE_URL, task_id)
 
         resp = requests.delete(fme_url, headers=headers)
         if resp.ok:
             log.info('Task finalized in FME: {0}'.format(task_id))
-
-        log.info('Error finalizing task in FME: {0}'.format(task_id))
+        else:
+            log.info('Error finalizing task in FME: {0}'.format(task_id))
