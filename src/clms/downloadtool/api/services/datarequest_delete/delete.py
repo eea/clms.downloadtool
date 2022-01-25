@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-For HTTP GET operations we can use standard HTTP parameter passing
-(through the URL)
-
+DELETE endpoint for the download tool.
 """
 from logging import getLogger
 
@@ -12,7 +10,7 @@ from plone import api
 from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
 
-# logger, do log.info('XXXX') to print in the console
+import requests
 
 log = getLogger(__name__)
 
@@ -27,7 +25,6 @@ class datarequest_delete(Service):
         user_id = user.getId()
         task_id = str(body.get("TaskID"))
         response_json = None
-        log.info("DATAREQUEST_DELETE")
         utility = getUtility(IDownloadToolUtility)
 
         if not task_id:
@@ -47,5 +44,36 @@ class datarequest_delete(Service):
             self.request.response.setStatus(404)
             return {"status": "error", "msg": response_json}
 
+        # Try to get the FME task id to signal finalization
+        fme_task_id = response_json.get('FMETaskId', None)
+        if fme_task_id:
+            self.signal_finalization_to_fme(fme_task_id)
+        else:
+            log.info('No FME task id found for task: {0}'.format(task_id))
+
         self.request.response.setStatus(204)
         return response_json
+
+    def signal_finalization_to_fme(self, task_id):
+        FME_DELETE_URL = api.portal.get_registry_record(
+            "clms.addon.fme_config_controlpanel.delete_url"
+        )
+        FME_TOKEN = api.portal.get_registry_record(
+            "clms.addon.fme_config_controlpanel.fme_token"
+        )
+        headers = {
+            "Content-Type": "application/json; charset=utf-8",
+            "Accept": "application/json",
+            "Authorization": "fmetoken token={0}".format(FME_TOKEN),
+        }
+
+        if FME_DELETE_URL.endswith('/'):
+            FME_DELETE_URL = FME_DELETE_URL[:-1]
+
+        fme_url = FME_DELETE_URL + '/' + task_id
+
+        resp = requests.delete(fme_url, headers=headers)
+        if resp.ok:
+            log.info('Task finalized in FME: {0}'.format(task_id))
+
+        log.info('Error finalizing task in FME: {0}'.format(task_id))
