@@ -367,7 +367,12 @@ class DataRequestPost(Service):
 
             self.request.response.setStatus(201)
             log.info('Datarequest created: "%s"', params)
-            return {"TaskID": get_task_id(utility_response_json)}
+            fme_task_id = resp.json().get('id', None)
+            if fme_task_id is not None:
+                data_object["FMETaskId"] = fme_task_id
+                utility.datarequest_status_patch(data_object, utility_task_id)
+
+            return {"TaskID": utility_task_id}
 
         body = json.dumps(params)
         # pylint: disable=line-too-long
