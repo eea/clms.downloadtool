@@ -6,7 +6,7 @@ For HTTP GET operations we can use standard HTTP parameter passing
 """
 from logging import getLogger
 
-from plone.restapi.services import Service
+from plone.restapi.services import Service, _no_content_marker
 from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
 
@@ -26,6 +26,7 @@ class delete_data(Service):
         response_json = utility.delete_data()
         if response_json.get('status', "") == 'Error':
             self.request.response.setStatus(400)
-        else:
-            self.request.response.setStatus(204)
-        return response_json
+            return response_json
+
+        self.request.response.setStatus(204)
+        return _no_content_marker

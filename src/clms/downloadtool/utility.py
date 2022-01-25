@@ -23,16 +23,18 @@ We have to understand the utility as being a Singleton object.
 from logging import getLogger
 import random
 
+from clms.downloadtool.utils import ANNOTATION_KEY
+from clms.downloadtool.utils import STATUS_LIST
+from persistent.mapping import PersistentMapping
 from plone import api
 from plone.restapi.interfaces import ISerializeToJson
-from persistent.mapping import PersistentMapping
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getMultiAdapter
+from zope.component.hooks import getSite
 from zope.globalrequest import getRequest
 from zope.interface import implementer
 from zope.interface import Interface
-from zope.site.hooks import getSite
-from clms.downloadtool.utils import ANNOTATION_KEY, STATUS_LIST
+
 
 log = getLogger(__name__)
 
@@ -121,12 +123,7 @@ class DownloadToolUtility:
 
     def dataset_get(self, title):
         """DatasetGet method"""
-        log.info("Before the for")
         datasets = self.get_dataset_info()
-
-        log.info(datasets)
-        # if "items" not in datasets:
-        #    return "Error, there are no datasets to query"
 
         if not title:
             return datasets
@@ -134,8 +131,6 @@ class DownloadToolUtility:
         search_list = []
 
         for i in datasets:
-            log.info(i)
-            log.info(i["title"])
             if title in i["title"]:
                 search_list.append(i)
         if not search_list:
@@ -165,9 +160,10 @@ class DownloadToolUtility:
         registry_item["DownloadURL"] = data_object["DownloadURL"]
         registry_item["FileSize"] = data_object["FileSize"]
         registry_item["Status"] = data_object["Status"]
-        registry_item["FinalizationDateTime"] = data_object[
-            "FinalizationDateTime"
-        ]
+        if data_object["Status"] != "In_progress":
+            registry_item["FinalizationDateTime"] = data_object[
+                "FinalizationDateTime"
+            ]
         registry[task_id] = registry_item
         annotations[ANNOTATION_KEY] = registry
         return registry_item
