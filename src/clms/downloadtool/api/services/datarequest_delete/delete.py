@@ -4,7 +4,7 @@ DELETE endpoint for the download tool.
 """
 from logging import getLogger
 
-from plone.restapi.services import Service
+from plone.restapi.services import Service, _no_content_marker
 from plone.restapi.deserializer import json_body
 from plone import api
 from zope.component import getUtility
@@ -52,7 +52,7 @@ class datarequest_delete(Service):
             log.info('No FME task id found for task: {0}'.format(task_id))
 
         self.request.response.setStatus(204)
-        return response_json
+        return _no_content_marker
 
     def signal_finalization_to_fme(self, task_id):
         FME_DELETE_URL = api.portal.get_registry_record(
