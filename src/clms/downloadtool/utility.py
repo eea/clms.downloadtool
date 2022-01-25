@@ -21,6 +21,7 @@ We have to understand the utility as being a Singleton object.
 
 """
 from logging import getLogger
+import random
 
 from clms.downloadtool.utils import ANNOTATION_KEY
 from clms.downloadtool.utils import STATUS_LIST
@@ -34,7 +35,6 @@ from zope.globalrequest import getRequest
 from zope.interface import implementer
 from zope.interface import Interface
 
-import random
 
 
 log = getLogger(__name__)
