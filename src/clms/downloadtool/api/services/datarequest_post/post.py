@@ -381,9 +381,9 @@ class DataRequestPost(Service):
 
 
 def extract_dates_from_temporal_filter(temporal_filter):
-    """ StartDate and EndDate are mandatory and come in miliseconds since epoch,
-        so we need to convert them to datetime objects first and to ISO8601-like
-        format then.
+    """ StartDate and EndDate are mandatory and come in miliseconds since
+        epoch, so we need to convert them to datetime objects first and to
+        ISO8601-like format then.
     """
     try:
         start_date = temporal_filter.get("StartDate")
