@@ -181,29 +181,6 @@ class DataRequestPost(Service):
                     )
 
                 if "TemporalFilter" in dataset_json:
-                    # pylint: disable=line-too-long
-                    if not validateDate1(
-                        dataset_json["TemporalFilter"]
-                    ) and not validateDate2(
-                        dataset_json["TemporalFilter"]
-                    ):  # noqa
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "Error, date format is not correct",
-                        }
-
-                    if not checkDateDifference(dataset_json["TemporalFilter"]):
-                        self.request.response.setStatus(400)
-                        # pylint: disable=line-too-long
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "Error, difference between StartDate "
-                                " and EndDate is not coherent"
-                            ),
-                        }
-
                     if len(dataset_json["TemporalFilter"].keys()) > 2:
                         self.request.response.setStatus(400)
                         return {
@@ -224,8 +201,34 @@ class DataRequestPost(Service):
                             ),
                         }
 
+                    start_date, end_date = extract_dates_from_temporal_filter(
+                        dataset_json["TemporalFilter"]
+                    )
+
+                    if start_date is None or end_date is None:
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": "Error, date format is not correct",
+                        }
+
+                    if start_date > end_date:
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": (
+                                "Error, difference between StartDate "
+                                " and EndDate is not coherent"
+                            ),
+                        }
+
                     response_json.update(
-                        {"TemporalFilter": dataset_json["TemporalFilter"]}
+                        {
+                            "TemporalFilter": {
+                                "StartDate": start_date,
+                                "EndDate": end_date,
+                            }
+                        }
                     )
 
                 if "OutputGCS" in dataset_json:
@@ -300,7 +303,7 @@ class DataRequestPost(Service):
         data_object["RegistrationDateTime"] = datetime.utcnow().isoformat()
         utility_response_json = utility.datarequest_post(data_object)
         utility_task_id = get_task_id(utility_response_json)
-        new_datasets = {"Datasets": data_object['Datasets']}
+        new_datasets = {"Datasets": data_object["Datasets"]}
 
         params = {
             "publishedParameters": [
@@ -322,7 +325,6 @@ class DataRequestPost(Service):
                         api.portal.get().absolute_url(),
                         "@datarequest_status_patch",
                     ),
-
                 },
                 # dump the json into a string for FME
                 {"name": "json", "value": json.dumps(new_datasets)},
@@ -334,7 +336,9 @@ class DataRequestPost(Service):
             "Start": "",
             "User": str(user_id),
             # pylint: disable=line-too-long
-            "Dataset": [item["DatasetID"] for item in data_object.get("Datasets", [])],  # noqa: E501
+            "Dataset": [
+                item["DatasetID"] for item in data_object.get("Datasets", [])
+            ],  # noqa: E501
             "TransformationData": new_datasets,
             "TaskID": utility_task_id,
             "End": "",
@@ -359,7 +363,7 @@ class DataRequestPost(Service):
         if resp.ok:
             self.request.response.setStatus(201)
             log.info('Datarequest created: "%s"', params)
-            fme_task_id = resp.json().get('id', None)
+            fme_task_id = resp.json().get("id", None)
             if fme_task_id is not None:
                 data_object["FMETaskId"] = fme_task_id
                 utility.datarequest_status_patch(data_object, utility_task_id)
@@ -369,46 +373,31 @@ class DataRequestPost(Service):
         body = json.dumps(params)
         # pylint: disable=line-too-long
         log.info(
-            "There was an error registering the download request in"
-            " FME: %s",
+            "There was an error registering the download request in FME: %s",
             body,
         )  # noqa
         self.request.response.setStatus(500)
         return {}
 
 
-def validateDate1(temporal_filter):
-    """ validate date format year-month day """
-    start_date = temporal_filter.get("StartDate")
-    end_date = temporal_filter.get("EndDate")
-
-    date_format = "%Y-%m-%d"
+def extract_dates_from_temporal_filter(temporal_filter):
+    """ StartDate and EndDate are mandatory and come in miliseconds since
+        epoch, so we need to convert them to datetime objects first and to
+        ISO8601-like format then.
+    """
     try:
-        if start_date is not None and end_date is not None:
-            date_obj1 = datetime.strptime(start_date, date_format)
-            date_obj2 = datetime.datetime.strptime(end_date, date_format)
-            return {"StartDate": date_obj1, "EndDate": date_obj2}
-    except ValueError:
-        log.info("Incorrect data format, should be YYYY-MM-DD")
-        return False
-    return False
+        start_date = temporal_filter.get("StartDate")
+        end_date = temporal_filter.get("EndDate")
 
+        start_date_obj = datetime.fromtimestamp(start_date / 1000)
+        end_date_obj = datetime.fromtimestamp(end_date / 1000)
 
-def validateDate2(temporal_filter):
-    """ validate date format day-month-year"""
-    start_date = temporal_filter.get("StartDate")
-    end_date = temporal_filter.get("EndDate")
-
-    date_format = "%d-%m-%Y"
-    try:
-        if start_date and end_date:
-            date_obj1 = datetime.strptime(start_date, date_format)
-            date_obj2 = datetime.strptime(end_date, date_format)
-            return {"StartDate": date_obj1, "EndDate": date_obj2}
-    except ValueError:
-        log.info("Incorrect data format, should be DD-MM-YYYY")
-        return False
-    return False
+        return (
+            start_date_obj.strftime("%Y-%m-%d %H:%M:%S"),
+            end_date_obj.strftime("%Y-%m-%d %H:%M:%S")
+        )
+    except (TypeError, ValueError):
+        return None, None
 
 
 def validateSpatialExtent(bounding_box):
