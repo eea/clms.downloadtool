@@ -4,8 +4,8 @@ from plone.restapi.controlpanels import RegistryConfigletPanel
 from zope.component import adapter
 from zope.interface import Interface
 
-from clms.downloadtool.controlpanels.fme_config_controlpanel.controlpanel import \
-    IFMEConfigControlPanel
+# pylint: disable=line-too-long
+from clms.downloadtool.controlpanels.fme_config_controlpanel.controlpanel import IFMEConfigControlPanel  # noqa: E501
 from clms.addon.interfaces import IClmsAddonLayer
 
 
