@@ -6,5 +6,6 @@
     i18n_domain="clms.downloadtool">
 
   <include file="1001.zcml" />
+  <include file="1002.zcml" />
 
 </configure>

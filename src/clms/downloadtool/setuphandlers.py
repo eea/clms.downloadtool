@@ -6,7 +6,7 @@ from zope.interface import implementer
 
 
 @implementer(INonInstallable)
-class HiddenProfiles():
+class HiddenProfiles:
     """Hidden profiles"""
 
     def getNonInstallableProfiles(self):
@@ -14,6 +14,10 @@ class HiddenProfiles():
         return [
             "clms.downloadtool:uninstall",
         ]
+
+    def getNonInstallableProducts(self):
+        """Hide the upgrades package from site-creation and quickinstaller."""
+        return ["clms.downloadtool.upgrades"]
 
 
 def post_install(context):
