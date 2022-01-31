@@ -16,5 +16,6 @@
 <include package=".delete_data" />
 <include package=".conversion_table" />
 <include package=".projections" />
+<include package=".nuts_name" />
 </configure>
 
