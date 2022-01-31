@@ -157,10 +157,13 @@ class DownloadToolUtility:
 
         registry_item = registry.get(task_id, None)
 
-        registry_item["DownloadURL"] = data_object["DownloadURL"]
-        registry_item["FileSize"] = data_object["FileSize"]
         registry_item["Status"] = data_object["Status"]
-        if data_object["Status"] != "In_progress":
+
+        if "DownloadURL" in data_object:
+            registry_item["DownloadURL"] = data_object["DownloadURL"]
+        if 'FileSize' in data_object:
+            registry_item["FileSize"] = data_object["FileSize"]
+        if "FinalizationDateTime" in data_object:
             registry_item["FinalizationDateTime"] = data_object[
                 "FinalizationDateTime"
             ]
