@@ -4,9 +4,16 @@ Return NUTS region names
 
 """
 from plone import api
-from plone.restapi.services import Service
+from plone.memoize.ram import cache
 from plone.restapi.search.utils import unflatten_dotted_dict
+from plone.restapi.services import Service
+
 import requests
+
+
+def _cache_key(fun, self, nutsid):
+    """ Cache key function """
+    return nutsid
 
 
 class NUTSName(Service):
@@ -38,6 +45,7 @@ class NUTSName(Service):
 
         return res
 
+    @cache(_cache_key)
     def get_nuts_name(self, nutsid):
         """Based on the NUTS ID, return the name of
         the NUTS region.
