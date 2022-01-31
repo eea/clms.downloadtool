@@ -29,7 +29,7 @@ class NUTSName(Service):
                 if "," in v:
                     new_query[k] = v.split(",")
                 else:
-                    new_query[k] = v
+                    new_query[k] = [v]
 
         nuts_ids = new_query.get("nuts_ids", [])
         res = {}
