@@ -53,7 +53,9 @@ class datarequest_status_patch(Service):
         if download_url:
             response_json.update({"DownloadURL": download_url})
 
-        response_json["FinalizationDateTime"] = datetime.utcnow().isoformat()
+        if status != "In_progress":
+            # pylint: disable=line-too-long
+            response_json["FinalizationDateTime"] = datetime.utcnow().isoformat()  # noqa: E501
 
         response_json = utility.datarequest_status_patch(
             response_json, task_id
