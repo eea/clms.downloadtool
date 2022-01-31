@@ -50,10 +50,9 @@ class NUTSName(Service):
         """Based on the NUTS ID, return the name of
         the NUTS region.
         """
-        # pylint: disable=line-too-long
         url = api.portal.get_registry_record(
             "clms.downloadtool.fme_config_controlpanel.nuts_service"
-        )  # noqa: E501
+        )
         if url:
             url += "where=NUTS_ID='{}'".format(nutsid)
             resp = requests.get(url)
