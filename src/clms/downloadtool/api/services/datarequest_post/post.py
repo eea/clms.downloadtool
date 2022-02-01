@@ -16,13 +16,18 @@ from clms.downloadtool.utils import FORMAT_CONVERSION_TABLE
 from clms.downloadtool.utils import GCS
 from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
+from plone.memoize.ram import cache
 from plone.protect.interfaces import IDisableCSRFProtection
 from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
 from zope.component import getUtility
 from zope.interface import alsoProvides
-
 import requests
+
+
+def _cache_key(fun, self, nutsid):
+    """ Cache key function """
+    return nutsid
 
 
 log = getLogger(__name__)
@@ -160,6 +165,9 @@ class DataRequestPost(Service):
                             "msg": "NUTS country error",
                         }
                     response_json.update({"NUTSID": dataset_json["NUTS"]})
+                    response_json.update(
+                        {"NUTSName": self.get_nuts_name(dataset_json["NUTS"])}
+                    )
 
                 if "BoundingBox" in dataset_json:
                     if "NUTS" in dataset_json:
@@ -379,11 +387,33 @@ class DataRequestPost(Service):
         self.request.response.setStatus(500)
         return {}
 
+    @cache(_cache_key)
+    def get_nuts_name(self, nutsid):
+        """Based on the NUTS ID, return the name of
+        the NUTS region.
+        """
+        url = api.portal.get_registry_record(
+            "clms.downloadtool.fme_config_controlpanel.nuts_service"
+        )
+        if url:
+            url += "where=NUTS_ID='{}'".format(nutsid)
+            resp = requests.get(url)
+            if resp.ok:
+                resp_json = resp.json()
+                features = resp_json.get("features", [])
+                for feature in features:
+                    attributes = feature.get("attributes", {})
+                    nuts_name = attributes.get("NAME_LATN", "")
+                    if nuts_name:
+                        return nuts_name
+
+        return nutsid
+
 
 def extract_dates_from_temporal_filter(temporal_filter):
-    """ StartDate and EndDate are mandatory and come in miliseconds since
-        epoch, so we need to convert them to datetime objects first and to
-        ISO8601-like format then.
+    """StartDate and EndDate are mandatory and come in miliseconds since
+    epoch, so we need to convert them to datetime objects first and to
+    ISO8601-like format then.
     """
     try:
         start_date = temporal_filter.get("StartDate")
@@ -394,7 +424,7 @@ def extract_dates_from_temporal_filter(temporal_filter):
 
         return (
             start_date_obj.strftime("%Y-%m-%d %H:%M:%S"),
-            end_date_obj.strftime("%Y-%m-%d %H:%M:%S")
+            end_date_obj.strftime("%Y-%m-%d %H:%M:%S"),
         )
     except (TypeError, ValueError):
         return None, None
