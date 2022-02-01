@@ -251,6 +251,8 @@ COUNTRIES = {
     "UA": "UKR",
     "QA": "QAT",
     "MZ": "MOZ",
+    "EL": "GRE",
+    "UK": "GBR",
 }
 
 GCS = ["EPSG:4326", "EPSG:3035", "EPSG:3857", "EPSG:4258"]
