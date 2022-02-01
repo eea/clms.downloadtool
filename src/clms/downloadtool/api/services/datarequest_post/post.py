@@ -16,12 +16,12 @@ from clms.downloadtool.utils import FORMAT_CONVERSION_TABLE
 from clms.downloadtool.utils import GCS
 from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
+from plone.memoize.ram import cache
 from plone.protect.interfaces import IDisableCSRFProtection
 from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
 from zope.component import getUtility
 from zope.interface import alsoProvides
-from plone.memoize.ram import cache
 import requests
 
 
