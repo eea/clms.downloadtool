@@ -1,30 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-For HTTP GET operations we can use standard HTTP parameter passing
-(through the URL)
-
+An endpoint to reset all the data in the download tool
+available only for site managers
 """
-from logging import getLogger
-
 from plone.restapi.services import Service, _no_content_marker
 from zope.component import getUtility
+
 from clms.downloadtool.utility import IDownloadToolUtility
-
-# logger, do log.info('XXXX') to print in the console
-
-log = getLogger(__name__)
 
 
 class delete_data(Service):
-    """Delete data
-    """
+    """Delete data"""
+
     def reply(self):
         """ JSON response """
         response_json = None
-        log.info("DELETE_DATA")
         utility = getUtility(IDownloadToolUtility)
         response_json = utility.delete_data()
-        if response_json.get('status', "") == 'Error':
+        if response_json.get("status", "") == "Error":
             self.request.response.setStatus(400)
             return response_json
 

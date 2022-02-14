@@ -4,18 +4,16 @@
     xmlns:plone="http://namespaces.plone.org/plone"
     i18n_domain="clms.downloadtool">
 
-  -*- extra stuff goes here -*-
+  <!-- -*- extra stuff goes here -*- -->
 
-<include package=".datarequest_post" />
-<include package=".datarequest_search" />
-
-<include package=".datarequest_status_get" />
-<include package=".dataset_get" />
-<include package=".datarequest_status_patch" />
-<include package=".datarequest_delete" />
-<include package=".delete_data" />
-<include package=".conversion_table" />
-<include package=".projections" />
-<include package=".nuts_name" />
+  <include package=".conversion_table" />
+  <include package=".datarequest_delete" />
+  <include package=".datarequest_post" />
+  <include package=".datarequest_search" />
+  <include package=".datarequest_status_get" />
+  <include package=".datarequest_status_patch" />
+  <include package=".delete_data" />
+  <include package=".nuts_name" />
+  <include package=".projections" />
 </configure>
 

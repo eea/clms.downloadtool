@@ -7,14 +7,10 @@ through the URL)
 import base64
 import json
 import re
-
 from datetime import datetime
 from logging import getLogger
-from clms.downloadtool.utility import IDownloadToolUtility
-from clms.downloadtool.utils import COUNTRIES
-from clms.downloadtool.utils import FORMAT_CONVERSION_TABLE
-from clms.downloadtool.utils import GCS
-from clms.statstool.utility import IDownloadStatsUtility
+
+import requests
 from plone import api
 from plone.memoize.ram import cache
 from plone.protect.interfaces import IDisableCSRFProtection
@@ -22,7 +18,10 @@ from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
 from zope.component import getUtility
 from zope.interface import alsoProvides
-import requests
+
+from clms.downloadtool.utility import IDownloadToolUtility
+from clms.downloadtool.utils import COUNTRIES, FORMAT_CONVERSION_TABLE, GCS
+from clms.statstool.utility import IDownloadStatsUtility
 
 
 def _cache_key(fun, self, nutsid):
@@ -76,7 +75,7 @@ class DataRequestPost(Service):
         downloadable_files_json = dataset_object.downloadable_files
         for file_object in downloadable_files_json.get("items", []):
             if file_object.get("@id") == file_id:
-                return file_object.get("file_format", "")
+                return file_object.get("format", "")
 
         return None
 
@@ -105,7 +104,14 @@ class DataRequestPost(Service):
 
         for dataset_json in datasets_json:
             response_json = {}
-            if not dataset_json["DatasetID"]:
+            if "DatasetID" not in dataset_json:
+                self.request.response.setStatus(400)
+                return {
+                    "status": "error",
+                    "msg": "Error, DatasetID is not defined",
+                }
+
+            if not dataset_json.get("DatasetID"):
                 self.request.response.setStatus(400)
                 return {
                     "status": "error",
@@ -143,7 +149,7 @@ class DataRequestPost(Service):
                 file_format = self.get_dataset_file_format_from_file_id(
                     dataset_object, dataset_json["FileID"]
                 )
-                if dataset_json is not None:
+                if file_path and file_format:
                     response_json.update({"FileID": dataset_json["FileID"]})
                     response_json.update(
                         {"DatasetPath": base64_encode_path(file_path)}
@@ -158,7 +164,7 @@ class DataRequestPost(Service):
                     }
             else:
                 if "NUTS" in dataset_json:
-                    if not validateNuts(dataset_json["NUTS"]):
+                    if not validate_nuts(dataset_json["NUTS"]):
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
@@ -177,7 +183,9 @@ class DataRequestPost(Service):
                             "msg": "Error, NUTS is also defined",
                         }
 
-                    if not validateSpatialExtent(dataset_json["BoundingBox"]):
+                    if not validate_spatial_extent(
+                        dataset_json["BoundingBox"]
+                    ):
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
@@ -196,10 +204,16 @@ class DataRequestPost(Service):
                             "msg": "Error, TemporalFilter has too many fields",
                         }
 
-                    if (
-                        # pylint: disable=line-too-long
-                        "StartDate" not in dataset_json["TemporalFilter"].keys() or "EndDate" not in dataset_json["TemporalFilter"].keys()  # noqa: E501
-                    ):
+                    if "StartDate" not in dataset_json["TemporalFilter"]:
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": (
+                                "Error, TemporalFilter does "
+                                " not have StartDate or EndDate"
+                            ),
+                        }
+                    if "EndDate" not in dataset_json["TemporalFilter"]:
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
@@ -261,10 +275,26 @@ class DataRequestPost(Service):
                         "OutputFormat": dataset_json.get("OutputFormat", ""),
                     }
                 )
+                requested_output_format = dataset_json.get(
+                    "OutputFormat", None
+                )
+                if requested_output_format not in FORMAT_CONVERSION_TABLE:
+                    self.request.response.setStatus(400)
+                    return {
+                        "status": "error",
+                        "msg": (
+                            "Error, the specified output format is not valid"
+                        ),
+                    }
 
-                if not FORMAT_CONVERSION_TABLE[
-                    dataset_object.dataset_full_format
-                ][dataset_json.get("OutputFormat", "")]:
+                available_transformations_for_format = (
+                    FORMAT_CONVERSION_TABLE.get(
+                        dataset_object.dataset_full_format
+                    )
+                )
+                if not available_transformations_for_format.get(
+                    requested_output_format, None
+                ):
                     self.request.response.setStatus(400)
                     return {
                         "status": "error",
@@ -279,12 +309,11 @@ class DataRequestPost(Service):
                     }
                 )
 
+                response_json.update({"DatasetSource": ""})
                 if dataset_object.dataset_full_source is not None:
                     response_json.update(
                         {"DatasetSource": dataset_object.dataset_full_source}
                     )
-                else:
-                    response_json.update({"DatasetSource": ""})
 
                 metadata = []
                 for meta in dataset_object.geonetwork_identifiers.get(
@@ -356,6 +385,18 @@ class DataRequestPost(Service):
             "Successful": "",
         }
         save_stats(stats_params)
+        fme_result = self.post_request_to_fme(params)
+        if fme_result:
+            data_object["FMETaskId"] = fme_result
+            utility.datarequest_status_patch(data_object, utility_task_id)
+            self.request.response.setStatus(201)
+            return {"TaskID": utility_task_id}
+
+        self.request.response.setStatus(500)
+        return {"status": "error", "msg": "Error, FME request failed"}
+
+    def post_request_to_fme(self, params):
+        """ send the request to FME and let it process it"""
         FME_URL = api.portal.get_registry_record(
             "clms.downloadtool.fme_config_controlpanel.url"
         )
@@ -369,14 +410,8 @@ class DataRequestPost(Service):
         }
         resp = requests.post(FME_URL, json=params, headers=headers)
         if resp.ok:
-            self.request.response.setStatus(201)
-            log.info('Datarequest created: "%s"', params)
             fme_task_id = resp.json().get("id", None)
-            if fme_task_id is not None:
-                data_object["FMETaskId"] = fme_task_id
-                utility.datarequest_status_patch(data_object, utility_task_id)
-
-            return {"TaskID": utility_task_id}
+            return fme_task_id
 
         body = json.dumps(params)
         # pylint: disable=line-too-long
@@ -384,7 +419,7 @@ class DataRequestPost(Service):
             "There was an error registering the download request in FME: %s",
             body,
         )  # noqa
-        self.request.response.setStatus(500)
+
         return {}
 
     @cache(_cache_key)
@@ -430,7 +465,7 @@ def extract_dates_from_temporal_filter(temporal_filter):
         return None, None
 
 
-def validateSpatialExtent(bounding_box):
+def validate_spatial_extent(bounding_box):
     """ validate Bounding Box """
     if not len(bounding_box) == 4:
         return False
@@ -442,16 +477,7 @@ def validateSpatialExtent(bounding_box):
     return True
 
 
-def checkDateDifference(temporal_filter):
-    """ Check date difference """
-    log.info(temporal_filter)
-    start_date = temporal_filter["StartDate"]
-    end_date = temporal_filter.get("EndDate")
-
-    return start_date < end_date
-
-
-def validateNuts(nuts_id):
+def validate_nuts(nuts_id):
     """ validate nuts """
     match = re.match(r"([A-Z]+)([0-9]*)", nuts_id, re.I)
     if match:

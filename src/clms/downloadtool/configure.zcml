@@ -6,17 +6,15 @@
     i18n_domain="clms.downloadtool">
 
   <i18n:registerTranslations directory="locales" />
-  <include package="clms.addon" />
 
   <!--
     Be careful if you use general includeDependencies, it can have side effects!
     Better import explicit packages or configurations ;)
   -->
   <!--<includeDependencies package="." />-->
-
+  <include package="clms.types" />
   <include file="permissions.zcml" />
   <include package=".api" />
-  <include package=".browser" />
   <include package=".controlpanels" />
   <include package=".restapi" />
   <include package=".upgrades" />

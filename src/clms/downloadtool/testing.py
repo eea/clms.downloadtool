@@ -6,14 +6,14 @@ from plone.app.testing import applyProfile
 from plone.app.testing import FunctionalTesting
 from plone.app.testing import IntegrationTesting
 from plone.app.testing import PloneSandboxLayer
-import plone.restapi
+from plone.testing.zope import WSGI_SERVER_FIXTURE
 
 import clms.downloadtool
+import plone.restapi
 
 
 class ClmsDownloadtoolLayer(PloneSandboxLayer):
-    """ Plone sandbox
-    """
+    """Plone sandbox"""
 
     defaultBases = (PLONE_APP_CONTENTTYPES_FIXTURE,)
 
@@ -43,4 +43,9 @@ CLMS_DOWNLOADTOOL_INTEGRATION_TESTING = IntegrationTesting(
 CLMS_DOWNLOADTOOL_FUNCTIONAL_TESTING = FunctionalTesting(
     bases=(CLMS_DOWNLOADTOOL_FIXTURE,),
     name="ClmsDownloadtoolLayer:FunctionalTesting",
+)
+
+CLMS_DOWNLOADTOOL_RESTAPI_TESTING = FunctionalTesting(
+    bases=(CLMS_DOWNLOADTOOL_FIXTURE, WSGI_SERVER_FIXTURE),
+    name="ClmstypesLayer:RestApiTesting",
 )
