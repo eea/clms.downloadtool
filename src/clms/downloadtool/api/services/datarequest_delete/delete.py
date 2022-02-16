@@ -4,13 +4,13 @@ DELETE endpoint for the download tool.
 """
 from logging import getLogger
 
-from plone.restapi.services import Service, _no_content_marker
-from plone.restapi.deserializer import json_body
-from plone import api
-from zope.component import getUtility
-from clms.downloadtool.utility import IDownloadToolUtility
-
 import requests
+from plone import api
+from plone.restapi.deserializer import json_body
+from plone.restapi.services import Service, _no_content_marker
+from zope.component import getUtility
+
+from clms.downloadtool.utility import IDownloadToolUtility
 
 log = getLogger(__name__)
 
@@ -23,18 +23,15 @@ class datarequest_delete(Service):
         body = json_body(self.request)
         user = api.user.get_current()
         user_id = user.getId()
-        task_id = str(body.get("TaskID"))
-        response_json = None
-        utility = getUtility(IDownloadToolUtility)
+        task_id = body.get("TaskID")
 
         if not task_id:
             self.request.response.setStatus(400)
             return {"status": "error", "msg": "Error, TaskID not defined"}
-        if not user_id:
-            self.request.response.setStatus(400)
-            return {"status": "error", "msg": "Error, UserID not defined"}
 
-        response_json = utility.datarequest_delete(task_id, user_id)
+        utility = getUtility(IDownloadToolUtility)
+        str_task_id = str(body.get("TaskID"))
+        response_json = utility.datarequest_delete(str_task_id, user_id)
 
         if "Error, TaskID not registered" in response_json:
             self.request.response.setStatus(403)
@@ -45,11 +42,11 @@ class datarequest_delete(Service):
             return {"status": "error", "msg": response_json}
 
         # Try to get the FME task id to signal finalization
-        fme_task_id = response_json.get('FMETaskId', None)
+        fme_task_id = response_json.get("FMETaskId", None)
         if fme_task_id:
             self.signal_finalization_to_fme(fme_task_id)
         else:
-            log.info('No FME task id found for task: %s', task_id)
+            log.info("No FME task id found for task: %s", str_task_id)
 
         self.request.response.setStatus(204)
         return _no_content_marker
@@ -68,13 +65,13 @@ class datarequest_delete(Service):
             "Authorization": "fmetoken token={0}".format(FME_TOKEN),
         }
 
-        if FME_DELETE_URL.endswith('/'):
+        if FME_DELETE_URL.endswith("/"):
             FME_DELETE_URL = FME_DELETE_URL[:-1]
 
-        fme_url = '{}/{}'.format(FME_DELETE_URL, task_id)
+        fme_url = "{}/{}".format(FME_DELETE_URL, task_id)
 
         resp = requests.delete(fme_url, headers=headers)
         if resp.ok:
-            log.info('Task finalized in FME: %s', task_id)
+            log.info("Task finalized in FME: %s", task_id)
         else:
-            log.info('Error finalizing task in FME: %s', task_id)
+            log.info("Error finalizing task in FME: %s", task_id)

@@ -2,7 +2,7 @@
 """
 This is the control panel for fme configuration
 """
-from clms.addon import _
+from clms.downloadtool import _
 from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
 from plone.app.registry.browser.controlpanel import RegistryEditForm
 from plone.z3cform import layout

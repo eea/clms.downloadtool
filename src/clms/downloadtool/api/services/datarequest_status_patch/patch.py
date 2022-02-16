@@ -22,6 +22,11 @@ class datarequest_status_patch(Service):
     def reply(self):
         """ JSON response """
         body = json_body(self.request)
+
+        if not body.get("TaskID", None):
+            self.request.response.setStatus(400)
+            return {"status": "error", "msg": "Error, TaskID is not defined"}
+
         task_id = str(body.get("TaskID"))
         status = body.get("Status")
         download_url = body.get("DownloadURL")
@@ -30,10 +35,6 @@ class datarequest_status_patch(Service):
         response_json = {}
 
         utility = getUtility(IDownloadToolUtility)
-
-        if not task_id:
-            self.request.response.setStatus(400)
-            return {"status": "error", "msg": "Error, TaskID is not defined"}
 
         if not status:
             self.request.response.setStatus(400)
@@ -55,7 +56,9 @@ class datarequest_status_patch(Service):
 
         if status != "In_progress":
             # pylint: disable=line-too-long
-            response_json["FinalizationDateTime"] = datetime.utcnow().isoformat()  # noqa: E501
+            response_json[
+                "FinalizationDateTime"
+            ] = datetime.utcnow().isoformat()  # noqa: E501
 
         response_json = utility.datarequest_status_patch(
             response_json, task_id
@@ -65,17 +68,6 @@ class datarequest_status_patch(Service):
             self.request.response.setStatus(404)
             return {"status": "error", "msg": response_json}
 
-        if (
-            "Error, NUTSID and BoundingBox can't be defined in the same task"
-            in response_json
-        ):
-            self.request.response.setStatus(400)
-            return {"status": "error", "msg": response_json}
-
-        if "Error" in response_json:
-            self.request.response.setStatus(400)
-            return {"status": "error", "msg": response_json}
-
-        self.request.response.setStatus(201)
+        self.request.response.setStatus(200)
 
         return response_json
