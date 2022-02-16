@@ -20,21 +20,15 @@ and call its method.
 We have to understand the utility as being a Singleton object.
 
 """
-from logging import getLogger
 import random
+from logging import getLogger
 
-from clms.downloadtool.utils import ANNOTATION_KEY
-from clms.downloadtool.utils import STATUS_LIST
 from persistent.mapping import PersistentMapping
-from plone import api
-from plone.restapi.interfaces import ISerializeToJson
 from zope.annotation.interfaces import IAnnotations
-from zope.component import getMultiAdapter
 from zope.component.hooks import getSite
-from zope.globalrequest import getRequest
-from zope.interface import implementer
-from zope.interface import Interface
+from zope.interface import Interface, implementer
 
+from clms.downloadtool.utils import ANNOTATION_KEY, STATUS_LIST
 
 log = getLogger(__name__)
 
@@ -52,24 +46,18 @@ class DownloadToolUtility:
         site = getSite()
         annotations = IAnnotations(site)
         task_id = random.randint(0, 99999999999)
+        str_task_id = str(task_id)
 
-        if annotations.get(ANNOTATION_KEY, None) is None:
-            registry = {str(task_id): data_request}
-            annotations[ANNOTATION_KEY] = registry
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
 
-        else:
-            registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-            exists = True
-            while exists:
-                if task_id not in registry:
-                    exists = False
-                else:
-                    task_id = random.randint(0, 99999999999)
+        while str_task_id in registry:
+            task_id = random.randint(0, 99999999999)
+            str_task_id = str(task_id)
 
-            registry[str(task_id)] = data_request
-            annotations[ANNOTATION_KEY] = registry
+        registry[str_task_id] = data_request
+        annotations[ANNOTATION_KEY] = registry
 
-        return {task_id: data_request}
+        return {str_task_id: data_request}
 
     def datarequest_delete(self, task_id, user_id):
         """DatarequestDelete method"""
@@ -121,22 +109,6 @@ class DownloadToolUtility:
 
         return dataObject
 
-    def dataset_get(self, title):
-        """DatasetGet method"""
-        datasets = self.get_dataset_info()
-
-        if not title:
-            return datasets
-
-        search_list = []
-
-        for i in datasets:
-            if title in i["title"]:
-                search_list.append(i)
-        if not search_list:
-            return "Error, dataset not found"
-        return search_list
-
     def datarequest_status_get(self, task_id):
         """DataRequestStatusGet method"""
         site = getSite()
@@ -157,11 +129,11 @@ class DownloadToolUtility:
 
         registry_item = registry.get(task_id, None)
 
-        registry_item["Status"] = data_object["Status"]
-
+        if "Status" in data_object:
+            registry_item["Status"] = data_object["Status"]
         if "DownloadURL" in data_object:
             registry_item["DownloadURL"] = data_object["DownloadURL"]
-        if 'FileSize' in data_object:
+        if "FileSize" in data_object:
             registry_item["FileSize"] = data_object["FileSize"]
         if "FinalizationDateTime" in data_object:
             registry_item["FinalizationDateTime"] = data_object[
@@ -170,22 +142,6 @@ class DownloadToolUtility:
         registry[task_id] = registry_item
         annotations[ANNOTATION_KEY] = registry
         return registry_item
-
-    def get_dataset_info(self):
-        """GetDatasetInfo method"""
-        brains = api.content.find(portal_type="DataSet")
-        # pylint: disable=line-too-long
-        items = getMultiAdapter((brains, getRequest()), ISerializeToJson)(
-            fullobjects=True
-        )  # noqa
-        return items.get("items", [])
-
-    def get_item(self, key):
-        """GetItem method"""
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        return registry.get(key)
 
     def delete_data(self):
         """ a method to delete all data from the registry """
