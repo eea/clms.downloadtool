@@ -117,7 +117,7 @@ class TestDatarequestPatch(unittest.TestCase):
         response = self.api_session.patch(
             "@datarequest_status_patch", json=data
         )
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["Status"], "Finished_ok")
 
     def test_update_status_provide_filesize(self):
@@ -134,7 +134,7 @@ class TestDatarequestPatch(unittest.TestCase):
         response = self.api_session.patch(
             "@datarequest_status_patch", json=data
         )
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["Status"], "Finished_ok")
         self.assertEqual(response.json()["FileSize"], 1000000)
 
@@ -152,7 +152,7 @@ class TestDatarequestPatch(unittest.TestCase):
         response = self.api_session.patch(
             "@datarequest_status_patch", json=data
         )
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["Status"], "Finished_ok")
         self.assertEqual(
             response.json()["DownloadURL"], "https://some.download.com/url"
@@ -172,7 +172,7 @@ class TestDatarequestPatch(unittest.TestCase):
         response = self.api_session.patch(
             "@datarequest_status_patch", json=data
         )
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["Status"], "Finished_ok")
         self.assertEqual(response.json()["FileSize"], 1000000)
         self.assertEqual(

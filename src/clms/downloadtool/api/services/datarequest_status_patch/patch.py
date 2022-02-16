@@ -68,6 +68,6 @@ class datarequest_status_patch(Service):
             self.request.response.setStatus(404)
             return {"status": "error", "msg": response_json}
 
-        self.request.response.setStatus(201)
+        self.request.response.setStatus(200)
 
         return response_json
