@@ -5,11 +5,12 @@ Test the datarequest_status_patch endpoint
 import unittest
 
 import transaction
+from plone import api
 from plone.app.testing import (
     SITE_OWNER_NAME,
     SITE_OWNER_PASSWORD,
     TEST_USER_ID,
-    setRoles,
+    TEST_USER_PASSWORD,
 )
 from plone.restapi.testing import RelativeSession
 from zope.component import getUtility
@@ -28,10 +29,14 @@ class TestDatarequestPatch(unittest.TestCase):
         """Set up the test."""
         self.portal = self.layer["portal"]
         self.portal_url = self.portal.absolute_url()
-        setRoles(self.portal, TEST_USER_ID, ["Manager"])
+
         self.api_session = RelativeSession(self.portal_url)
         self.api_session.headers.update({"Accept": "application/json"})
-        self.api_session.auth = (SITE_OWNER_NAME, SITE_OWNER_PASSWORD)
+        self.api_session.auth = (TEST_USER_ID, TEST_USER_PASSWORD)
+
+        self.manager_api_session = RelativeSession(self.portal_url)
+        self.manager_api_session.headers.update({"Accept": "application/json"})
+        self.manager_api_session.auth = (SITE_OWNER_NAME, SITE_OWNER_PASSWORD)
 
         self.anonymous_session = RelativeSession(self.portal_url)
         self.anonymous_session.headers.update({"Accept": "application/json"})
@@ -53,6 +58,15 @@ class TestDatarequestPatch(unittest.TestCase):
         """ tear down cleanup"""
         self.api_session.close()
         self.anonymous_session.close()
+        self.manager_api_session.close()
+
+    def test_user_roles(self):
+        """ test the user roles to be used in these tests"""
+        manager_user = api.user.get(userid=SITE_OWNER_NAME)
+        self.assertIn("Manager", manager_user.getRoles())
+
+        standard_user = api.user.get(userid=TEST_USER_ID)
+        self.assertNotIn("Manager", standard_user.getRoles())
 
     def test_status_method_as_anonymous(self):
         """test anonymous user cannot access datarequest_status_patch
@@ -66,10 +80,22 @@ class TestDatarequestPatch(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 401)
 
+    def test_status_method_as_standard_logged_in_user(self):
+        """test standard logged in user cannot access datarequest_status_patch
+        endpoint"""
+        data = {}
+        response = self.api_session.patch(
+            "@datarequest_status_patch", json=data
+        )
+        self.assertEqual(
+            response.headers.get("Content-Type"), "application/json"
+        )
+        self.assertEqual(response.status_code, 401)
+
     def test_patch_without_task_id(self):
         """ TaskID is a required parameter """
         data = {"ThisIsNotTaskID": 1}
-        response = self.api_session.patch(
+        response = self.manager_api_session.patch(
             "@datarequest_status_patch", json=data
         )
         self.assertEqual(response.status_code, 400)
@@ -77,7 +103,7 @@ class TestDatarequestPatch(unittest.TestCase):
     def test_patch_with_empty_task_id(self):
         """ TaskID is a required parameter """
         data = {"TaskID": ""}
-        response = self.api_session.patch(
+        response = self.manager_api_session.patch(
             "@datarequest_status_patch", json=data
         )
         self.assertEqual(response.status_code, 400)
@@ -85,7 +111,7 @@ class TestDatarequestPatch(unittest.TestCase):
     def test_patch_with_invalid_task_id(self):
         """ test update status of a datarequest """
         data = {"TaskID": "some-invalid-task-id", "Status": "Finished_ok"}
-        response = self.api_session.patch(
+        response = self.manager_api_session.patch(
             "@datarequest_status_patch", json=data
         )
         self.assertEqual(response.status_code, 404)
@@ -93,7 +119,7 @@ class TestDatarequestPatch(unittest.TestCase):
     def test_patch_without_status(self):
         """ status is a required parameter """
         data = {"TaskID": self.task_id}
-        response = self.api_session.patch(
+        response = self.manager_api_session.patch(
             "@datarequest_status_patch", json=data
         )
         self.assertEqual(response.status_code, 400)
@@ -104,7 +130,7 @@ class TestDatarequestPatch(unittest.TestCase):
         data = {"TaskID": self.task_id, "Status": some_invalid_status}
         self.assertNotIn(some_invalid_status, STATUS_LIST)
 
-        response = self.api_session.patch(
+        response = self.manager_api_session.patch(
             "@datarequest_status_patch", json=data
         )
         self.assertEqual(response.status_code, 400)
@@ -114,7 +140,7 @@ class TestDatarequestPatch(unittest.TestCase):
         data = {"TaskID": self.task_id, "Status": "Finished_ok"}
 
         self.assertIn("Finished_ok", STATUS_LIST)
-        response = self.api_session.patch(
+        response = self.manager_api_session.patch(
             "@datarequest_status_patch", json=data
         )
         self.assertEqual(response.status_code, 200)
@@ -131,7 +157,7 @@ class TestDatarequestPatch(unittest.TestCase):
         }
 
         self.assertIn("Finished_ok", STATUS_LIST)
-        response = self.api_session.patch(
+        response = self.manager_api_session.patch(
             "@datarequest_status_patch", json=data
         )
         self.assertEqual(response.status_code, 200)
@@ -149,7 +175,7 @@ class TestDatarequestPatch(unittest.TestCase):
         }
 
         self.assertIn("Finished_ok", STATUS_LIST)
-        response = self.api_session.patch(
+        response = self.manager_api_session.patch(
             "@datarequest_status_patch", json=data
         )
         self.assertEqual(response.status_code, 200)
@@ -169,7 +195,7 @@ class TestDatarequestPatch(unittest.TestCase):
         }
 
         self.assertIn("Finished_ok", STATUS_LIST)
-        response = self.api_session.patch(
+        response = self.manager_api_session.patch(
             "@datarequest_status_patch", json=data
         )
         self.assertEqual(response.status_code, 200)
