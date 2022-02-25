@@ -74,6 +74,7 @@ setup(
             "plone.app.contenttypes",
             "plone.app.robotframework",
             "plone.restapi[test]",
+            "coverage",
         ],
     },
     entry_points="""
