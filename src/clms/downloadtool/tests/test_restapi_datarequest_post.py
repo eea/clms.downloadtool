@@ -163,7 +163,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()['TaskIds']), 1)
 
     def test_nuts_restriction(self):
         """ test post with valid data"""
@@ -193,7 +194,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()['TaskIds']), 1)
 
     def test_bbox_restriction(
         self,
@@ -235,7 +237,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()['TaskIds']), 1)
 
     def test_nuts_and_bbox_restriction(self):
         """ test post with valid data"""
@@ -270,7 +273,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()['TaskIds']), 1)
 
     def test_temporal_restriction(self):
         """ test post with valid data"""
@@ -306,7 +310,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()['TaskIds']), 1)
 
     def test_nuts_and_temporal_restriction(self):
         """ test post with valid data"""
@@ -344,7 +349,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()['TaskIds']), 1)
 
     def test_bbox_and_temporal_restriction(self):
         """ test post with valid data"""
@@ -392,7 +398,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()['TaskIds']), 1)
 
     def test_combined_restrictions(self):
         """ test post with valid data"""
@@ -441,7 +448,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()['TaskIds']), 1)
 
     def test_invalid_fme_response(self):
         """ when FME fails, it must return an error"""
@@ -887,7 +895,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()['TaskIds']), 1)
 
     def test_download_invalid_prepackaged_file_id(self):
         """ some files can be downloaded directly, providing their file_id """
@@ -933,6 +942,54 @@ class TestDatarequestPost(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("status", response.json())
+
+    def test_download_general_and_prepackaged_file_id(self):
+        """ in a single query users can request a generic download
+         and also a download of a prepackaged file  """
+
+        data = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset1.UID(),
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                    "BoundingBox": [
+                        2.354736328128108,
+                        46.852958688910306,
+                        4.639892578127501,
+                        45.88264619696234,
+                    ],
+                    "TemporalFilter": {
+                        "StartDate": 1546333200000,
+                        "EndDate": 1559289600000,
+                    },
+                },
+                {
+                    "DatasetID": self.dataset3.UID(),
+                    "FileID": self.dataset3.downloadable_files["items"][0][
+                        "@id"
+                    ],
+                },
+                {
+                    "DatasetID": self.dataset3.UID(),
+                    "FileID": self.dataset3.downloadable_files["items"][1][
+                        "@id"
+                    ],
+                },
+            ]
+        }
+
+        # Patch FME call to return an OK response
+        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+
+        response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(
+            response.headers.get("Content-Type"), "application/json"
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()['TaskIds']), 2)
 
 
 class TestDatarequestPostTemporalFilter(unittest.TestCase):
