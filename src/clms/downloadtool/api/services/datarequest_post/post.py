@@ -513,6 +513,7 @@ def save_stats(stats_json):
             "There was an error saving the stats: %s", json.dumps(stats_json)
         )  # noqa
 
+
 def get_dataset_file_path_from_file_id(dataset_object, file_id):
     """ get the dataset file path from the file id"""
     downloadable_files_json = dataset_object.downloadable_files
@@ -521,6 +522,7 @@ def get_dataset_file_path_from_file_id(dataset_object, file_id):
             return file_object.get("path", "")
 
     return None
+
 
 def get_dataset_file_format_from_file_id(dataset_object, file_id):
     """ get the dataset file format from the file id"""
