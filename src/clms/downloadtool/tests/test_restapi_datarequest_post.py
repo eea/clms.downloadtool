@@ -8,14 +8,27 @@ from datetime import datetime
 
 import transaction
 from plone import api
-from plone.app.testing import (SITE_OWNER_NAME, SITE_OWNER_PASSWORD,
-                               TEST_USER_ID, setRoles)
+from plone.app.testing import (
+    SITE_OWNER_NAME,
+    SITE_OWNER_PASSWORD,
+    TEST_USER_ID,
+    setRoles,
+)
 from plone.restapi.testing import RelativeSession
 
 from clms.downloadtool.api.services.datarequest_post.post import (
-    DataRequestPost, base64_encode_path, extract_dates_from_temporal_filter,
-    validate_nuts, validate_spatial_extent)
-from clms.downloadtool.testing import CLMS_DOWNLOADTOOL_RESTAPI_TESTING
+    DataRequestPost,
+    base64_encode_path,
+    extract_dates_from_temporal_filter,
+    validate_nuts,
+    validate_spatial_extent,
+    get_dataset_file_path_from_file_id,
+    get_dataset_file_format_from_file_id,
+)
+from clms.downloadtool.testing import (
+    CLMS_DOWNLOADTOOL_RESTAPI_TESTING,
+    CLMS_DOWNLOADTOOL_INTEGRATION_TESTING,
+)
 from clms.downloadtool.utils import DATASET_FORMATS, GCS
 
 FME_TASK_ID = 123456
@@ -104,17 +117,17 @@ class TestDatarequestPost(unittest.TestCase):
                 "items": [
                     {
                         "@id": "demo-id-1",
-                        "file_path": "7path/to/file1",
+                        "path": "7path/to/file1",
                         "format": "GDB",
                     },
                     {
                         "@id": "demo-id-2",
-                        "file_path": "7path/to/file2",
+                        "path": "7path/to/file2",
                         "format": "Shapefile",
                     },
                     {
                         "@id": "demo-id-3",
-                        "file_path": "7path/to/file3",
+                        "path": "7path/to/file3",
                         "format": "Netcdf",
                     },
                 ]
@@ -163,7 +176,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()["TaskIds"]), 1)
 
     def test_nuts_restriction(self):
         """ test post with valid data"""
@@ -193,7 +207,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()["TaskIds"]), 1)
 
     def test_bbox_restriction(
         self,
@@ -235,7 +250,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()["TaskIds"]), 1)
 
     def test_nuts_and_bbox_restriction(self):
         """ test post with valid data"""
@@ -270,7 +286,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()["TaskIds"]), 1)
 
     def test_temporal_restriction(self):
         """ test post with valid data"""
@@ -306,7 +323,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()["TaskIds"]), 1)
 
     def test_nuts_and_temporal_restriction(self):
         """ test post with valid data"""
@@ -344,7 +362,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()["TaskIds"]), 1)
 
     def test_bbox_and_temporal_restriction(self):
         """ test post with valid data"""
@@ -392,7 +411,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()["TaskIds"]), 1)
 
     def test_combined_restrictions(self):
         """ test post with valid data"""
@@ -441,7 +461,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()["TaskIds"]), 1)
 
     def test_invalid_fme_response(self):
         """ when FME fails, it must return an error"""
@@ -887,7 +908,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskID", response.json())
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()["TaskIds"]), 1)
 
     def test_download_invalid_prepackaged_file_id(self):
         """ some files can be downloaded directly, providing their file_id """
@@ -933,6 +955,54 @@ class TestDatarequestPost(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("status", response.json())
+
+    def test_download_general_and_prepackaged_file_id(self):
+        """in a single query users can request a generic download
+        and also a download of a prepackaged file"""
+
+        data = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset1.UID(),
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                    "BoundingBox": [
+                        2.354736328128108,
+                        46.852958688910306,
+                        4.639892578127501,
+                        45.88264619696234,
+                    ],
+                    "TemporalFilter": {
+                        "StartDate": 1546333200000,
+                        "EndDate": 1559289600000,
+                    },
+                },
+                {
+                    "DatasetID": self.dataset3.UID(),
+                    "FileID": self.dataset3.downloadable_files["items"][0][
+                        "@id"
+                    ],
+                },
+                {
+                    "DatasetID": self.dataset3.UID(),
+                    "FileID": self.dataset3.downloadable_files["items"][1][
+                        "@id"
+                    ],
+                },
+            ]
+        }
+
+        # Patch FME call to return an OK response
+        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+
+        response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(
+            response.headers.get("Content-Type"), "application/json"
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()["TaskIds"]), 2)
 
 
 class TestDatarequestPostTemporalFilter(unittest.TestCase):
@@ -1058,3 +1128,113 @@ class TestDatarequestPostEncodePath(unittest.TestCase):
             base64_encode_path(path),
             base64.urlsafe_b64encode(path).decode(),
         )
+
+
+class TestDatarequestPostUtilMethods(unittest.TestCase):
+    """ test util methods to extract data from dataset objects"""
+
+    layer = CLMS_DOWNLOADTOOL_INTEGRATION_TESTING
+
+    def setUp(self):
+        """ set up """
+        self.portal = self.layer["portal"]
+        self.portal_url = self.portal.absolute_url()
+        setRoles(self.portal, TEST_USER_ID, ["Manager"])
+        self.product = api.content.create(
+            container=self.portal,
+            type="Product",
+            title="Product 1",
+            id="product1",
+        )
+
+        self.dataset1 = api.content.create(
+            container=self.product,
+            type="DataSet",
+            title="DataSet 1",
+            id="dataset1",
+            dataset_full_format="Netcdf",
+            dataset_full_path="/this/is/a/path/to/dataset1",
+            dataset_full_source="EEA",
+            geonetwork_identifiers={
+                "items": [
+                    {
+                        "@id": "some-id",
+                        "type": "EEA",
+                        "id": "some-geonetwork-id",
+                    }
+                ]
+            },
+            downloadable_files={
+                "items": [
+                    {
+                        "@id": "id-1",
+                        "format": "GDB",
+                        "path": "/path/to/file1",
+                    },
+                    {
+                        "@id": "id-2",
+                        "format": "GDB",
+                        "path": "/path/to/file2",
+                    },
+                ]
+            },
+        )
+
+        self.dataset2 = api.content.create(
+            container=self.product,
+            type="DataSet",
+            title="DataSet 2",
+            id="dataset2",
+            dataset_full_format="GDB",
+            dataset_full_path="/this/is/a/path/to/dataset2",
+            dataset_full_source="WEKEO",
+            geonetwork_identifiers={
+                "items": [
+                    {
+                        "@id": "some-id-2",
+                        "type": "VITO",
+                        "id": "some-geonetwork-id-2",
+                    }
+                ]
+            },
+            downloadable_files={
+                "items": [
+                    {
+                        "@id": "id-3",
+                        "format": "Shapefile",
+                        "path": "/path/to/file3",
+                    },
+                    {
+                        "@id": "id-4",
+                        "format": "GDB",
+                        "path": "/path/to/file4",
+                    },
+                ]
+            },
+        )
+
+    def test_get_prepackaged_path_from_id(self):
+        """ return the path of a prepackaged file based on its id"""
+        path = get_dataset_file_path_from_file_id(self.dataset1, "id-1")
+        self.assertEqual(path, "/path/to/file1")
+
+        path = get_dataset_file_path_from_file_id(self.dataset2, "id-3")
+        self.assertEqual(path, "/path/to/file3")
+
+    def test_get_prepackaged_path_from_id_not_found(self):
+        """ return None if the file id is not found"""
+        path = get_dataset_file_path_from_file_id(self.dataset1, "id-4")
+        self.assertIsNone(path)
+
+    def test_get_prepackaged_format_from_id(self):
+        """ return the format of a prepackaged file based on its id"""
+        path = get_dataset_file_format_from_file_id(self.dataset1, "id-1")
+        self.assertEqual(path, "GDB")
+
+        path = get_dataset_file_format_from_file_id(self.dataset2, "id-3")
+        self.assertEqual(path, "Shapefile")
+
+    def test_get_prepackaged_format_from_id_not_found(self):
+        """ return None if the file id is not found"""
+        path = get_dataset_file_format_from_file_id(self.dataset1, "id-4")
+        self.assertIsNone(path)
