@@ -61,24 +61,6 @@ class DataRequestPost(Service):
 
         return None
 
-    def get_dataset_file_path_from_file_id(self, dataset_object, file_id):
-        """ get the dataset file path from the file id"""
-        downloadable_files_json = dataset_object.downloadable_files
-        for file_object in downloadable_files_json.get("items", []):
-            if file_object.get("@id") == file_id:
-                return file_object.get("file_path", "")
-
-        return None
-
-    def get_dataset_file_format_from_file_id(self, dataset_object, file_id):
-        """ get the dataset file format from the file id"""
-        downloadable_files_json = dataset_object.downloadable_files
-        for file_object in downloadable_files_json.get("items", []):
-            if file_object.get("@id") == file_id:
-                return file_object.get("format", "")
-
-        return None
-
     def reply(self):
         """ JSON response """
         alsoProvides(self.request, IDisableCSRFProtection)
@@ -95,8 +77,11 @@ class DataRequestPost(Service):
         datasets_json = body.get("Datasets")
 
         mail = user.getProperty("email")
-        data_object = {}
-        data_object["Datasets"] = []
+        general_download_data_object = {}
+        general_download_data_object["Datasets"] = []
+
+        prepacked_download_data_object = {}
+        prepacked_download_data_object["Datasets"] = []
 
         valid_dataset = False
 
@@ -143,10 +128,10 @@ class DataRequestPost(Service):
             # - if not return an error stating that the requested FileID is
             #   not valid
             if "FileID" in dataset_json:
-                file_path = self.get_dataset_file_path_from_file_id(
+                file_path = get_dataset_file_path_from_file_id(
                     dataset_object, dataset_json["FileID"]
                 )
-                file_format = self.get_dataset_file_format_from_file_id(
+                file_format = get_dataset_file_format_from_file_id(
                     dataset_object, dataset_json["FileID"]
                 )
                 if file_path and file_format:
@@ -162,6 +147,9 @@ class DataRequestPost(Service):
                         "status": "error",
                         "msg": "Error, the FileID is not valid",
                     }
+                prepacked_download_data_object["Datasets"].append(
+                    response_json
+                )
             else:
                 if "NUTS" in dataset_json:
                     if not validate_nuts(dataset_json["NUTS"]):
@@ -333,67 +321,86 @@ class DataRequestPost(Service):
 
                 response_json["Metadata"] = metadata
 
-            data_object["Datasets"].append(response_json)
+                general_download_data_object["Datasets"].append(response_json)
 
-        data_object["Status"] = "In_progress"
-        data_object["UserID"] = user_id
-        data_object["RegistrationDateTime"] = datetime.utcnow().isoformat()
-        utility_response_json = utility.datarequest_post(data_object)
-        utility_task_id = get_task_id(utility_response_json)
-        new_datasets = {"Datasets": data_object["Datasets"]}
-
-        params = {
-            "publishedParameters": [
-                {
-                    "name": "UserID",
-                    "value": str(user_id),
-                },
-                {
-                    "name": "TaskID",
-                    "value": utility_task_id,
-                },
-                {
-                    "name": "UserMail",
-                    "value": mail,
-                },
-                {
-                    "name": "CallbackUrl",
-                    "value": "{}/{}".format(
-                        api.portal.get().absolute_url(),
-                        "@datarequest_status_patch",
-                    ),
-                },
-                # dump the json into a string for FME
-                {"name": "json", "value": json.dumps(new_datasets)},
-            ]
+        fme_results = {
+            'ok': [],
+            'error': [],
         }
 
-        # build the stat params and save them
-        stats_params = {
-            "Start": "",
-            "User": str(user_id),
-            # pylint: disable=line-too-long
-            "Dataset": [
-                item["DatasetID"] for item in data_object.get("Datasets", [])
-            ],  # noqa: E501
-            "TransformationData": new_datasets,
-            "TaskID": utility_task_id,
-            "End": "",
-            "TransformationDuration": "",
-            "TransformationSize": "",
-            "TransformationResultData": "",
-            "Successful": "",
-        }
-        save_stats(stats_params)
-        fme_result = self.post_request_to_fme(params)
-        if fme_result:
-            data_object["FMETaskId"] = fme_result
-            utility.datarequest_status_patch(data_object, utility_task_id)
-            self.request.response.setStatus(201)
-            return {"TaskID": utility_task_id}
+        # pylint: disable=line-too-long
+        for data_object in [prepacked_download_data_object, general_download_data_object]:  # noqa: E501
 
-        self.request.response.setStatus(500)
-        return {"status": "error", "msg": "Error, FME request failed"}
+            data_object["Status"] = "In_progress"
+            data_object["UserID"] = user_id
+            data_object["RegistrationDateTime"] = datetime.utcnow().isoformat()
+            utility_response_json = utility.datarequest_post(data_object)
+            utility_task_id = get_task_id(utility_response_json)
+            new_datasets = {"Datasets": data_object["Datasets"]}
+
+            params = {
+                "publishedParameters": [
+                    {
+                        "name": "UserID",
+                        "value": str(user_id),
+                    },
+                    {
+                        "name": "TaskID",
+                        "value": utility_task_id,
+                    },
+                    {
+                        "name": "UserMail",
+                        "value": mail,
+                    },
+                    {
+                        "name": "CallbackUrl",
+                        "value": "{}/{}".format(
+                            api.portal.get().absolute_url(),
+                            "@datarequest_status_patch",
+                        ),
+                    },
+                    # dump the json into a string for FME
+                    {"name": "json", "value": json.dumps(new_datasets)},
+                ]
+            }
+
+            # build the stat params and save them
+            stats_params = {
+                "Start": "",
+                "User": str(user_id),
+                # pylint: disable=line-too-long
+                "Dataset": [item["DatasetID"] for item in data_object.get("Datasets", [])],  # noqa: E501
+                "TransformationData": new_datasets,
+                "TaskID": utility_task_id,
+                "End": "",
+                "TransformationDuration": "",
+                "TransformationSize": "",
+                "TransformationResultData": "",
+                "Successful": "",
+            }
+            save_stats(stats_params)
+            fme_result = self.post_request_to_fme(params)
+            if fme_result:
+                data_object["FMETaskId"] = fme_result
+                utility.datarequest_status_patch(data_object, utility_task_id)
+                self.request.response.setStatus(201)
+                fme_results['ok'].append({"TaskID": utility_task_id})
+            else:
+                fme_results['error'].append({"TaskID": utility_task_id})
+
+        if fme_results['error'] and not fme_results['ok']:
+            # All requests failed
+            self.request.response.setStatus(500)
+            return {
+                "status": "error",
+                "msg": "Error, all requests failed",
+            }
+
+        self.request.response.setStatus(201)
+        return {
+            'TaskIds': fme_results['ok'],
+            'ErrorTaskIds': fme_results['error'],
+        }
 
     def post_request_to_fme(self, params):
         """ send the request to FME and let it process it"""
@@ -505,3 +512,23 @@ def save_stats(stats_json):
         log.info(
             "There was an error saving the stats: %s", json.dumps(stats_json)
         )  # noqa
+
+
+def get_dataset_file_path_from_file_id(dataset_object, file_id):
+    """ get the dataset file path from the file id"""
+    downloadable_files_json = dataset_object.downloadable_files
+    for file_object in downloadable_files_json.get("items", []):
+        if file_object.get("@id") == file_id:
+            return file_object.get("path", "")
+
+    return None
+
+
+def get_dataset_file_format_from_file_id(dataset_object, file_id):
+    """ get the dataset file format from the file id"""
+    downloadable_files_json = dataset_object.downloadable_files
+    for file_object in downloadable_files_json.get("items", []):
+        if file_object.get("@id") == file_id:
+            return file_object.get("format", "")
+
+    return None
