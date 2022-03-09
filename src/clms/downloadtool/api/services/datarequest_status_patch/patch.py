@@ -31,6 +31,7 @@ class datarequest_status_patch(Service):
         status = body.get("Status")
         download_url = body.get("DownloadURL")
         filesize = body.get("FileSize")
+        message = body.get("Message")
 
         response_json = {}
 
@@ -54,7 +55,10 @@ class datarequest_status_patch(Service):
         if download_url:
             response_json.update({"DownloadURL": download_url})
 
-        if status != "In_progress":
+        if message:
+            response_json.update({"Message": message})
+
+        if status not in ["Queued", "In_progress"]:
             # pylint: disable=line-too-long
             response_json[
                 "FinalizationDateTime"
