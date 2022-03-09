@@ -376,7 +376,7 @@ class DataRequestPost(Service):
             general_download_data_object,
         ]:
             if data_object["Datasets"]:
-                data_object["Status"] = "In_progress"
+                data_object["Status"] = "Queued"
                 data_object["UserID"] = user_id
                 data_object[
                     "RegistrationDateTime"
