@@ -11,7 +11,6 @@ from datetime import datetime
 from logging import getLogger
 
 import requests
-from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
 from plone.memoize.ram import cache
 from plone.protect.interfaces import IDisableCSRFProtection
@@ -20,6 +19,7 @@ from plone.restapi.services import Service
 from zope.component import getUtility
 from zope.interface import alsoProvides
 
+from clms.statstool.utility import IDownloadStatsUtility
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import COUNTRIES, FORMAT_CONVERSION_TABLE, GCS
 
