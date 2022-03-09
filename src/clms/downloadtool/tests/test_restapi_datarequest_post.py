@@ -20,18 +20,17 @@ from clms.downloadtool.api.services.datarequest_post.post import (
     DataRequestPost,
     base64_encode_path,
     extract_dates_from_temporal_filter,
+    get_dataset_file_format_from_file_id,
+    get_dataset_file_path_from_file_id,
+    get_full_dataset_path,
     get_full_dataset_source,
+    get_full_dataset_wekeo_choices,
     validate_nuts,
     validate_spatial_extent,
-    get_dataset_file_path_from_file_id,
-    get_dataset_file_format_from_file_id,
-    get_full_dataset_source,
-    get_full_dataset_path,
-    get_full_dataset_wekeo_choices,
 )
 from clms.downloadtool.testing import (
-    CLMS_DOWNLOADTOOL_RESTAPI_TESTING,
     CLMS_DOWNLOADTOOL_INTEGRATION_TESTING,
+    CLMS_DOWNLOADTOOL_RESTAPI_TESTING,
 )
 from clms.downloadtool.utils import DATASET_FORMATS, GCS
 
