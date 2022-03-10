@@ -136,10 +136,10 @@ class DataRequestPost(Service):
                 )
                 if file_path and file_format:
                     response_json.update({"FileID": dataset_json["FileID"]})
+                    response_json.update({"DatasetPath": ""})
                     response_json.update(
-                        {"DatasetPath": base64_encode_path(file_path)}
+                        {"FilePath": base64_encode_path(file_path)}
                     )
-                    response_json.update({"FilePath": "PREPACKAGE"})
                     response_json.update({"OutputFormat": file_format})
                 else:
                     self.request.response.setStatus(400)
