@@ -20,14 +20,17 @@ from clms.downloadtool.api.services.datarequest_post.post import (
     DataRequestPost,
     base64_encode_path,
     extract_dates_from_temporal_filter,
+    get_dataset_file_format_from_file_id,
+    get_dataset_file_path_from_file_id,
+    get_full_dataset_path,
+    get_full_dataset_source,
+    get_full_dataset_wekeo_choices,
     validate_nuts,
     validate_spatial_extent,
-    get_dataset_file_path_from_file_id,
-    get_dataset_file_format_from_file_id,
 )
 from clms.downloadtool.testing import (
-    CLMS_DOWNLOADTOOL_RESTAPI_TESTING,
     CLMS_DOWNLOADTOOL_INTEGRATION_TESTING,
+    CLMS_DOWNLOADTOOL_RESTAPI_TESTING,
 )
 from clms.downloadtool.utils import DATASET_FORMATS, GCS
 
@@ -73,15 +76,23 @@ class TestDatarequestPost(unittest.TestCase):
             type="DataSet",
             title="DataSet 1",
             id="dataset1",
-            dataset_full_format="Netcdf",
-            dataset_full_path="/this/is/a/path/to/dataset1",
-            dataset_full_source="EEA",
             geonetwork_identifiers={
                 "items": [
                     {
                         "@id": "some-id",
                         "type": "EEA",
                         "id": "some-geonetwork-id",
+                    }
+                ]
+            },
+            dataset_download_information={
+                "items": [
+                    {
+                        "@id": "id-1",
+                        "full_format": "Netcdf",
+                        "full_path": "/this/is/a/path/to/dataset1",
+                        "full_source": "EEA",
+                        "wekeo_choices": "choice-1",
                     }
                 ]
             },
@@ -92,15 +103,23 @@ class TestDatarequestPost(unittest.TestCase):
             type="DataSet",
             title="DataSet 2",
             id="dataset2",
-            dataset_full_format="GDB",
-            dataset_full_path="/this/is/a/path/to/dataset2",
-            dataset_full_source="WEKEO",
             geonetwork_identifiers={
                 "items": [
                     {
                         "@id": "some-id-2",
                         "type": "VITO",
                         "id": "some-geonetwork-id-2",
+                    }
+                ]
+            },
+            dataset_download_information={
+                "items": [
+                    {
+                        "@id": "id-2",
+                        "full_format": "GDB",
+                        "full_path": "/this/is/a/path/to/dataset2",
+                        "full_source": "WEKEO",
+                        "wekeo_choices": "choice-2",
                     }
                 ]
             },
@@ -111,8 +130,6 @@ class TestDatarequestPost(unittest.TestCase):
             type="DataSet",
             title="DataSet 3",
             id="dataset3",
-            dataset_full_format="GDB",
-            dataset_full_path="/this/is/a/path/to/dataset3",
             downloadable_files={
                 "items": [
                     {
@@ -130,6 +147,17 @@ class TestDatarequestPost(unittest.TestCase):
                         "path": "7path/to/file3",
                         "format": "Netcdf",
                     },
+                ]
+            },
+            dataset_download_information={
+                "items": [
+                    {
+                        "@id": "id-3",
+                        "full_format": "GDB",
+                        "full_path": "/this/is/a/path/to/dataset3",
+                        "full_source": "EEA",
+                        "wekeo_choices": "choice-3",
+                    }
                 ]
             },
         )
@@ -157,11 +185,13 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                 },
                 {
                     "DatasetID": self.dataset2.UID(),
+                    "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                 },
@@ -186,12 +216,14 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "NUTS": "BE",
                 },
                 {
                     "DatasetID": self.dataset2.UID(),
+                    "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "NUTS": "ITC11",
@@ -219,6 +251,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": [
@@ -230,6 +263,7 @@ class TestDatarequestPost(unittest.TestCase):
                 },
                 {
                     "DatasetID": self.dataset2.UID(),
+                    "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": [
@@ -260,12 +294,14 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "NUTS": "ITC11",
                 },
                 {
                     "DatasetID": self.dataset2.UID(),
+                    "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": [
@@ -296,6 +332,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "TemporalFilter": {
@@ -305,6 +342,7 @@ class TestDatarequestPost(unittest.TestCase):
                 },
                 {
                     "DatasetID": self.dataset2.UID(),
+                    "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "TemporalFilter": {
@@ -333,6 +371,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "NUTS": "ITC11",
@@ -343,6 +382,7 @@ class TestDatarequestPost(unittest.TestCase):
                 },
                 {
                     "DatasetID": self.dataset2.UID(),
+                    "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "NUTS": "BE",
@@ -372,6 +412,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "TemporalFilter": {
@@ -387,6 +428,7 @@ class TestDatarequestPost(unittest.TestCase):
                 },
                 {
                     "DatasetID": self.dataset2.UID(),
+                    "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "TemporalFilter": {
@@ -421,6 +463,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": [
@@ -436,6 +479,7 @@ class TestDatarequestPost(unittest.TestCase):
                 },
                 {
                     "DatasetID": self.dataset2.UID(),
+                    "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "NUTS": "BE",
@@ -446,6 +490,7 @@ class TestDatarequestPost(unittest.TestCase):
                 },
                 {
                     "DatasetID": self.dataset2.UID(),
+                    "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "NUTS": "ES",
@@ -470,6 +515,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": [
@@ -485,6 +531,7 @@ class TestDatarequestPost(unittest.TestCase):
                 },
                 {
                     "DatasetID": self.dataset2.UID(),
+                    "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "NUTS": "BE",
@@ -495,6 +542,7 @@ class TestDatarequestPost(unittest.TestCase):
                 },
                 {
                     "DatasetID": self.dataset2.UID(),
+                    "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "NUTS": "ES",
@@ -518,6 +566,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     # No DatasetID
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": [
@@ -534,6 +583,7 @@ class TestDatarequestPost(unittest.TestCase):
                 {
                     # DatasetID is None
                     "DatasetID": None,
+                    "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "NUTS": "BE",
@@ -567,6 +617,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": invalid_dataset_id,
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": [
@@ -601,6 +652,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "NUTS": invalid_nuts_code,
@@ -624,6 +676,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": invalid_bbox,
@@ -648,6 +701,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": valid_bbox,
@@ -675,6 +729,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "TemporalFilter": invalid_temporal_filter,
@@ -706,6 +761,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "TemporalFilter": invalid_temporal_filter,
@@ -735,6 +791,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "TemporalFilter": invalid_temporal_filter,
@@ -764,6 +821,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "TemporalFilter": invalid_temporal_filter,
@@ -794,6 +852,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "TemporalFilter": invalid_temporal_filter,
@@ -821,6 +880,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": invalid_projection,
                 },
@@ -843,6 +903,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": invalid_format,
                 },
             ]
@@ -865,6 +926,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": gdb_format,
                 },
             ]
@@ -876,6 +938,22 @@ class TestDatarequestPost(unittest.TestCase):
             response.headers.get("Content-Type"), "application/json"
         )
 
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("status", response.json())
+
+    def test_invalid_download_information_id(self):
+        """ test request with an invalid download information id """
+        data = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "this-is-an-invalid-id",
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                },
+            ]
+        }
+        response = self.api_session.post("@datarequest_post", json=data)
         self.assertEqual(response.status_code, 400)
         self.assertIn("status", response.json())
 
@@ -964,6 +1042,7 @@ class TestDatarequestPost(unittest.TestCase):
             "Datasets": [
                 {
                     "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": [
@@ -1178,6 +1257,17 @@ class TestDatarequestPostUtilMethods(unittest.TestCase):
                     },
                 ]
             },
+            dataset_download_information={
+                "items": [
+                    {
+                        "@id": "id-1",
+                        "full_format": "GDB",
+                        "full_path": "/this/is/a/path/to/dataset1",
+                        "full_source": "EEA",
+                        "wekeo_choices": "choice-1",
+                    }
+                ]
+            },
         )
 
         self.dataset2 = api.content.create(
@@ -1185,9 +1275,6 @@ class TestDatarequestPostUtilMethods(unittest.TestCase):
             type="DataSet",
             title="DataSet 2",
             id="dataset2",
-            dataset_full_format="GDB",
-            dataset_full_path="/this/is/a/path/to/dataset2",
-            dataset_full_source="WEKEO",
             geonetwork_identifiers={
                 "items": [
                     {
@@ -1209,6 +1296,17 @@ class TestDatarequestPostUtilMethods(unittest.TestCase):
                         "format": "GDB",
                         "path": "/path/to/file4",
                     },
+                ]
+            },
+            dataset_download_information={
+                "items": [
+                    {
+                        "@id": "id-2",
+                        "full_format": "GDB",
+                        "full_path": "/this/is/a/path/to/dataset2",
+                        "full_source": "WEKEO",
+                        "wekeo_choices": "choice-2",
+                    }
                 ]
             },
         )
@@ -1238,3 +1336,43 @@ class TestDatarequestPostUtilMethods(unittest.TestCase):
         """ return None if the file id is not found"""
         path = get_dataset_file_format_from_file_id(self.dataset1, "id-4")
         self.assertIsNone(path)
+
+    def test_get_full_dataset_source(self):
+        """ return the source of the dataset based on download_information_id"""
+        item = get_full_dataset_source(self.dataset1, "id-1")
+        self.assertEqual(item, "EEA")
+
+        item = get_full_dataset_source(self.dataset2, "id-2")
+        self.assertEqual(item, "WEKEO")
+
+    def test_get_full_dataset_source_with_invalid_id(self):
+        """ with an invalid id, None is returned"""
+        item = get_full_dataset_source(self.dataset1, "invalid-id")
+        self.assertIsNone(item)
+
+    def test_get_full_dataset_path(self):
+        """ return the path of the dataset based on download_information_id"""
+        item = get_full_dataset_path(self.dataset1, "id-1")
+        self.assertEqual(item, "/this/is/a/path/to/dataset1")
+
+        item = get_full_dataset_path(self.dataset2, "id-2")
+        self.assertEqual(item, "/this/is/a/path/to/dataset2")
+
+    def test_get_full_dataset_path_with_invalid_id(self):
+        """ with an invalid id, None is returned"""
+        item = get_full_dataset_path(self.dataset1, "invalid-id")
+        self.assertIsNone(item)
+
+    def test_get_full_dataset_wekeo_choices(self):
+        """return the wekeo_choices of the dataset based on
+        download_information_id"""
+        item = get_full_dataset_wekeo_choices(self.dataset1, "id-1")
+        self.assertEqual(item, "choice-1")
+
+        item = get_full_dataset_wekeo_choices(self.dataset2, "id-2")
+        self.assertEqual(item, "choice-2")
+
+    def test_get_full_dataset_wekeo_choices_with_invalid_id(self):
+        """ with an invalid id, None is returned"""
+        item = get_full_dataset_wekeo_choices(self.dataset1, "invalid-id")
+        self.assertIsNone(item)

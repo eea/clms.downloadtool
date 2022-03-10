@@ -19,9 +19,9 @@ from plone.restapi.services import Service
 from zope.component import getUtility
 from zope.interface import alsoProvides
 
+from clms.statstool.utility import IDownloadStatsUtility
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import COUNTRIES, FORMAT_CONVERSION_TABLE, GCS
-from clms.statstool.utility import IDownloadStatsUtility
 
 
 def _cache_key(fun, self, nutsid):
@@ -252,17 +252,30 @@ class DataRequestPost(Service):
                         {"OutputGCS": dataset_json["OutputGCS"]}
                     )
 
-                # Quick check if the dataset format value is None
-                dataset_full_format = dataset_object.dataset_full_format
-                if dataset_full_format is None:
-                    dataset_full_format = ""
-
-                response_json.update(
-                    {
-                        "DatasetFormat": dataset_object.dataset_full_format,
-                        "OutputFormat": dataset_json.get("OutputFormat", ""),
+                if "DatasetDownloadInformationID" not in dataset_json:
+                    self.request.response.setStatus(400)
+                    return {
+                        "status": "error",
+                        "msg": (
+                            "Error, DatasetDownloadInformationID is not"
+                            " defined."
+                        ),
                     }
+
+                download_information_id = dataset_json.get(
+                    "DatasetDownloadInformationID"
                 )
+                # Check if the dataset format value is correct
+                full_dataset_format = get_full_dataset_format(
+                    dataset_object, download_information_id
+                )
+                if full_dataset_format is None:
+                    self.request.response.setStatus(400)
+                    return {
+                        "status": "error",
+                        "msg": "Error, the dataset format is not valid",
+                    }
+
                 requested_output_format = dataset_json.get(
                     "OutputFormat", None
                 )
@@ -276,10 +289,9 @@ class DataRequestPost(Service):
                     }
 
                 available_transformations_for_format = (
-                    FORMAT_CONVERSION_TABLE.get(
-                        dataset_object.dataset_full_format
-                    )
+                    FORMAT_CONVERSION_TABLE.get(full_dataset_format)
                 )
+
                 if not available_transformations_for_format.get(
                     requested_output_format, None
                 ):
@@ -288,20 +300,51 @@ class DataRequestPost(Service):
                         "status": "error",
                         "msg": "Error, specified formats are not compatible",
                     }
-                # In any case, get the dataset_full_path and use it.
-                response_json.update(
-                    {
-                        "DatasetPath": base64_encode_path(
-                            dataset_object.dataset_full_path
-                        )
-                    }
+
+                # Check if the dataset source is OK
+                full_dataset_source = get_full_dataset_source(
+                    dataset_object, download_information_id
                 )
 
-                response_json.update({"DatasetSource": ""})
-                if dataset_object.dataset_full_source is not None:
-                    response_json.update(
-                        {"DatasetSource": dataset_object.dataset_full_source}
-                    )
+                if not full_dataset_source:
+                    self.request.response.setStatus(400)
+                    return {
+                        "status": "error",
+                        "msg": "Error, the dataset source is not valid",
+                    }
+
+                # Check if the dataset path is OK
+                full_dataset_path = get_full_dataset_path(
+                    dataset_object, download_information_id
+                )
+                if not full_dataset_path:
+                    self.request.response.setStatus(400)
+                    return {
+                        "status": "error",
+                        "msg": "Error, the dataset path is not valid",
+                    }
+
+                #
+                # # Check if wekeo choices are OK
+                # wekeo_choices = get_full_dataset_wekeo_choices(
+                #     dataset_object, download_information_id
+                # )
+                # if not wekeo_choices:
+                #     self.request.response.setStatus(400)
+                #     return {
+                #         "status": "error",
+                #         "msg": "Error, the dataset path is not valid",
+                #     }
+
+                response_json.update(
+                    {
+                        "DatasetFormat": full_dataset_format,
+                        "OutputFormat": dataset_json.get("OutputFormat", ""),
+                        "DatasetPath": base64_encode_path(full_dataset_path),
+                        "DatasetSource": full_dataset_source,
+                        # "WekeoChoices": wekeo_choices,
+                    }
+                )
 
                 metadata = []
                 for meta in dataset_object.geonetwork_identifiers.get(
@@ -324,71 +367,80 @@ class DataRequestPost(Service):
                 general_download_data_object["Datasets"].append(response_json)
 
         fme_results = {
-            'ok': [],
-            'error': [],
+            "ok": [],
+            "error": [],
         }
 
-        # pylint: disable=line-too-long
-        for data_object in [prepacked_download_data_object, general_download_data_object]:  # noqa: E501
+        for data_object in [
+            prepacked_download_data_object,
+            general_download_data_object,
+        ]:
+            if data_object["Datasets"]:
+                data_object["Status"] = "Queued"
+                data_object["UserID"] = user_id
+                data_object[
+                    "RegistrationDateTime"
+                ] = datetime.utcnow().isoformat()
+                utility_response_json = utility.datarequest_post(data_object)
+                utility_task_id = get_task_id(utility_response_json)
+                new_datasets = {"Datasets": data_object["Datasets"]}
 
-            data_object["Status"] = "In_progress"
-            data_object["UserID"] = user_id
-            data_object["RegistrationDateTime"] = datetime.utcnow().isoformat()
-            utility_response_json = utility.datarequest_post(data_object)
-            utility_task_id = get_task_id(utility_response_json)
-            new_datasets = {"Datasets": data_object["Datasets"]}
+                params = {
+                    "publishedParameters": [
+                        {
+                            "name": "UserID",
+                            "value": str(user_id),
+                        },
+                        {
+                            "name": "TaskID",
+                            "value": utility_task_id,
+                        },
+                        {
+                            "name": "UserMail",
+                            "value": mail,
+                        },
+                        {
+                            "name": "CallbackUrl",
+                            "value": "{}/{}".format(
+                                api.portal.get().absolute_url(),
+                                "@datarequest_status_patch",
+                            ),
+                        },
+                        # dump the json into a string for FME
+                        {"name": "json", "value": json.dumps(new_datasets)},
+                    ]
+                }
 
-            params = {
-                "publishedParameters": [
-                    {
-                        "name": "UserID",
-                        "value": str(user_id),
-                    },
-                    {
-                        "name": "TaskID",
-                        "value": utility_task_id,
-                    },
-                    {
-                        "name": "UserMail",
-                        "value": mail,
-                    },
-                    {
-                        "name": "CallbackUrl",
-                        "value": "{}/{}".format(
-                            api.portal.get().absolute_url(),
-                            "@datarequest_status_patch",
-                        ),
-                    },
-                    # dump the json into a string for FME
-                    {"name": "json", "value": json.dumps(new_datasets)},
-                ]
-            }
+                # build the stat params and save them
+                stats_params = {
+                    "Start": "",
+                    "User": str(user_id),
+                    # pylint: disable=line-too-long
+                    "Dataset": [
+                        item["DatasetID"]
+                        for item in data_object.get("Datasets", [])
+                    ],  # noqa: E501
+                    "TransformationData": new_datasets,
+                    "TaskID": utility_task_id,
+                    "End": "",
+                    "TransformationDuration": "",
+                    "TransformationSize": "",
+                    "TransformationResultData": "",
+                    "Successful": "",
+                }
+                save_stats(stats_params)
+                fme_result = self.post_request_to_fme(params)
+                if fme_result:
+                    data_object["FMETaskId"] = fme_result
+                    utility.datarequest_status_patch(
+                        data_object, utility_task_id
+                    )
+                    self.request.response.setStatus(201)
+                    fme_results["ok"].append({"TaskID": utility_task_id})
+                else:
+                    fme_results["error"].append({"TaskID": utility_task_id})
 
-            # build the stat params and save them
-            stats_params = {
-                "Start": "",
-                "User": str(user_id),
-                # pylint: disable=line-too-long
-                "Dataset": [item["DatasetID"] for item in data_object.get("Datasets", [])],  # noqa: E501
-                "TransformationData": new_datasets,
-                "TaskID": utility_task_id,
-                "End": "",
-                "TransformationDuration": "",
-                "TransformationSize": "",
-                "TransformationResultData": "",
-                "Successful": "",
-            }
-            save_stats(stats_params)
-            fme_result = self.post_request_to_fme(params)
-            if fme_result:
-                data_object["FMETaskId"] = fme_result
-                utility.datarequest_status_patch(data_object, utility_task_id)
-                self.request.response.setStatus(201)
-                fme_results['ok'].append({"TaskID": utility_task_id})
-            else:
-                fme_results['error'].append({"TaskID": utility_task_id})
-
-        if fme_results['error'] and not fme_results['ok']:
+        if fme_results["error"] and not fme_results["ok"]:
             # All requests failed
             self.request.response.setStatus(500)
             return {
@@ -398,8 +450,8 @@ class DataRequestPost(Service):
 
         self.request.response.setStatus(201)
         return {
-            'TaskIds': fme_results['ok'],
-            'ErrorTaskIds': fme_results['error'],
+            "TaskIds": fme_results["ok"],
+            "ErrorTaskIds": fme_results["error"],
         }
 
     def post_request_to_fme(self, params):
@@ -530,5 +582,65 @@ def get_dataset_file_format_from_file_id(dataset_object, file_id):
     for file_object in downloadable_files_json.get("items", []):
         if file_object.get("@id") == file_id:
             return file_object.get("format", "")
+
+    return None
+
+
+def get_full_dataset_format(dataset_object, download_information_id):
+    """get the dataset full format based on the requested
+    download_information_id"""
+    dataset_download_information_json = (
+        dataset_object.dataset_download_information
+    )
+    for download_information in dataset_download_information_json.get(
+        "items", []
+    ):
+        if download_information.get("@id") == download_information_id:
+            return download_information.get("full_format", "")
+
+    return None
+
+
+def get_full_dataset_source(dataset_object, download_information_id):
+    """get the dataset full source based on the requested
+    download_information_id"""
+    dataset_download_information_json = (
+        dataset_object.dataset_download_information
+    )
+    for download_information in dataset_download_information_json.get(
+        "items", []
+    ):
+        if download_information.get("@id") == download_information_id:
+            return download_information.get("full_source", "")
+
+    return None
+
+
+def get_full_dataset_path(dataset_object, download_information_id):
+    """get the dataset full path based on the requested
+    download_information_id"""
+    dataset_download_information_json = (
+        dataset_object.dataset_download_information
+    )
+    for download_information in dataset_download_information_json.get(
+        "items", []
+    ):
+        if download_information.get("@id") == download_information_id:
+            return download_information.get("full_path", "")
+
+    return None
+
+
+def get_full_dataset_wekeo_choices(dataset_object, download_information_id):
+    """get the dataset wekeo_choices based on the requested
+    download_information_id"""
+    dataset_download_information_json = (
+        dataset_object.dataset_download_information
+    )
+    for download_information in dataset_download_information_json.get(
+        "items", []
+    ):
+        if download_information.get("@id") == download_information_id:
+            return download_information.get("wekeo_choices", "")
 
     return None
