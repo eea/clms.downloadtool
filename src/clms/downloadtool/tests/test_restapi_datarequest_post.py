@@ -135,16 +135,19 @@ class TestDatarequestPost(unittest.TestCase):
                         "@id": "demo-id-1",
                         "path": "7path/to/file1",
                         "format": "GDB",
+                        "source": "EEA",
                     },
                     {
                         "@id": "demo-id-2",
                         "path": "7path/to/file2",
                         "format": "Shapefile",
+                        "source": "EEA",
                     },
                     {
                         "@id": "demo-id-3",
                         "path": "7path/to/file3",
                         "format": "Netcdf",
+                        "source": "EEA",
                     },
                 ]
             },
