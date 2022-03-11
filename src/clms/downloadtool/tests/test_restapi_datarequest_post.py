@@ -20,7 +20,6 @@ from clms.downloadtool.api.services.datarequest_post.post import (
     DataRequestPost,
     base64_encode_path,
     extract_dates_from_temporal_filter,
-    get_dataset_file_format_from_file_id,
     get_dataset_file_path_from_file_id,
     get_full_dataset_path,
     get_full_dataset_source,
@@ -1322,19 +1321,6 @@ class TestDatarequestPostUtilMethods(unittest.TestCase):
     def test_get_prepackaged_path_from_id_not_found(self):
         """ return None if the file id is not found"""
         path = get_dataset_file_path_from_file_id(self.dataset1, "id-4")
-        self.assertIsNone(path)
-
-    def test_get_prepackaged_format_from_id(self):
-        """ return the format of a prepackaged file based on its id"""
-        path = get_dataset_file_format_from_file_id(self.dataset1, "id-1")
-        self.assertEqual(path, "GDB")
-
-        path = get_dataset_file_format_from_file_id(self.dataset2, "id-3")
-        self.assertEqual(path, "Shapefile")
-
-    def test_get_prepackaged_format_from_id_not_found(self):
-        """ return None if the file id is not found"""
-        path = get_dataset_file_format_from_file_id(self.dataset1, "id-4")
         self.assertIsNone(path)
 
     def test_get_full_dataset_source(self):

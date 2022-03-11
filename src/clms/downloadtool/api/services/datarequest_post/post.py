@@ -131,16 +131,16 @@ class DataRequestPost(Service):
                 file_path = get_dataset_file_path_from_file_id(
                     dataset_object, dataset_json["FileID"]
                 )
-                file_format = get_dataset_file_format_from_file_id(
+                file_source = get_dataset_file_source_from_file_id(
                     dataset_object, dataset_json["FileID"]
                 )
-                if file_path and file_format:
+                if file_path and file_source:
                     response_json.update({"FileID": dataset_json["FileID"]})
                     response_json.update({"DatasetPath": ""})
                     response_json.update(
                         {"FilePath": base64_encode_path(file_path)}
                     )
-                    response_json.update({"OutputFormat": file_format})
+                    response_json.update({"DatasetSource": file_source})
                 else:
                     self.request.response.setStatus(400)
                     return {
@@ -576,12 +576,12 @@ def get_dataset_file_path_from_file_id(dataset_object, file_id):
     return None
 
 
-def get_dataset_file_format_from_file_id(dataset_object, file_id):
+def get_dataset_file_source_from_file_id(dataset_object, file_id):
     """ get the dataset file format from the file id"""
     downloadable_files_json = dataset_object.downloadable_files
     for file_object in downloadable_files_json.get("items", []):
         if file_object.get("@id") == file_id:
-            return file_object.get("format", "")
+            return file_object.get("source", "")
 
     return None
 
