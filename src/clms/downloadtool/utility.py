@@ -21,6 +21,7 @@ We have to understand the utility as being a Singleton object.
 
 """
 import random
+from datetime import datetime
 from logging import getLogger
 
 from persistent.mapping import PersistentMapping
@@ -75,6 +76,8 @@ class DownloadToolUtility:
             return "Error, permission denied"
 
         dataObject["Status"] = "Cancelled"
+        dataObject["FinalizationDateTime"] = datetime.utcnow().isoformat()
+
         registry[str(task_id)] = dataObject
         annotations[ANNOTATION_KEY] = registry
 
