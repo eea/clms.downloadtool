@@ -2,7 +2,6 @@
 <metadata>
   <version>1002</version>
   <dependencies>
-    <!--<dependency>profile-plone.app.dexterity:default</dependency>-->
     <dependency>profile-plone.restapi:default</dependency>
     <dependency>profile-clms.types:default</dependency>
   </dependencies>

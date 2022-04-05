@@ -66,29 +66,29 @@ class DownloadToolUtility:
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
 
-        dataObject = None
+        data_object = None
 
         if task_id not in registry:
             return "Error, TaskID not registered"
 
-        dataObject = registry.get(str(task_id))
-        if user_id not in dataObject["UserID"]:
+        data_object = registry.get(str(task_id))
+        if user_id not in data_object["UserID"]:
             return "Error, permission denied"
 
-        dataObject["Status"] = "Cancelled"
-        dataObject["FinalizationDateTime"] = datetime.utcnow().isoformat()
+        data_object["Status"] = "Cancelled"
+        data_object["FinalizationDateTime"] = datetime.utcnow().isoformat()
 
-        registry[str(task_id)] = dataObject
+        registry[str(task_id)] = data_object
         annotations[ANNOTATION_KEY] = registry
 
-        return dataObject
+        return data_object
 
     def datarequest_search(self, user_id, status):
         """DatarequestSearch method"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
-        dataObject = {}
+        data_object = {}
 
         if not user_id:
             return "Error, UserID not defined"
@@ -97,8 +97,8 @@ class DownloadToolUtility:
             for key in registry.keys():
                 values = registry.get(key)
                 if str(user_id) == values.get("UserID"):
-                    dataObject[key] = values
-            return dataObject
+                    data_object[key] = values
+            return data_object
 
         if status not in STATUS_LIST:
             return "Error, status not recognized"
@@ -108,9 +108,9 @@ class DownloadToolUtility:
             if status == values.get("Status") and str(user_id) == values.get(
                 "UserID"
             ):
-                dataObject[key] = values
+                data_object[key] = values
 
-        return dataObject
+        return data_object
 
     def datarequest_status_get(self, task_id):
         """DataRequestStatusGet method"""
