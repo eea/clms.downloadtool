@@ -206,7 +206,9 @@ class TestDatarequestPatch(unittest.TestCase):
         )
 
     def test_update_status_provide_message(self):
-        """when Message parameter is provided, it should be included in the response"""
+        """when Message parameter is provided, it should be included
+        in the response
+        """
         data = {
             "TaskID": self.task_id,
             "Status": "Finished_ok",
