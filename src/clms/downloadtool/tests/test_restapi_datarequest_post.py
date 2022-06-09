@@ -1233,9 +1233,6 @@ class TestDatarequestPostUtilMethods(unittest.TestCase):
             type="DataSet",
             title="DataSet 1",
             id="dataset1",
-            dataset_full_format="Netcdf",
-            dataset_full_path="/this/is/a/path/to/dataset1",
-            dataset_full_source="EEA",
             geonetwork_identifiers={
                 "items": [
                     {

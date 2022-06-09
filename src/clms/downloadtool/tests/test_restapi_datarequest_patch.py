@@ -21,7 +21,7 @@ from clms.downloadtool.utils import STATUS_LIST
 
 
 class TestDatarequestPatch(unittest.TestCase):
-    """ base class"""
+    """base class"""
 
     layer = CLMS_DOWNLOADTOOL_RESTAPI_TESTING
 
@@ -55,13 +55,13 @@ class TestDatarequestPatch(unittest.TestCase):
         transaction.commit()
 
     def tearDown(self):
-        """ tear down cleanup"""
+        """tear down cleanup"""
         self.api_session.close()
         self.anonymous_session.close()
         self.manager_api_session.close()
 
     def test_user_roles(self):
-        """ test the user roles to be used in these tests"""
+        """test the user roles to be used in these tests"""
         manager_user = api.user.get(userid=SITE_OWNER_NAME)
         self.assertIn("Manager", manager_user.getRoles())
 
@@ -93,7 +93,7 @@ class TestDatarequestPatch(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_patch_without_task_id(self):
-        """ TaskID is a required parameter """
+        """TaskID is a required parameter"""
         data = {"ThisIsNotTaskID": 1}
         response = self.manager_api_session.patch(
             "@datarequest_status_patch", json=data
@@ -101,7 +101,7 @@ class TestDatarequestPatch(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_patch_with_empty_task_id(self):
-        """ TaskID is a required parameter """
+        """TaskID is a required parameter"""
         data = {"TaskID": ""}
         response = self.manager_api_session.patch(
             "@datarequest_status_patch", json=data
@@ -109,7 +109,7 @@ class TestDatarequestPatch(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_patch_with_invalid_task_id(self):
-        """ test update status of a datarequest """
+        """test update status of a datarequest"""
         data = {"TaskID": "some-invalid-task-id", "Status": "Finished_ok"}
         response = self.manager_api_session.patch(
             "@datarequest_status_patch", json=data
@@ -117,7 +117,7 @@ class TestDatarequestPatch(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_patch_without_status(self):
-        """ status is a required parameter """
+        """status is a required parameter"""
         data = {"TaskID": self.task_id}
         response = self.manager_api_session.patch(
             "@datarequest_status_patch", json=data
@@ -125,7 +125,7 @@ class TestDatarequestPatch(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_patch_with_an_invalid_status(self):
-        """ status must be in the list of allowed values """
+        """status must be in the list of allowed values"""
         some_invalid_status = "some-invalid-status"
         data = {"TaskID": self.task_id, "Status": some_invalid_status}
         self.assertNotIn(some_invalid_status, STATUS_LIST)
@@ -136,7 +136,7 @@ class TestDatarequestPatch(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_update_status(self):
-        """ test update status of a datarequest """
+        """test update status of a datarequest"""
         data = {"TaskID": self.task_id, "Status": "Finished_ok"}
 
         self.assertIn("Finished_ok", STATUS_LIST)
@@ -204,3 +204,20 @@ class TestDatarequestPatch(unittest.TestCase):
         self.assertEqual(
             response.json()["DownloadURL"], "https://some.download.com/url"
         )
+
+    def test_update_status_provide_message(self):
+        """when Message parameter is provided, it should be included in the response"""
+        data = {
+            "TaskID": self.task_id,
+            "Status": "Finished_ok",
+            "DownloadURL": "https://some.download.com/url",
+            "FileSize": 1000000,
+            "Message": "This is my message",
+        }
+
+        self.assertIn("Finished_ok", STATUS_LIST)
+        response = self.manager_api_session.patch(
+            "@datarequest_status_patch", json=data
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["Message"], "This is my message")
