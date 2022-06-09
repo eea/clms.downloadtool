@@ -142,12 +142,14 @@ class DownloadToolUtility:
             registry_item["FinalizationDateTime"] = data_object[
                 "FinalizationDateTime"
             ]
+        if "Message" in data_object:
+            registry_item["Message"] = data_object["Message"]
         registry[task_id] = registry_item
         annotations[ANNOTATION_KEY] = registry
         return registry_item
 
     def delete_data(self):
-        """ a method to delete all data from the registry """
+        """a method to delete all data from the registry"""
         site = getSite()
         annotations = IAnnotations(site)
 
