@@ -266,11 +266,6 @@ class DataRequestPost(Service):
                     "DatasetDownloadInformationID"
                 )
                 # Check if the dataset format value is correct
-                import pdb
-
-                pdb.set_trace()
-                a = 1
-
                 full_dataset_format = get_full_dataset_format(
                     dataset_object, download_information_id
                 )
@@ -622,7 +617,7 @@ def get_full_dataset_source(dataset_object, download_information_id):
         if download_information.get("@id") == download_information_id:
             value = download_information.get("full_source", "")
             if isinstance(value, dict):
-                return value.get('token', '')
+                return value.get("token", "")
 
             return value
 
