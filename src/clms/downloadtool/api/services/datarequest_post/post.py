@@ -25,7 +25,7 @@ from clms.downloadtool.utils import COUNTRIES, FORMAT_CONVERSION_TABLE, GCS
 
 
 def _cache_key(fun, self, nutsid):
-    """ Cache key function """
+    """Cache key function"""
     return nutsid
 
 
@@ -43,7 +43,7 @@ VITO_GEONETWORK_BASE_URL = (
 
 
 def base64_encode_path(path):
-    """ encode the given path as base64"""
+    """encode the given path as base64"""
     if isinstance(path, str):
         return base64.urlsafe_b64encode(path.encode("utf-8")).decode("utf-8")
 
@@ -54,7 +54,7 @@ class DataRequestPost(Service):
     """Set Data"""
 
     def get_dataset_by_uid(self, uid):
-        """ get the dataset by UID"""
+        """get the dataset by UID"""
         brains = api.content.find(UID=uid)
         if brains:
             return brains[0].getObject()
@@ -62,7 +62,7 @@ class DataRequestPost(Service):
         return None
 
     def reply(self):
-        """ JSON response """
+        """JSON response"""
         alsoProvides(self.request, IDisableCSRFProtection)
         body = json_body(self.request)
 
@@ -266,6 +266,11 @@ class DataRequestPost(Service):
                     "DatasetDownloadInformationID"
                 )
                 # Check if the dataset format value is correct
+                import pdb
+
+                pdb.set_trace()
+                a = 1
+
                 full_dataset_format = get_full_dataset_format(
                     dataset_object, download_information_id
                 )
@@ -455,7 +460,7 @@ class DataRequestPost(Service):
         }
 
     def post_request_to_fme(self, params):
-        """ send the request to FME and let it process it"""
+        """send the request to FME and let it process it"""
         FME_URL = api.portal.get_registry_record(
             "clms.downloadtool.fme_config_controlpanel.url"
         )
@@ -525,7 +530,7 @@ def extract_dates_from_temporal_filter(temporal_filter):
 
 
 def validate_spatial_extent(bounding_box):
-    """ validate Bounding Box """
+    """validate Bounding Box"""
     if not len(bounding_box) == 4:
         return False
 
@@ -537,7 +542,7 @@ def validate_spatial_extent(bounding_box):
 
 
 def validate_nuts(nuts_id):
-    """ validate nuts """
+    """validate nuts"""
     match = re.match(r"([A-Z]+)([0-9]*)", nuts_id, re.I)
     if match:
         items = match.groups()
@@ -555,7 +560,7 @@ def get_task_id(params):
 
 
 def save_stats(stats_json):
-    """ save the stats in the download stats utility"""
+    """save the stats in the download stats utility"""
     try:
         utility = getUtility(IDownloadStatsUtility)
         utility.register_item(stats_json)
@@ -567,7 +572,7 @@ def save_stats(stats_json):
 
 
 def get_dataset_file_path_from_file_id(dataset_object, file_id):
-    """ get the dataset file path from the file id"""
+    """get the dataset file path from the file id"""
     downloadable_files_json = dataset_object.downloadable_files
     for file_object in downloadable_files_json.get("items", []):
         if file_object.get("@id") == file_id:
@@ -577,7 +582,7 @@ def get_dataset_file_path_from_file_id(dataset_object, file_id):
 
 
 def get_dataset_file_source_from_file_id(dataset_object, file_id):
-    """ get the dataset file format from the file id"""
+    """get the dataset file format from the file id"""
     downloadable_files_json = dataset_object.downloadable_files
     for file_object in downloadable_files_json.get("items", []):
         if file_object.get("@id") == file_id:
@@ -596,7 +601,11 @@ def get_full_dataset_format(dataset_object, download_information_id):
         "items", []
     ):
         if download_information.get("@id") == download_information_id:
-            return download_information.get("full_format", "")
+            value = download_information.get("full_format", "")
+            if isinstance(value, dict):
+                return value.get("token", "")
+
+            return value
 
     return None
 
@@ -611,7 +620,11 @@ def get_full_dataset_source(dataset_object, download_information_id):
         "items", []
     ):
         if download_information.get("@id") == download_information_id:
-            return download_information.get("full_source", "")
+            value = download_information.get("full_source", "")
+            if isinstance(value, dict):
+                return value.get('token', '')
+
+            return value
 
     return None
 
