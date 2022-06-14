@@ -341,6 +341,16 @@ FORMAT_CONVERSION_TABLE = {
         "GML": True,
         "WFS": True,
     },
+    "GML": {
+        "Shapefile": False,
+        "GDB": False,
+        "GPKG": False,
+        "Geojson": False,
+        "Geotiff": False,
+        "Netcdf": False,
+        "GML": True,
+        "WFS": False,
+    },
 }
 
 ANNOTATION_KEY = "clms.downloadtool"
