@@ -11,6 +11,7 @@ from datetime import datetime
 from logging import getLogger
 
 import requests
+from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
 from plone.memoize.ram import cache
 from plone.protect.interfaces import IDisableCSRFProtection
@@ -19,7 +20,6 @@ from plone.restapi.services import Service
 from zope.component import getUtility
 from zope.interface import alsoProvides
 
-from clms.statstool.utility import IDownloadStatsUtility
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import COUNTRIES, FORMAT_CONVERSION_TABLE, GCS
 
@@ -467,11 +467,15 @@ class DataRequestPost(Service):
             "Accept": "application/json",
             "Authorization": "fmetoken token={0}".format(FME_TOKEN),
         }
-        resp = requests.post(FME_URL, json=params, headers=headers)
-        if resp.ok:
-            fme_task_id = resp.json().get("id", None)
-            return fme_task_id
-
+        try:
+            resp = requests.post(
+                FME_URL, json=params, headers=headers, timeout=10
+            )
+            if resp.ok:
+                fme_task_id = resp.json().get("id", None)
+                return fme_task_id
+        except requests.exceptions.Timeout:
+            log.info("FME request timed out")
         body = json.dumps(params)
         # pylint: disable=line-too-long
         log.info(
