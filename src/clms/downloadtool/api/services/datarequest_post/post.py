@@ -11,7 +11,6 @@ from datetime import datetime
 from logging import getLogger
 
 import requests
-from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
 from plone.memoize.ram import cache
 from plone.protect.interfaces import IDisableCSRFProtection
@@ -22,6 +21,7 @@ from zope.interface import alsoProvides
 
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import COUNTRIES, FORMAT_CONVERSION_TABLE, GCS
+from clms.statstool.utility import IDownloadStatsUtility
 
 
 def _cache_key(fun, self, nutsid):
