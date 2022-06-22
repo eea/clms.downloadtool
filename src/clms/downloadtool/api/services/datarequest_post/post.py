@@ -326,15 +326,15 @@ class DataRequestPost(Service):
 
                 #
                 # # Check if wekeo choices are OK
-                # wekeo_choices = get_full_dataset_wekeo_choices(
-                #     dataset_object, download_information_id
-                # )
-                # if not wekeo_choices:
-                #     self.request.response.setStatus(400)
-                #     return {
-                #         "status": "error",
-                #         "msg": "Error, the dataset path is not valid",
-                #     }
+                wekeo_choices = get_full_dataset_wekeo_choices(
+                    dataset_object, download_information_id
+                )
+                if not wekeo_choices:
+                    self.request.response.setStatus(400)
+                    return {
+                        "status": "error",
+                        "msg": "Error, the dataset path is not valid",
+                    }
 
                 response_json.update(
                     {
@@ -342,7 +342,7 @@ class DataRequestPost(Service):
                         "OutputFormat": dataset_json.get("OutputFormat", ""),
                         "DatasetPath": base64_encode_path(full_dataset_path),
                         "DatasetSource": full_dataset_source,
-                        # "WekeoChoices": wekeo_choices,
+                        "WekeoChoices": wekeo_choices,
                     }
                 )
 
