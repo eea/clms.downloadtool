@@ -5,9 +5,6 @@
   </roles>
   <permissions>
   <!-- -*- extra stuff goes here -*- -->
-    <permission name="clms.downloadtool: Use Download Tool" acquire="True">
-      <role name="Authenticated"/>
-    </permission>
     <permission name="clms.downloadtool: Manage Download Tool" acquire="True">
       <role name="Manager"/>
       <role name="Site Administrator"/>

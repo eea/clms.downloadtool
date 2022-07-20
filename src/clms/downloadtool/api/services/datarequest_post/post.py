@@ -407,7 +407,7 @@ class DataRequestPost(Service):
 
                 # build the stat params and save them
                 stats_params = {
-                    "Start": "",
+                    "Start": datetime.utcnow().isoformat(),
                     "User": str(user_id),
                     # pylint: disable=line-too-long
                     "Dataset": [
@@ -420,7 +420,7 @@ class DataRequestPost(Service):
                     "TransformationDuration": "",
                     "TransformationSize": "",
                     "TransformationResultData": "",
-                    "Successful": "",
+                    "Status": "Queued",
                 }
                 save_stats(stats_params)
                 fme_result = self.post_request_to_fme(params)

@@ -7,7 +7,7 @@
     for="Products.CMFPlone.interfaces.IPloneSiteRoot"
     factory=".patch.datarequest_status_patch"
     name="@datarequest_status_patch"
-    permission="cmf.ManagePortal"
+    permission="clms.downloadtool.managedownloadtool"
     />
 
 </configure>
