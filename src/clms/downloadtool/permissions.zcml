@@ -8,6 +8,12 @@
     <permission
       id="clms.downloadtool.usedownloadtool"
       title="clms.downloadtool: Use Download Tool" />
+    <permission
+      id="clms.downloadtool.managedownloadtool"
+      title="clms.downloadtool: Manage Download Tool" />
+
+
+
 
   </configure>
 
