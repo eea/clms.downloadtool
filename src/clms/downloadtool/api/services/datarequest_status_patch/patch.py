@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-For HTTP GET operations we can use standard HTTP parameter passing
-(through the URL)
-
+Download tool patch operation
 """
 from datetime import datetime
 from logging import getLogger
@@ -11,16 +9,31 @@ from plone.restapi.services import Service
 from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import STATUS_LIST
+from clms.statstool.utility import IDownloadStatsUtility
 
+import json
 
 log = getLogger(__name__)
+
+
+def save_stats(stats_json):
+    """save the stats in the download stats utility"""
+    try:
+        utility = getUtility(IDownloadStatsUtility)
+        task_id = stats_json.get("TaskID")
+        utility.patch_item(stats_json, task_id)
+    except Exception:
+        # pylint: disable=line-too-long
+        log.info(
+            "There was an error saving the stats: %s", json.dumps(stats_json)
+        )  # noqa
 
 
 class datarequest_status_patch(Service):
     """Nuts & BBox not at the same time"""
 
     def reply(self):
-        """ JSON response """
+        """JSON response"""
         body = json_body(self.request)
 
         if not body.get("TaskID", None):
@@ -48,9 +61,11 @@ class datarequest_status_patch(Service):
                 "msg": "Error, defined Status is not in the list",
             }
         response_json = {"TaskID": task_id, "Status": status}
-
+        # Dict top save stats data
+        stats_data = {}
         if filesize:
             response_json.update({"FileSize": filesize})
+            stats_data.update({"TransformationSize": filesize})
 
         if download_url:
             response_json.update({"DownloadURL": download_url})
@@ -63,6 +78,11 @@ class datarequest_status_patch(Service):
             response_json[
                 "FinalizationDateTime"
             ] = datetime.utcnow().isoformat()  # noqa: E501
+            stats_data.update({"End": datetime.utcnow().isoformat()})
+        stats_data.update({"Status": status})
+        stats_data.update({"TaskID": task_id})
+        # Save stats data
+        save_stats(stats_data)
 
         response_json = utility.datarequest_status_patch(
             response_json, task_id
