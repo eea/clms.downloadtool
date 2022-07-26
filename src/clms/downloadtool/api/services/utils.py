@@ -51,24 +51,28 @@ def get_values_from_vocabulary(item, vocabulary_name):
 
 
 def get_user_profile_value_country(term):
+    """get the value from the relevant vocabulary"""
     return get_values_from_vocabulary(
         term, "collective.taxonomy.user_profile_country"
     )
 
 
 def get_user_profile_value_affiliation(term):
+    """get the value from the relevant vocabulary"""
     return get_values_from_vocabulary(
         term, "collective.taxonomy.user_profile_affiliation"
     )
 
 
 def get_user_profile_value_thematic_activity(term):
+    """get the value from the relevant vocabulary"""
     return get_values_from_vocabulary(
         term, "collective.taxonomy.user_profile_thematic_activity"
     )
 
 
 def get_user_profile_value_sector_of_activity(term):
+    """get the value from the relevant vocabulary"""
     return get_values_from_vocabulary(
         term, "collective.taxonomy.user_profile_sector_of_activity"
     )
