@@ -19,6 +19,7 @@ from plone.restapi.services import Service
 from zope.component import getUtility
 from zope.interface import alsoProvides
 
+from clms.downloadtool.api.services.utils import get_extra_data
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import COUNTRIES, FORMAT_CONVERSION_TABLE, GCS
 from clms.statstool.utility import IDownloadStatsUtility
@@ -556,6 +557,7 @@ def save_stats(stats_json):
     """save the stats in the download stats utility"""
     try:
         utility = getUtility(IDownloadStatsUtility)
+        stats_json.update(get_extra_data(stats_json))
         utility.register_item(stats_json)
     except Exception:
         # pylint: disable=line-too-long
