@@ -10,6 +10,7 @@ from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
 from zope.component import getUtility
 
+from clms.downloadtool.api.services.utils import get_extra_data
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import STATUS_LIST
 from clms.statstool.utility import IDownloadStatsUtility
@@ -22,6 +23,7 @@ def save_stats(stats_json):
     try:
         utility = getUtility(IDownloadStatsUtility)
         task_id = stats_json.get("TaskID")
+        stats_json.update(get_extra_data(stats_json))
         utility.patch_item(stats_json, task_id)
     except Exception:
         # pylint: disable=line-too-long
