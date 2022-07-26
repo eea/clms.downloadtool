@@ -1,6 +1,3 @@
-import code
-
-
 """ some util methods"""
 # -*- coding: utf-8 -*-
 
