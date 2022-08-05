@@ -52,18 +52,8 @@ class GetWekeoService(Service):
         y_max = "y_max" in self.request
         x_min = "x_min" in self.request
         y_min = "y_min" in self.request
-
-        if (
-            api_url
-            and dataset_path
-            and wekeo_choices
-            and date_from
-            and date_to
-            and x_max
-            and y_max
-            and x_min
-            and y_min
-        ):
+        # pylint: disable=line-too-long
+        if (api_url and dataset_path and wekeo_choices and date_from and date_to and x_max and y_max and x_min and y_min):  # noqa
             result = get_wekeo(
                 self.request.get("api_url"),
                 self.request.get("dataset_path"),
