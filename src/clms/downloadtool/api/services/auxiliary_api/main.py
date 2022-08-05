@@ -164,6 +164,7 @@ def get_legacy(path, date_from, date_to):
     """get legacy data"""
     files_to_download = []
 
+    # pylint: disable=too-many-nested-blocks
     if path.startswith("ftp"):
         ftp_params = path.replace("ftp://", "").split("/")
         ftp = FTP(ftp_params[0], "copernicus", "CopernicusBM")
@@ -204,6 +205,7 @@ def get_legacy(path, date_from, date_to):
                                     path + file.split("/")[-1]
                                 )
     else:
+        # pylint: disable=consider-using-with
         data = urllib.request.urlopen(path)
 
         for line in data:
@@ -262,11 +264,3 @@ if __name__ == "__main__":
         "",
         "",
     )
-
-    # get_wekeo("https://wekeo-broker.apps.mercator.dpi.wekeo.eu/databroker", "EO:HRVPP:DAT:VEGETATION-INDICES",
-    #          '{"datasetId":"EO:HRVPP:DAT:VEGETATION-INDICES","boundingBoxValues":[{"name":"bbox","bbox":[@xmin,@ymin,@xmax,@ymax]}],"dateRangeSelectValues":[{"name":"temporal_interval","start":"@startdate","end":"@enddate"}],"stringChoiceValues":[{"name":"productType","value":"LAI"}]}',
-    #          "2020-09-25", "2020-10-25", "", "", "", "")
-
-    # get_legacy("https://land.copernicus.vgt.vito.be/manifest/albh_v1_1km/manifest_cgls_albh_v1_1km_latest.txt", "", "")
-
-    # get_legacy("ftp://ftp.globalland.cls.fr/Core/CRYOSPHERE/dataset-fmi-lie-baltic-250m/", "2018-01-01", "2018-03-01")
