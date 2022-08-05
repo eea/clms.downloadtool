@@ -59,13 +59,13 @@ def get_landcover(api_url, dataset_path, x_max, y_max, x_min, y_min):
             token = ""
             while running:
                 url = (
-                    api_url
-                    + "?list-type=2&max-keys=1000&prefix="
-                    + dataset_path
-                    + "/"
-                    + longitude
-                    + latitude
-                ) # no-qa
+                    api_url  # noqa
+                    + "?list-type=2&max-keys=1000&prefix="  # noqa
+                    + dataset_path  # noqa
+                    + "/"  # noqa
+                    + longitude  # noqa
+                    + latitude  # noqa
+                )  # noqa
 
                 if token != "":
                     url += "&continuation-token=" + urllib.parse.quote(token)
