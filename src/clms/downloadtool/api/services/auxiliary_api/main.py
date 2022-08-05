@@ -201,11 +201,8 @@ def get_legacy(path, date_from, date_to):
             if file != "":
                 if date_from != "" and date_to != "":
                     date_file_aux = extract_date_legacy_http(file)
-                    if (
-                        datetime.strptime(date_from, "%Y-%m-%d")
-                        <= date_file_aux
-                        <= datetime.strptime(date_to, "%Y-%m-%d")
-                    ):  # no-qa
+                    # pylint: disable=line-too-long
+                    if (datetime.strptime(date_from, "%Y-%m-%d") <= date_file_aux <= datetime.strptime(date_to, "%Y-%m-%d")):  # noqa
                         files_to_download.append(file)
                 else:
                     if len(files_to_download) == 0:
