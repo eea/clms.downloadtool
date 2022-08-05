@@ -65,7 +65,7 @@ def get_landcover(api_url, dataset_path, x_max, y_max, x_min, y_min):
                     + "/"
                     + longitude
                     + latitude
-                )
+                ) # no-qa
 
                 if token != "":
                     url += "&continuation-token=" + urllib.parse.quote(token)
@@ -113,7 +113,7 @@ def get_wekeo(
                 date_to = (
                     datetime.strptime(f["details"]["start"][0:10], "%Y-%m-%d")
                     + timedelta(days=10)
-                ).strftime("%Y-%m-%d")
+                ).strftime("%Y-%m-%d")  # noqa
                 break
 
     if date_from == "" or date_to == "":
@@ -186,7 +186,7 @@ def get_legacy(path, date_from, date_to):
                         datetime.strptime(date_from, "%Y-%m-%d")
                         <= datetime.strptime(date_file_aux, "%Y%m%d%H%M")
                         <= datetime.strptime(date_to, "%Y-%m-%d")
-                    ):
+                    ):  # no-qa
                         files_to_download.append(path + file.split("/")[-1])
                 else:
                     if len(files_to_download) == 0:
@@ -217,7 +217,7 @@ def get_legacy(path, date_from, date_to):
                         datetime.strptime(date_from, "%Y-%m-%d")
                         <= date_file_aux
                         <= datetime.strptime(date_to, "%Y-%m-%d")
-                    ):
+                    ):  # no-qa
                         files_to_download.append(file)
                 else:
                     if len(files_to_download) == 0:

@@ -20,7 +20,7 @@ class GetLandCoverService(Service):
         x_min = "x_min" in self.request
         y_min = "y_min" in self.request
 
-        # pylint: disable=too-many-boolean-expression
+        # pylint: disable=too-many-boolean-expressions
         if api_url and dataset_path and x_max and y_max and x_min and y_min:
 
             return get_landcover(
