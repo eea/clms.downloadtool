@@ -15,5 +15,6 @@
   <include package=".delete_data" />
   <include package=".nuts_name" />
   <include package=".projections" />
+  <include package=".auxiliary_api" />
 </configure>
 
