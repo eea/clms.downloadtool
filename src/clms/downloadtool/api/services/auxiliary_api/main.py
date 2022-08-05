@@ -58,14 +58,8 @@ def get_landcover(api_url, dataset_path, x_max, y_max, x_min, y_min):
             running = True
             token = ""
             while running:
-                url = (
-                    api_url  # noqa: W503
-                    + "?list-type=2&max-keys=1000&prefix="  # noqa: W503
-                    + dataset_path  # noqa: W503
-                    + "/"  # noqa: W503
-                    + longitude  # noqa: W503
-                    + latitude  # noqa: W503
-                )  # noqa: W503
+                # pylint: disable=line-too-long
+                url = api_url + "?list-type=2&max-keys=1000&prefix=" + dataset_path + "/" + longitude + latitude  # no-qa
 
                 if token != "":
                     url += "&continuation-token=" + urllib.parse.quote(token)
@@ -110,9 +104,9 @@ def get_wekeo(
         for f in metadata["parameters"]["dateRangeSelects"]:
             if f["details"]["start"] is not None:
                 date_from = f["details"]["start"][0:10]
+                # pylint: disable=line-too-long
                 date_to = (
-                    datetime.strptime(f["details"]["start"][0:10], "%Y-%m-%d")
-                    + timedelta(days=10)
+                    datetime.strptime(f["details"]["start"][0:10], "%Y-%m-%d") + timedelta(days=10)  # no-qa
                 ).strftime("%Y-%m-%d")  # noqa
                 break
 
@@ -182,11 +176,8 @@ def get_legacy(path, date_from, date_to):
             if file.endswith(".nc"):
                 if date_from != "" and date_to != "":
                     date_file_aux = extract_date_legacy_ftp(file)
-                    if (
-                        datetime.strptime(date_from, "%Y-%m-%d")
-                        <= datetime.strptime(date_file_aux, "%Y%m%d%H%M")
-                        <= datetime.strptime(date_to, "%Y-%m-%d")
-                    ):  # no-qa
+                    # pylint: disable=line-too-long
+                    if datetime.strptime(date_from, "%Y-%m-%d") <= datetime.strptime(date_file_aux, "%Y%m%d%H%M") <= datetime.strptime(date_to, "%Y-%m-%d"):  # no-qa
                         files_to_download.append(path + file.split("/")[-1])
                 else:
                     if len(files_to_download) == 0:
@@ -198,9 +189,8 @@ def get_legacy(path, date_from, date_to):
                         date_file_aux = extract_date_legacy_ftp(file)
 
                         if date_file != "" and date_file_aux != "":
-                            if datetime.strptime(
-                                date_file, "%Y%m%d%H%M"
-                            ) < datetime.strptime(date_file_aux, "%Y%m%d%H%M"):
+                            # pylint: disable=line-too-long
+                            if datetime.strptime(date_file, "%Y%m%d%H%M") < datetime.strptime(date_file_aux, "%Y%m%d%H%M"):  # no-qa
                                 files_to_download[0] = (
                                     path + file.split("/")[-1]
                                 )
