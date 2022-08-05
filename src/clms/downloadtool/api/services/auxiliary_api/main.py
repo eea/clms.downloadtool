@@ -59,7 +59,7 @@ def get_landcover(api_url, dataset_path, x_max, y_max, x_min, y_min):
             token = ""
             while running:
                 # pylint: disable=line-too-long
-                url = api_url + "?list-type=2&max-keys=1000&prefix=" + dataset_path + "/" + longitude + latitude  # no-qa
+                url = api_url + "?list-type=2&max-keys=1000&prefix=" + dataset_path + "/" + longitude + latitude  # noqa
 
                 if token != "":
                     url += "&continuation-token=" + urllib.parse.quote(token)
@@ -105,9 +105,7 @@ def get_wekeo(
             if f["details"]["start"] is not None:
                 date_from = f["details"]["start"][0:10]
                 # pylint: disable=line-too-long
-                date_to = (
-                    datetime.strptime(f["details"]["start"][0:10], "%Y-%m-%d") + timedelta(days=10)  # no-qa
-                ).strftime("%Y-%m-%d")  # noqa
+                date_to = (datetime.strptime(f["details"]["start"][0:10], "%Y-%m-%d") + timedelta(days=10)).strftime("%Y-%m-%d")  # noqa
                 break
 
     if date_from == "" or date_to == "":
@@ -177,7 +175,7 @@ def get_legacy(path, date_from, date_to):
                 if date_from != "" and date_to != "":
                     date_file_aux = extract_date_legacy_ftp(file)
                     # pylint: disable=line-too-long
-                    if datetime.strptime(date_from, "%Y-%m-%d") <= datetime.strptime(date_file_aux, "%Y%m%d%H%M") <= datetime.strptime(date_to, "%Y-%m-%d"):  # no-qa
+                    if datetime.strptime(date_from, "%Y-%m-%d") <= datetime.strptime(date_file_aux, "%Y%m%d%H%M") <= datetime.strptime(date_to, "%Y-%m-%d"):  # noqa
                         files_to_download.append(path + file.split("/")[-1])
                 else:
                     if len(files_to_download) == 0:
@@ -190,7 +188,7 @@ def get_legacy(path, date_from, date_to):
 
                         if date_file != "" and date_file_aux != "":
                             # pylint: disable=line-too-long
-                            if datetime.strptime(date_file, "%Y%m%d%H%M") < datetime.strptime(date_file_aux, "%Y%m%d%H%M"):  # no-qa
+                            if datetime.strptime(date_file, "%Y%m%d%H%M") < datetime.strptime(date_file_aux, "%Y%m%d%H%M"):  # noqa
                                 files_to_download[0] = (
                                     path + file.split("/")[-1]
                                 )
