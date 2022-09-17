@@ -173,4 +173,3 @@ class DownloadToolUtility:
         annotations[ANNOTATION_KEY] = registry
 
         return 1
-
