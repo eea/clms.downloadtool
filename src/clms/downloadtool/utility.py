@@ -158,3 +158,19 @@ class DownloadToolUtility:
 
         annotations[ANNOTATION_KEY] = PersistentMapping()
         return {}
+
+    def datarequest_remove_task(self, task_id):
+        """ Remove all data about the given task"""
+        site = getSite()
+        annotations = IAnnotations(site)
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+
+        if task_id not in registry:
+            return "Error, TaskID not registered"
+
+        del registry[str(task_id)]
+
+        annotations[ANNOTATION_KEY] = registry
+
+        return 1
+
