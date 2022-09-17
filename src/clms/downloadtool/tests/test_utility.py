@@ -307,3 +307,17 @@ class TestUtility(unittest.TestCase):
         self.assertIn("msg", result)
         self.assertEqual(result["status"], "Error")
         self.assertEqual(result["msg"], "Registry is empty")
+
+    def test_remove_task(self):
+        """ test removing a task"""
+        data_dict = {"key1": "value1", "key2": "value2"}
+        result = self.utility.datarequest_post(data_dict)
+        self.assertEqual(list(result.values())[0], data_dict)
+        key = list(result.keys())[0]
+        result = self.utility.datarequest_remove_task(key)
+        self.assertEqual(result, 1)
+
+    def test_remove_unexisting_task(self):
+        """ test removing an unexisting"""
+        result = self.utility.datarequest_remove_task("unexisting-key")
+        self.assertEqual(result, "Error, TaskID not registered")
