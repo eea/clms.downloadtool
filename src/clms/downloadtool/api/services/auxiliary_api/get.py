@@ -20,7 +20,8 @@ class GetDownloadFileUrls(Service):
             return {
                 "status": "error",
                 "message": (
-                    "Required parameters are missing: dataset_uid is mandatory"
+                    "Required parameters are missing: dataset_uid is "
+                    "mandatory"
                 ),
             }
 
@@ -38,7 +39,8 @@ class GetDownloadFileUrls(Service):
             return {
                 "status": "error",
                 "message": (
-                    "Required parameters are missing: dataset_collection is mandatory"
+                    "Required parameters are missing: dataset_collection"
+                    " is mandatory"
                 ),
             }
 
@@ -62,10 +64,12 @@ class GetDownloadFileUrls(Service):
                 "clms.downloadtool.auxiliary_api_control_panel.wekeo_api_url"
             )
             api_username = api.portal.get_registry_record(
-                "clms.downloadtool.auxiliary_api_control_panel.wekeo_api_username"
+                # pylint: disable=line-too-long
+                "clms.downloadtool.auxiliary_api_control_panel.wekeo_api_username"  # noqa
             )
             api_password = api.portal.get_registry_record(
-                "clms.downloadtool.auxiliary_api_control_panel.wekeo_api_password"
+                # pylint: disable=line-too-long
+                "clms.downloadtool.auxiliary_api_control_panel.wekeo_api_password"  # noqa
             )
             full_path = dataset_download_info.get("full_path")
             wekeo_choices = dataset_download_info.get("wekeo_choices")
@@ -91,10 +95,11 @@ class GetDownloadFileUrls(Service):
                 x_min,
                 y_min,
             )
-            return {}
-        elif dataset_download_info.get("full_source") == "LANDCOVER":
+
+        if dataset_download_info.get("full_source") == "LANDCOVER":
             api_url = api.portal.get_registry_record(
-                "clms.downloadtool.auxiliary_api_control_panel.landcover_api_url"
+                # pylint: disable=line-too-long
+                "clms.downloadtool.auxiliary_api_control_panel.landcover_api_url"  # noqa
             )
             x_max = self.request.get("x_max", "")
             y_max = self.request.get("y_max", "")
@@ -104,20 +109,21 @@ class GetDownloadFileUrls(Service):
             return get_landcover(
                 api_url, full_path, x_max, y_max, x_min, y_min
             )
-        elif dataset_download_info.get("full_source") == "LEGACY":
+
+        if dataset_download_info.get("full_source") == "LEGACY":
             full_path = dataset_download_info.get("full_path")
             date_from = self.request.get("date_from", "")
             date_to = self.request.get("date_to", "")
 
             return get_legacy(full_path, date_from, date_to)
 
-            return {}
-
         return {}
 
     def get_dataset_download_information(
         self, download_information, dataset_collection
     ):
+        """get the download information related to the given
+        dataset_collection"""
         for item in download_information:
             if item.get("collection") == dataset_collection:
                 return item

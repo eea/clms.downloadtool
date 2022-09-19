@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from clms.downloadtool import _
-from clms.downloadtool.interfaces import IClmsDownloadtoolLayer
+""" control panel to save some download settings"""
 from plone.app.registry.browser.controlpanel import (
     ControlPanelFormWrapper,
     RegistryEditForm,
@@ -11,8 +10,13 @@ from zope import schema
 from zope.component import adapter
 from zope.interface import Interface
 
+from clms.downloadtool import _
+from clms.downloadtool.interfaces import IClmsDownloadtoolLayer
+
 
 class IAuxiliaryAPIControlPanel(Interface):
+    """control panel schema"""
+
     wekeo_api_url = schema.TextLine(
         title=_(
             u"Wekeo API URL",
@@ -63,6 +67,8 @@ class IAuxiliaryAPIControlPanel(Interface):
 
 
 class AuxiliaryAPIControlPanel(RegistryEditForm):
+    """control panel implementation"""
+
     schema = IAuxiliaryAPIControlPanel
     schema_prefix = "clms.downloadtool.auxiliary_api_control_panel"
     label = _("Auxiliary API Control Panel")

@@ -2,16 +2,17 @@
 """
 This is the control panel for fme configuration
 """
-from clms.downloadtool import _
-from plone.app.registry.browser.controlpanel import (ControlPanelFormWrapper,
-                                                     RegistryEditForm)
+from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
+from plone.app.registry.browser.controlpanel import RegistryEditForm
 from plone.z3cform import layout
 from zope import schema
 from zope.interface import Interface
 
+from clms.downloadtool import _
+
 
 class IFMEConfigControlPanel(Interface):
-    """ Control Panel Schema """
+    """Control Panel Schema"""
 
     url = schema.TextLine(
         title=_(
@@ -70,7 +71,7 @@ class IFMEConfigControlPanel(Interface):
 
 
 class FMEConfigControlPanel(RegistryEditForm):
-    """ control panel rest API endpoint configuration """
+    """control panel rest API endpoint configuration"""
 
     schema = IFMEConfigControlPanel
     schema_prefix = "clms.downloadtool.fme_config_controlpanel"
