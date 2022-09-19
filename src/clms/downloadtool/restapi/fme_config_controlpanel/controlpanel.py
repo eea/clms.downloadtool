@@ -5,8 +5,7 @@ from zope.component import adapter
 from zope.interface import Interface
 
 # pylint: disable=line-too-long
-from clms.downloadtool.controlpanels.fme_config_controlpanel.controlpanel import \
-    IFMEConfigControlPanel  # noqa: E501
+from clms.downloadtool.controlpanels.fme_config_controlpanel.controlpanel import IFMEConfigControlPanel  # noqa: E501
 from clms.downloadtool.interfaces import IClmsDownloadtoolLayer
 
 
