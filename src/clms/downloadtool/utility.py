@@ -43,7 +43,7 @@ class DownloadToolUtility:
     """Downloadtool request methods"""
 
     def datarequest_post(self, data_request):
-        """DatarequestPost method"""
+        """register new download request"""
         site = getSite()
         annotations = IAnnotations(site)
         task_id = random.randint(0, 99999999999)
@@ -61,7 +61,7 @@ class DownloadToolUtility:
         return {str_task_id: data_request}
 
     def datarequest_delete(self, task_id, user_id):
-        """DatarequestDelete method"""
+        """cancel the download request"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -84,7 +84,7 @@ class DownloadToolUtility:
         return data_object
 
     def datarequest_search(self, user_id, status):
-        """DatarequestSearch method"""
+        """search for download requests"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -113,7 +113,7 @@ class DownloadToolUtility:
         return data_object
 
     def datarequest_status_get(self, task_id):
-        """DataRequestStatusGet method"""
+        """get a given download task's information"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -122,7 +122,7 @@ class DownloadToolUtility:
         return registry.get(task_id)
 
     def datarequest_status_patch(self, data_object, task_id):
-        """DatarequestStatusPatch method"""
+        """modify a given download task's information"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -158,3 +158,18 @@ class DownloadToolUtility:
 
         annotations[ANNOTATION_KEY] = PersistentMapping()
         return {}
+
+    def datarequest_remove_task(self, task_id):
+        """ Remove all data about the given task"""
+        site = getSite()
+        annotations = IAnnotations(site)
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+
+        if task_id not in registry:
+            return "Error, TaskID not registered"
+
+        del registry[str(task_id)]
+
+        annotations[ANNOTATION_KEY] = registry
+
+        return 1
