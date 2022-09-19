@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 import unittest
 
-from plone import api
-
 from clms.downloadtool.testing import CLMS_DOWNLOADTOOL_INTEGRATION_TESTING
+from plone import api
 
 
 class TestControlPanel(unittest.TestCase):

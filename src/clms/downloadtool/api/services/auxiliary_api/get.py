@@ -1,11 +1,9 @@
 """ auxiliary endpoint REST API"""
+from clms.downloadtool.api.services.auxiliary_api.main import (get_landcover,
+                                                               get_legacy,
+                                                               get_wekeo)
 # -*- coding: utf-8 -*-
 from plone.restapi.services import Service
-from clms.downloadtool.api.services.auxiliary_api.main import (
-    get_landcover,
-    get_wekeo,
-    get_legacy,
-)
 
 
 class GetLandCoverService(Service):

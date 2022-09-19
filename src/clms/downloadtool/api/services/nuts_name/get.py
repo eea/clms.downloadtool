@@ -3,12 +3,11 @@ Return NUTS region names
 
 
 """
+import requests
 from plone import api
 from plone.memoize.ram import cache
 from plone.restapi.search.utils import unflatten_dotted_dict
 from plone.restapi.services import Service
-
-import requests
 
 
 def _cache_key(fun, self, nutsid):

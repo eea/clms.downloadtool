@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<registry
+    xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+    i18n:domain="clms.downloadtool">
+
+<!-- -*- extra stuff goes here -*- -->
+
+  <records interface="clms.downloadtool.controlpanels.auxiliary_a_p_i_control_panel.controlpanel.IAuxiliaryAPIControlPanel"
+           prefix="clms.downloadtool.auxiliary_a_p_i_control_panel" />
+
+
+</registry>

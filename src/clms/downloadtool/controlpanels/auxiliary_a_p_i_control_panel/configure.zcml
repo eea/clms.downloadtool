@@ -1,0 +1,22 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:i18n="http://namespaces.zope.org/i18n"
+    xmlns:plone="http://namespaces.plone.org/plone"
+    i18n_domain="clms.downloadtool">
+
+  <browser:page
+    name="auxiliary_a_p_i_control_panel-controlpanel"
+    for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+    class=".controlpanel.AuxiliaryAPIControlPanelView"
+    layer="clms.downloadtool.interfaces.IClmsDownloadtoolLayer"
+    permission="cmf.ManagePortal"
+    />
+
+  <include package="plone.restapi"  />
+  <adapter
+    factory=".controlpanel.AuxiliaryAPIControlPanelConfigletPanel"
+    name="auxiliary_a_p_i_control_panel" />
+
+
+</configure>

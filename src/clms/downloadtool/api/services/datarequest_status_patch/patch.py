@@ -6,14 +6,13 @@ import json
 from datetime import datetime
 from logging import getLogger
 
-from plone.restapi.deserializer import json_body
-from plone.restapi.services import Service
-from zope.component import getUtility
-
 from clms.downloadtool.api.services.utils import get_extra_data
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import STATUS_LIST
 from clms.statstool.utility import IDownloadStatsUtility
+from plone.restapi.deserializer import json_body
+from plone.restapi.services import Service
+from zope.component import getUtility
 
 log = getLogger(__name__)
 

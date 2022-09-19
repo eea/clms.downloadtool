@@ -3,8 +3,8 @@
 This is the control panel for fme configuration
 """
 from clms.downloadtool import _
-from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
-from plone.app.registry.browser.controlpanel import RegistryEditForm
+from plone.app.registry.browser.controlpanel import (ControlPanelFormWrapper,
+                                                     RegistryEditForm)
 from plone.z3cform import layout
 from zope import schema
 from zope.interface import Interface

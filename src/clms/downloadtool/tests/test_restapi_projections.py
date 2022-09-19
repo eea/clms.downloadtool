@@ -2,16 +2,11 @@
 # -*- coding: utf-8 -*-
 import unittest
 
-from plone.app.testing import (
-    SITE_OWNER_NAME,
-    SITE_OWNER_PASSWORD,
-    TEST_USER_ID,
-    setRoles,
-)
-from plone.restapi.testing import RelativeSession
-
 from clms.downloadtool.testing import CLMS_DOWNLOADTOOL_RESTAPI_TESTING
 from clms.downloadtool.utils import GCS
+from plone.app.testing import (SITE_OWNER_NAME, SITE_OWNER_PASSWORD,
+                               TEST_USER_ID, setRoles)
+from plone.restapi.testing import RelativeSession
 
 
 class TestProjectionsEndpoint(unittest.TestCase):
