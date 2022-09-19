@@ -15,6 +15,18 @@
         visible="True">
       <permission>Manage Portal</permission>
     </configlet>
+    <configlet
+        i18n:attributes="title"
+        title="Auxiliary API Control Panel"
+        action_id="auxiliary_api_control_panel-controlpanel"
+        appId="auxiliary_api_control_panel-controlpanel"
+        category="Products"
+        condition_expr=""
+        icon_expr=""
+        url_expr="string:${portal_url}/@@auxiliary_api_control_panel-controlpanel"
+        visible="True">
+      <permission>Manage Portal</permission>
+    </configlet>
 
-
+  <!-- -*- extra stuff goes here -*- -->
 </object>

@@ -1,33 +1,16 @@
 <configure
     xmlns="http://namespaces.zope.org/zope"
     xmlns:plone="http://namespaces.plone.org/plone"
-  >
+    >
 
-  <include package="plone.restapi"  />
-
-  <plone:service
-    method="GET"
-    name="@auxiliary-get-landcover"
-    factory=".get.GetLandCoverService"
-    permission="clms.downloadtool.usedownloadtool"
-    for="Products.CMFCore.interfaces.ISiteRoot"
-  />
+  <include package="plone.restapi" />
 
   <plone:service
-    method="GET"
-    name="@auxiliary-get-wekeo"
-    factory=".get.GetWekeoService"
-    permission="clms.downloadtool.usedownloadtool"
-    for="Products.CMFCore.interfaces.ISiteRoot"
-  />
-
-
-  <plone:service
-    method="GET"
-    name="@auxiliary-get-legacy"
-    factory=".get.GetLegacyService"
-    permission="clms.downloadtool.usedownloadtool"
-    for="Products.CMFCore.interfaces.ISiteRoot"
-  />
+      method="GET"
+      factory=".get.GetDownloadFileUrls"
+      for="Products.CMFCore.interfaces.ISiteRoot"
+      permission="clms.downloadtool.usedownloadtool"
+      name="@get-download-file-urls"
+      />
 
 </configure>

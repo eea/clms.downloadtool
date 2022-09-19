@@ -1,97 +1,125 @@
 """ auxiliary endpoint REST API"""
-from clms.downloadtool.api.services.auxiliary_api.main import (get_landcover,
-                                                               get_legacy,
-                                                               get_wekeo)
 # -*- coding: utf-8 -*-
+from plone import api
 from plone.restapi.services import Service
+from clms.downloadtool.api.services.auxiliary_api.main import (
+    get_landcover,
+    get_wekeo,
+    get_legacy,
+)
 
 
-class GetLandCoverService(Service):
-    """REST API endpoint for LandCover"""
+class GetDownloadFileUrls(Service):
+    """REST API for m2m users to obtain direct download links"""
 
     def reply(self):
-        """implementation"""
-        api_url = "api_url" in self.request
-        dataset_path = "dataset_path" in self.request
-        x_max = "x_max" in self.request
-        y_max = "y_max" in self.request
-        x_min = "x_min" in self.request
-        y_min = "y_min" in self.request
+        """return the result"""
+        dataset_uid = self.request.get("dataset_uid")
+        if dataset_uid is None:
+            self.request.response.setStatus(400)
+            return {
+                "status": "error",
+                "message": (
+                    "Required parameters are missing: dataset_uid is mandatory"
+                ),
+            }
 
-        # pylint: disable=too-many-boolean-expressions
-        if api_url and dataset_path and x_max and y_max and x_min and y_min:
+        dataset = api.content.get(UID=dataset_uid)
+        if dataset is None:
+            self.request.response.setStatus(400)
+            return {
+                "status": "error",
+                "message": "Dataset does not exist",
+            }
 
+        dataset_collection = self.request.get("dataset_collection")
+        if dataset_collection is None:
+            self.request.response.setStatus(400)
+            return {
+                "status": "error",
+                "message": (
+                    "Required parameters are missing: dataset_collection is mandatory"
+                ),
+            }
+
+        download_information = dataset.dataset_download_information.get(
+            "items", []
+        )
+        collection = [item.get("collection") for item in download_information]
+        if dataset_collection not in collection:
+            self.request.response.setStatus(400)
+            return {
+                "status": "error",
+                "message": ("Dataset collection does not exist"),
+            }
+
+        dataset_download_info = self.get_dataset_download_information(
+            download_information, dataset_collection
+        )
+
+        if dataset_download_info.get("full_source") == "WEKEO":
+            api_url = api.portal.get_registry_record(
+                "clms.downloadtool.auxiliary_api_control_panel.wekeo_api_url"
+            )
+            api_username = api.portal.get_registry_record(
+                "clms.downloadtool.auxiliary_api_control_panel.wekeo_api_username"
+            )
+            api_password = api.portal.get_registry_record(
+                "clms.downloadtool.auxiliary_api_control_panel.wekeo_api_password"
+            )
+            full_path = dataset_download_info.get("full_path")
+            wekeo_choices = dataset_download_info.get("wekeo_choices")
+
+            date_from = self.request.get("date_from", "")
+            date_to = self.request.get("date_to", "")
+
+            x_max = self.request.get("x_max", "")
+            y_max = self.request.get("y_max", "")
+            x_min = self.request.get("x_min", "")
+            y_min = self.request.get("y_min", "")
+
+            return get_wekeo(
+                api_url,
+                api_username,
+                api_password,
+                full_path,
+                wekeo_choices,
+                date_from,
+                date_to,
+                x_max,
+                y_max,
+                x_min,
+                y_min,
+            )
+            return {}
+        elif dataset_download_info.get("full_source") == "LANDCOVER":
+            api_url = api.portal.get_registry_record(
+                "clms.downloadtool.auxiliary_api_control_panel.landcover_api_url"
+            )
+            x_max = self.request.get("x_max", "")
+            y_max = self.request.get("y_max", "")
+            x_min = self.request.get("x_min", "")
+            y_min = self.request.get("y_min", "")
+            full_path = dataset_download_info.get("full_path")
             return get_landcover(
-                self.request.get("api_url"),
-                self.request.get("dataset_path"),
-                self.request.get("x_max"),
-                self.request.get("y_max"),
-                self.request.get("x_min"),
-                self.request.get("y_min"),
+                api_url, full_path, x_max, y_max, x_min, y_min
             )
+        elif dataset_download_info.get("full_source") == "LEGACY":
+            full_path = dataset_download_info.get("full_path")
+            date_from = self.request.get("date_from", "")
+            date_to = self.request.get("date_to", "")
 
-        self.request.response.setStatus(400)
-        return {
-            "status": "error",
-            "message": "Required parameters are missing",
-        }
+            return get_legacy(full_path, date_from, date_to)
 
+            return {}
 
-class GetWekeoService(Service):
-    """REST API endpoint for Wekeo"""
+        return {}
 
-    def reply(self):
-        """implementation"""
-        api_url = "api_url" in self.request
-        dataset_path = "dataset_path" in self.request
-        wekeo_choices = "wekeo_choices" in self.request
-        date_from = "date_from" in self.request
-        date_to = "date_to" in self.request
-        x_max = "x_max" in self.request
-        y_max = "y_max" in self.request
-        x_min = "x_min" in self.request
-        y_min = "y_min" in self.request
-        # pylint: disable=line-too-long too-many-boolean-expressions
-        if (api_url and dataset_path and wekeo_choices and date_from and date_to and x_max and y_max and x_min and y_min):  # noqa
-            result = get_wekeo(
-                self.request.get("api_url"),
-                self.request.get("dataset_path"),
-                self.request.get("wekeo_choices"),
-                self.request.get("date_from"),
-                self.request.get("date_to"),
-                self.request.get("x_max"),
-                self.request.get("y_max"),
-                self.request.get("x_min"),
-                self.request.get("y_min"),
-            )
+    def get_dataset_download_information(
+        self, download_information, dataset_collection
+    ):
+        for item in download_information:
+            if item.get("collection") == dataset_collection:
+                return item
 
-            return result
-
-        self.request.response.setStatus(400)
-        return {
-            "status": "error",
-            "message": "Required parameters are missing",
-        }
-
-
-class GetLegacyService(Service):
-    """REST API endpoint for Legacy"""
-
-    def reply(self):
-        """implementation"""
-        path = "path" in self.request
-        date_from = "date_from" in self.request
-        date_to = "date_to" in self.request
-
-        if path and date_from and date_to:
-            return get_legacy(
-                self.request.get("path"),
-                self.request.get("date_from"),
-                self.request.get("date_to"),
-            )
-
-        self.request.response.setStatus(400)
-        return {
-            "status": "error",
-            "message": "Required parameters are missing",
-        }
+        return {}

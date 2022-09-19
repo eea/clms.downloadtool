@@ -59,7 +59,14 @@ def get_landcover(api_url, dataset_path, x_max, y_max, x_min, y_min):
             token = ""
             while running:
                 # pylint: disable=line-too-long
-                url = api_url + "?list-type=2&max-keys=1000&prefix=" + dataset_path + "/" + longitude + latitude  # noqa
+                url = (
+                    api_url
+                    + "?list-type=2&max-keys=1000&prefix="
+                    + dataset_path
+                    + "/"
+                    + longitude
+                    + latitude
+                )  # noqa
 
                 if token != "":
                     url += "&continuation-token=" + urllib.parse.quote(token)
@@ -88,6 +95,8 @@ def get_namespace(tag):
 
 def get_wekeo(
     api_url,
+    username,
+    password,
     dataset_path,
     wekeo_choices,
     date_from,
@@ -99,13 +108,20 @@ def get_wekeo(
 ):
     """get data from wekeo"""
     if date_from == "" or date_to == "":
-        metadata_text = get_wekeo_metadata(api_url, dataset_path)
+        metadata_text = get_wekeo_metadata(
+            api_url, username, password, dataset_path
+        )
         metadata = json.loads(metadata_text)
         for f in metadata["parameters"]["dateRangeSelects"]:
             if f["details"]["start"] is not None:
                 date_from = f["details"]["start"][0:10]
                 # pylint: disable=line-too-long
-                date_to = (datetime.strptime(f["details"]["start"][0:10], "%Y-%m-%d") + timedelta(days=10)).strftime("%Y-%m-%d")  # noqa
+                date_to = (
+                    datetime.strptime(f["details"]["start"][0:10], "%Y-%m-%d")
+                    + timedelta(days=10)
+                ).strftime(
+                    "%Y-%m-%d"
+                )  # noqa
                 break
 
     if date_from == "" or date_to == "":
@@ -131,18 +147,16 @@ def get_wekeo(
     )
 
 
-def get_wekeo_token(api_url):
+def get_wekeo_token(api_url, username, password):
     """get wekeo token"""
-    response = requests.get(
-        api_url + "/gettoken", auth=("clmsportal", "clmsportal")
-    )
+    response = requests.get(api_url + "/gettoken", auth=(username, password))
     result = json.loads(response.text)
     return result["access_token"]
 
 
-def get_wekeo_metadata(api_url, dataset_path):
+def get_wekeo_metadata(api_url, username, password, dataset_path):
     """get wekeo metadata"""
-    token = get_wekeo_token(api_url)
+    token = get_wekeo_token(api_url, username, password)
     my_headers = {"Authorization": token}
 
     response = requests.get(
@@ -175,7 +189,11 @@ def get_legacy(path, date_from, date_to):
                 if date_from != "" and date_to != "":
                     date_file_aux = extract_date_legacy_ftp(file)
                     # pylint: disable=line-too-long
-                    if datetime.strptime(date_from, "%Y-%m-%d") <= datetime.strptime(date_file_aux, "%Y%m%d%H%M") <= datetime.strptime(date_to, "%Y-%m-%d"):  # noqa
+                    if (
+                        datetime.strptime(date_from, "%Y-%m-%d")
+                        <= datetime.strptime(date_file_aux, "%Y%m%d%H%M")
+                        <= datetime.strptime(date_to, "%Y-%m-%d")
+                    ):  # noqa
                         files_to_download.append(path + file.split("/")[-1])
                 else:
                     if len(files_to_download) == 0:
@@ -188,7 +206,11 @@ def get_legacy(path, date_from, date_to):
 
                         if date_file != "" and date_file_aux != "":
                             # pylint: disable=line-too-long
-                            if datetime.strptime(date_file, "%Y%m%d%H%M") < datetime.strptime(date_file_aux, "%Y%m%d%H%M"):  # noqa
+                            if datetime.strptime(
+                                date_file, "%Y%m%d%H%M"
+                            ) < datetime.strptime(
+                                date_file_aux, "%Y%m%d%H%M"
+                            ):  # noqa
                                 files_to_download[0] = (
                                     path + file.split("/")[-1]
                                 )
@@ -202,7 +224,11 @@ def get_legacy(path, date_from, date_to):
                 if date_from != "" and date_to != "":
                     date_file_aux = extract_date_legacy_http(file)
                     # pylint: disable=line-too-long
-                    if datetime.strptime(date_from, "%Y-%m-%d") <= date_file_aux <= datetime.strptime(date_to, "%Y-%m-%d"):  # noqa
+                    if (
+                        datetime.strptime(date_from, "%Y-%m-%d")
+                        <= date_file_aux
+                        <= datetime.strptime(date_to, "%Y-%m-%d")
+                    ):  # noqa
                         files_to_download.append(file)
                 else:
                     if len(files_to_download) == 0:
