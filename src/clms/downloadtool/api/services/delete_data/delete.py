@@ -3,10 +3,9 @@
 An endpoint to reset all the data in the download tool
 available only for site managers
 """
+from clms.downloadtool.utility import IDownloadToolUtility
 from plone.restapi.services import Service, _no_content_marker
 from zope.component import getUtility
-
-from clms.downloadtool.utility import IDownloadToolUtility
 
 
 class delete_data(Service):

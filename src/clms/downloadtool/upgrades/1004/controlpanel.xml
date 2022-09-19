@@ -5,18 +5,6 @@
 
     <configlet
         i18n:attributes="title"
-        title="FME Config Control Panel"
-        action_id="fme_config-controlpanel"
-        appId="fme-config-controlpanel"
-        category="Products"
-        condition_expr=""
-        icon_expr=""
-        url_expr="string:${portal_url}/@@fme-config-controlpanel"
-        visible="True">
-      <permission>Manage Portal</permission>
-    </configlet>
-    <configlet
-        i18n:attributes="title"
         title="Auxiliary API Control Panel"
         action_id="auxiliary_api_control_panel-controlpanel"
         appId="auxiliary_api_control_panel-controlpanel"

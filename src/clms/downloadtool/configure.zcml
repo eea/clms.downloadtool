@@ -45,6 +45,9 @@
 
   <!-- -*- extra stuff goes here -*- -->
 
+    <include package=".controlpanels" />
+
+
   <utility
     provides=".utility.IDownloadToolUtility"
     factory=".utility.DownloadToolUtility"

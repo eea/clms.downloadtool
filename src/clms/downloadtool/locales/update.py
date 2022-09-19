@@ -3,8 +3,8 @@
 """
 import os
 import subprocess
-import pkg_resources
 
+import pkg_resources
 
 domain = "clms.downloadtool"
 os.chdir(pkg_resources.resource_filename(domain, ""))
