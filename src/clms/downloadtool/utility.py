@@ -24,12 +24,11 @@ import random
 from datetime import datetime
 from logging import getLogger
 
+from clms.downloadtool.utils import ANNOTATION_KEY, STATUS_LIST
 from persistent.mapping import PersistentMapping
 from zope.annotation.interfaces import IAnnotations
 from zope.component.hooks import getSite
 from zope.interface import Interface, implementer
-
-from clms.downloadtool.utils import ANNOTATION_KEY, STATUS_LIST
 
 log = getLogger(__name__)
 

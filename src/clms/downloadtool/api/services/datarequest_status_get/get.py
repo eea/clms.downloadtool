@@ -6,11 +6,9 @@ For HTTP GET operations we can use standard HTTP parameter passing
 """
 from logging import getLogger
 
-from plone.restapi.services import Service
-
-from zope.component import getUtility
 from clms.downloadtool.utility import IDownloadToolUtility
-
+from plone.restapi.services import Service
+from zope.component import getUtility
 
 log = getLogger(__name__)
 

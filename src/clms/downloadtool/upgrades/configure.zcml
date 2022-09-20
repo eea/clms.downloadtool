@@ -3,10 +3,12 @@
     xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
     xmlns:i18n="http://namespaces.zope.org/i18n"
     xmlns:plone="http://namespaces.plone.org/plone"
-    i18n_domain="clms.downloadtool">
+    i18n_domain="clms.downloadtool"
+    >
 
   <include file="1001.zcml" />
   <include file="1002.zcml" />
   <include file="1003.zcml" />
+  <include file="1004.zcml" />
 
 </configure>

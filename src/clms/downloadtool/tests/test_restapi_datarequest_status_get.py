@@ -5,17 +5,12 @@ Test the datarequest_status_get endpoint
 import unittest
 
 import transaction
-from plone.app.testing import (
-    SITE_OWNER_NAME,
-    SITE_OWNER_PASSWORD,
-    TEST_USER_ID,
-    setRoles,
-)
-from plone.restapi.testing import RelativeSession
-from zope.component import getUtility
-
 from clms.downloadtool.testing import CLMS_DOWNLOADTOOL_RESTAPI_TESTING
 from clms.downloadtool.utility import IDownloadToolUtility
+from plone.app.testing import (SITE_OWNER_NAME, SITE_OWNER_PASSWORD,
+                               TEST_USER_ID, setRoles)
+from plone.restapi.testing import RelativeSession
+from zope.component import getUtility
 
 
 class TestDatarequestStatusGet(unittest.TestCase):

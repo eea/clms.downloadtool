@@ -2,9 +2,8 @@
 """
 Endpoint to return the information of the FORMAT_CONVERSION_TABLE
 """
-from plone.restapi.services import Service
-
 from clms.downloadtool.utils import GCS
+from plone.restapi.services import Service
 
 
 class GetProjectionsList(Service):

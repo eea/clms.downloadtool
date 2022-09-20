@@ -1,7 +1,12 @@
 <configure
     xmlns="http://namespaces.zope.org/zope"
-    i18n_domain="clms.downloadtool">
+    i18n_domain="clms.downloadtool"
+    >
 
   <include package=".fme_config_controlpanel" />
+  <include package=".auxiliary_api_control_panel" />
+
+  <!-- -*- extra stuff goes here -*- -->
+
 
 </configure>

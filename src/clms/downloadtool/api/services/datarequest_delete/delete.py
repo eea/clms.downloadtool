@@ -5,12 +5,11 @@ DELETE endpoint for the download tool.
 from logging import getLogger
 
 import requests
+from clms.downloadtool.utility import IDownloadToolUtility
 from plone import api
 from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service, _no_content_marker
 from zope.component import getUtility
-
-from clms.downloadtool.utility import IDownloadToolUtility
 
 log = getLogger(__name__)
 
