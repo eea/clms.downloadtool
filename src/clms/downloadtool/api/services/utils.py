@@ -16,7 +16,7 @@ def get_extra_data(data_json):
     data = {}
     user_id = data_json.get("User")
     if user_id is not None:
-        user = api.user.get(user_name=user_id)
+        user = api.user.get(username=user_id)
         if user is not None:
             data["user_country"] = get_user_profile_value_country(
                 user.getProperty("country")
