@@ -61,6 +61,17 @@ class DataRequestPost(Service):
 
         return None
 
+    def get_callback_url(self):
+        """get the callback url where FME should signal any status changes"""
+        portal_url = api.portal.get().absolute_url()
+        if portal_url.endswith("/api"):
+            portal_url = portal_url.replace("/api", "")
+
+        return "{}/++api++/{}".format(
+            portal_url,
+            "@datarequest_status_patch",
+        )
+
     def reply(self):
         """JSON response"""
         alsoProvides(self.request, IDisableCSRFProtection)
@@ -395,10 +406,7 @@ class DataRequestPost(Service):
                         },
                         {
                             "name": "CallbackUrl",
-                            "value": "{}/{}".format(
-                                api.portal.get().absolute_url(),
-                                "@datarequest_status_patch",
-                            ),
+                            "value": self.get_callback_url(),
                         },
                         # dump the json into a string for FME
                         {"name": "json", "value": json.dumps(new_datasets)},
@@ -558,8 +566,9 @@ def save_stats(stats_json):
         utility = getUtility(IDownloadStatsUtility)
         stats_json.update(get_extra_data(stats_json))
         utility.register_item(stats_json)
-    except Exception:
+    except Exception as e:
         # pylint: disable=line-too-long
+        log.exception(e)
         log.info(
             "There was an error saving the stats: %s", json.dumps(stats_json)
         )  # noqa

@@ -16,24 +16,39 @@ def get_extra_data(data_json):
     data = {}
     user_id = data_json.get("User")
     if user_id is not None:
-        user = api.user.get(user_name=user_id)
+        user = api.user.get(username=user_id)
         if user is not None:
-            data["user_country"] = get_user_profile_value_country(
-                user.getProperty("country")
-            )
-            data["user_affiliation"] = get_user_profile_value_affiliation(
-                user.getProperty("affiliation")
-            )
-            data[
-                "user_thematic_activity"
-            ] = get_user_profile_value_thematic_activity(
-                user.getProperty("thematic_activity")
-            )
-            data[
-                "user_sector_of_activity"
-            ] = get_user_profile_value_sector_of_activity(
-                user.getProperty("sector_of_activity")
-            )
+            try:
+                data["user_country"] = get_user_profile_value_country(
+                    user.getProperty("country")
+                )
+            except KeyError:
+                data["user_country"] = ""
+
+            try:
+                data["user_affiliation"] = get_user_profile_value_affiliation(
+                    user.getProperty("affiliation")
+                )
+            except KeyError:
+                data["user_affiliation"] = ""
+
+            try:
+                data[
+                    "user_thematic_activity"
+                ] = get_user_profile_value_thematic_activity(
+                    user.getProperty("thematic_activity")
+                )
+            except KeyError:
+                data["user_thematic_activity"] = ""
+
+            try:
+                data[
+                    "user_sector_of_activity"
+                ] = get_user_profile_value_sector_of_activity(
+                    user.getProperty("sector_of_activity")
+                )
+            except KeyError:
+                data["user_sector_of_activity"] = ""
 
     return data
 
