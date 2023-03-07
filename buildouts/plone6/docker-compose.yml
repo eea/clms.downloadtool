@@ -1,0 +1,11 @@
+version: "2"
+services:
+  plone:
+    image: plone:5
+    ports:
+    - "8080"
+    volumes:
+    - ../../:/plone/instance/src/clms.statstool
+    environment:
+      ADDONS: "clms.statstool[test]"
+      DEVELOP: "src/clms.statstool"
