@@ -14,12 +14,10 @@ class datarequest_search(Service):
     """Search datarequest"""
 
     def reply(self):
-        """JSON endpoint"""
+        """ JSON endpoint """
         utility = getUtility(IDownloadToolUtility)
         status = self.request.get("status")
-
         user = api.user.get_current()
-
         if not user:
             return {
                 "status": "error",
@@ -27,17 +25,6 @@ class datarequest_search(Service):
             }
 
         user_id = user.getId()
-
-        # Allow portal managers users to search someone else's
-        # download requests
-        if api.user.has_permission("clms.downloadtool.managedownloadtool"):
-            requested_userid = self.request.get("user", None)
-            if requested_userid:
-                requested_user = api.user.get(userid=requested_userid)
-                if requested_user is not None:
-                    user_id = requested_userid
-            else:
-                user_id = None
 
         response_json = utility.datarequest_search(user_id, status)
 
