@@ -8,18 +8,14 @@ import transaction
 from clms.downloadtool.testing import CLMS_DOWNLOADTOOL_RESTAPI_TESTING
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import STATUS_LIST
-from plone.app.testing import (
-    SITE_OWNER_NAME,
-    SITE_OWNER_PASSWORD,
-    TEST_USER_ID,
-    setRoles,
-)
+from plone.app.testing import (SITE_OWNER_NAME, SITE_OWNER_PASSWORD,
+                               TEST_USER_ID, setRoles)
 from plone.restapi.testing import RelativeSession
 from zope.component import getUtility
 
 
 class TestDatarequestStatusGet(unittest.TestCase):
-    """base class"""
+    """ base class"""
 
     layer = CLMS_DOWNLOADTOOL_RESTAPI_TESTING
 
@@ -36,7 +32,7 @@ class TestDatarequestStatusGet(unittest.TestCase):
         self.anonymous_session.headers.update({"Accept": "application/json"})
 
     def tearDown(self):
-        """tear down cleanup"""
+        """ tear down cleanup"""
         self.api_session.close()
         self.anonymous_session.close()
 
@@ -50,13 +46,13 @@ class TestDatarequestStatusGet(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
 
     def test_status_method_without_status(self):
-        """status is a required parameter"""
+        """ status is a required parameter """
 
         response = self.api_session.get("@datarequest_search")
         self.assertEqual(response.status_code, 200)
 
     def test_status_method_with_invalid_status(self):
-        """status is a required parameter and must be a real status"""
+        """ status is a required parameter and must be a real status """
 
         invalid_status = "invalid_status"
         self.assertNotIn(invalid_status, STATUS_LIST)
@@ -69,7 +65,7 @@ class TestDatarequestStatusGet(unittest.TestCase):
         self.assertIn("status", result)
 
     def test_status_method_with_valid_status(self):
-        """status is a required parameter and must be a real status"""
+        """ status is a required parameter and must be a real status """
         utility = getUtility(IDownloadToolUtility)
         data_dict_1 = {"Status": "In_progress", "UserID": SITE_OWNER_NAME}
         data_dict_2 = {"Status": "Cancelled", "UserID": SITE_OWNER_NAME}
@@ -88,7 +84,7 @@ class TestDatarequestStatusGet(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
         result = response.json()
-        self.assertEqual(len(result.keys()), 3)
+        self.assertEqual(len(result.keys()), 2)
 
         response = self.api_session.get(
             "@datarequest_search", params={"status": "Cancelled"}

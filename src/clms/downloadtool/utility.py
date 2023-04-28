@@ -89,13 +89,13 @@ class DownloadToolUtility:
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         data_object = {}
 
+        if not user_id:
+            return "Error, UserID not defined"
+
         if not status:
             for key in registry.keys():
                 values = registry.get(key)
-                if not user_id:
-                    if str(user_id) == values.get("UserID"):
-                        data_object[key] = values
-                else:
+                if str(user_id) == values.get("UserID"):
                     data_object[key] = values
             return data_object
 
@@ -104,11 +104,10 @@ class DownloadToolUtility:
 
         for key in registry.keys():
             values = registry.get(key)
-            if status == values.get("Status"):
-                if not user_id or str(user_id) == values.get(
-                    "UserID"
-                ):
-                    data_object[key] = values
+            if status == values.get("Status") and str(user_id) == values.get(
+                "UserID"
+            ):
+                data_object[key] = values
 
         return data_object
 
@@ -160,7 +159,7 @@ class DownloadToolUtility:
         return {}
 
     def datarequest_remove_task(self, task_id):
-        """Remove all data about the given task"""
+        """ Remove all data about the given task"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
