@@ -5,21 +5,28 @@ Return NUTS region names
 """
 import requests
 from plone import api
-from plone.memoize.ram import cache
 from plone.restapi.search.utils import unflatten_dotted_dict
 from plone.restapi.services import Service
+from eea.cache import cache
+
+LAYER_PER_LEVEL = {
+    "0": "0",
+    "1": "1",
+    "2": "3",
+    "3": "6",
+}
 
 
 def _cache_key(fun, self, nutsid):
-    """ Cache key function """
+    """Cache key function"""
     return nutsid
 
 
 class NUTSName(Service):
-    """ Service to return nuts region names """
+    """Service to return nuts region names"""
 
     def reply(self):
-        """ return the names"""
+        """return the names"""
         query = self.request.form.copy()
         query = unflatten_dotted_dict(query)
         new_query = {}
@@ -54,6 +61,15 @@ class NUTSName(Service):
         )
         if url:
             url += "where=NUTS_ID='{}'".format(nutsid)
+
+            nuts_level = str(len(nutsid[2:]))
+
+            layer = LAYER_PER_LEVEL.get(nuts_level)
+
+            url = url.replace(
+                "/MapServer/0/query", f"/MapServer/{layer}/query"
+            )
+
             resp = requests.get(url)
             if resp.ok:
                 resp_json = resp.json()
