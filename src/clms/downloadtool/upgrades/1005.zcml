@@ -1,0 +1,35 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:gs="http://namespaces.zope.org/genericsetup"
+    >
+
+  <gs:registerProfile
+      name="1005"
+      title="New control panel for the auxiliary API"
+      description="Configuration for version 1005"
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      for="Products.CMFPlone.interfaces.IMigratingPloneSiteRoot"
+      directory="1005"
+      />
+
+  <gs:upgradeSteps
+      profile="clms.downloadtool:default"
+      source="1004"
+      destination="1005"
+      >
+
+    <gs:upgradeStep
+        title="New control panel for the auxiliary API"
+        description="New control panel for the auxiliary API "
+        handler=".v1005.upgrade"
+        />
+
+    <gs:upgradeDepends
+        title="New control panel for the auxiliary API (GS profile)"
+        description="New control panel for the auxiliary API "
+        import_profile="clms.downloadtool.upgrades:1005"
+        />
+
+  </gs:upgradeSteps>
+
+</configure>

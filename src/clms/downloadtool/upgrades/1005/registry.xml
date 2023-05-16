@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<registry
+    xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+    i18n:domain="clms.downloadtool">
+
+<!-- -*- extra stuff goes here -*- -->
+
+  <records interface="clms.downloadtool.controlpanels.auxiliary_api_control_panel.controlpanel.IAuxiliaryAPIControlPanel"
+           prefix="clms.downloadtool.auxiliary_api_control_panel">
+
+  <value key="legacy_username" purge="false"> </value>
+  <value key="legacy_password" purge="false"> </value>
+
+  </records>
+
+
+</registry>

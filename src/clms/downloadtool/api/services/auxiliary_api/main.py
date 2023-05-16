@@ -156,14 +156,14 @@ def get_wekeo_metadata(api_url, username, password, dataset_path):
     return result
 
 
-def get_legacy(path, date_from, date_to):
+def get_legacy(username, password, path, date_from, date_to):
     """get legacy data"""
     files_to_download = []
 
     # pylint: disable=too-many-nested-blocks
     if path.startswith("ftp"):
         ftp_params = path.replace("ftp://", "").split("/")
-        ftp = FTP(ftp_params[0], "copernicus", "CopernicusBM")
+        ftp = FTP(ftp_params[0], username, password)
         ftp_path = ""
         for index, ftp_param in enumerate(ftp_params):
             if index != 0 and ftp_param != "":

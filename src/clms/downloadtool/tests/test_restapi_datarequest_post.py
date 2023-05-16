@@ -8,16 +8,29 @@ from datetime import datetime
 
 import transaction
 from clms.downloadtool.api.services.datarequest_post.post import (
-    DataRequestPost, base64_encode_path, extract_dates_from_temporal_filter,
-    get_dataset_file_path_from_file_id, get_full_dataset_format,
-    get_full_dataset_path, get_full_dataset_source,
-    get_full_dataset_wekeo_choices, validate_nuts, validate_spatial_extent)
-from clms.downloadtool.testing import (CLMS_DOWNLOADTOOL_INTEGRATION_TESTING,
-                                       CLMS_DOWNLOADTOOL_RESTAPI_TESTING)
+    DataRequestPost,
+    base64_encode_path,
+    extract_dates_from_temporal_filter,
+    get_dataset_file_path_from_file_id,
+    get_full_dataset_format,
+    get_full_dataset_path,
+    get_full_dataset_source,
+    get_full_dataset_wekeo_choices,
+    validate_nuts,
+    validate_spatial_extent,
+)
+from clms.downloadtool.testing import (
+    CLMS_DOWNLOADTOOL_INTEGRATION_TESTING,
+    CLMS_DOWNLOADTOOL_RESTAPI_TESTING,
+)
 from clms.downloadtool.utils import DATASET_FORMATS, GCS
 from plone import api
-from plone.app.testing import (SITE_OWNER_NAME, SITE_OWNER_PASSWORD,
-                               TEST_USER_ID, setRoles)
+from plone.app.testing import (
+    SITE_OWNER_NAME,
+    SITE_OWNER_PASSWORD,
+    TEST_USER_ID,
+    setRoles,
+)
 from plone.restapi.testing import RelativeSession
 
 FME_TASK_ID = 123456
@@ -167,8 +180,8 @@ class TestDatarequestPost(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 401)
 
-    def test_full_datasets(self):
-        """test post with valid data"""
+    def test_eea_full_dataset_download(self):
+        """test to download a EEA full dataset"""
 
         data = {
             "Datasets": [
@@ -177,7 +190,25 @@ class TestDatarequestPost(unittest.TestCase):
                     "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
-                },
+                }
+            ]
+        }
+        # Patch FME call to return an OK response
+        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+
+        response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(
+            response.headers.get("Content-Type"), "application/json"
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()["TaskIds"]), 1)
+
+    def test_non_eea_full_dataset_download(self):
+        """test to download a non-EEA full dataset"""
+        data = {
+            "Datasets": [
                 {
                     "DatasetID": self.dataset2.UID(),
                     "DatasetDownloadInformationID": "id-2",
@@ -194,9 +225,7 @@ class TestDatarequestPost(unittest.TestCase):
             response.headers.get("Content-Type"), "application/json"
         )
 
-        self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskIds", response.json())
-        self.assertTrue(len(response.json()["TaskIds"]), 1)
+        self.assertEqual(response.status_code, 400)
 
     def test_nuts_restriction(self):
         """test post with valid data"""

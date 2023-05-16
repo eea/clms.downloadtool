@@ -325,7 +325,6 @@ class DataRequestPost(Service):
                     }
 
                 # Check if the dataset path is OK
-
                 full_dataset_path = get_full_dataset_path(
                     dataset_object, download_information_id
                 )
@@ -340,6 +339,29 @@ class DataRequestPost(Service):
                 wekeo_choices = get_full_dataset_wekeo_choices(
                     dataset_object, download_information_id
                 )
+
+                # Check full dataset download restrictions
+                # pylint: disable=line-too-long
+                if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json and "TemporalFilter" not in dataset_json):  # noqa
+                    # We are requesting a full dataset download
+                    # We need to check if this dataset is a EEA dataset
+                    # if so, we continue with the download, otherwiser
+                    # we point the end-user to the specific endpoint
+                    # pylint: disable=line-too-long
+                    if (full_dataset_source and full_dataset_source != "EEA" or not full_dataset_source):  # noqa
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": (
+                                "You are requesting to download the full"
+                                " dataset but this dataset is not an EEA"
+                                " dataset and thus you need to query an"
+                                " specific endpoint to request its download."
+                                " Please check the API documentation to get"
+                                " more information about this specific"
+                                " endpoint."
+                            ),
+                        }
 
                 response_json.update(
                     {
