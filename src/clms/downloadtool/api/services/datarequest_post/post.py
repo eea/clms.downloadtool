@@ -342,20 +342,13 @@ class DataRequestPost(Service):
 
                 # Check full dataset download restrictions
                 # pylint: disable=line-too-long
-                if (
-                    "NUTS" not in dataset_json
-                    and "BoundingBox" not in dataset_json
-                    and "TemporalFilter" not in dataset_json
-                ):  # noqa
+                if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json and "TemporalFilter" not in dataset_json):  # noqa
                     # We are requesting a full dataset download
                     # We need to check if this dataset is a EEA dataset
                     # if so, we continue with the download, otherwiser
                     # we point the end-user to the specific endpoint
-                    if (
-                        full_dataset_source
-                        and full_dataset_source != "EEA"
-                        or not full_dataset_source
-                    ):
+                    # pylint: disable=line-too-long
+                    if (full_dataset_source and full_dataset_source != "EEA" or not full_dataset_source):  # noqa
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
