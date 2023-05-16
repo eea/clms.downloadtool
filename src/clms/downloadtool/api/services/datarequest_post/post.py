@@ -351,7 +351,6 @@ class DataRequestPost(Service):
                     # We need to check if this dataset is a EEA dataset
                     # if so, we continue with the download, otherwiser
                     # we point the end-user to the specific endpoint
-                    # Check if the dataset source is OK
                     if (
                         full_dataset_source
                         and full_dataset_source != "EEA"

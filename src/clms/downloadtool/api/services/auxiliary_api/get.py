@@ -20,8 +20,7 @@ class GetDownloadFileUrls(Service):
             return {
                 "status": "error",
                 "message": (
-                    "Required parameters are missing: dataset_uid is "
-                    "mandatory"
+                    "Required parameters are missing: dataset_uid is mandatory"
                 ),
             }
 
@@ -52,7 +51,7 @@ class GetDownloadFileUrls(Service):
             self.request.response.setStatus(400)
             return {
                 "status": "error",
-                "message": ("Dataset collection does not exist"),
+                "message": "Dataset collection does not exist",
             }
 
         dataset_download_info = self.get_dataset_download_information(
@@ -111,11 +110,21 @@ class GetDownloadFileUrls(Service):
             )
 
         if dataset_download_info.get("full_source") == "LEGACY":
+            username = api.portal.get_registry_record(
+                # pylint: disable=line-too-long
+                "clms.downloadtool.auxiliary_api_control_panel.legacy_username"  # noqa
+            )
+            password = api.portal.get_registry_record(
+                # pylint: disable=line-too-long
+                "clms.downloadtool.auxiliary_api_control_panel.legacy_password"  # noqa
+            )
             full_path = dataset_download_info.get("full_path")
             date_from = self.request.get("date_from", "")
             date_to = self.request.get("date_to", "")
 
-            return get_legacy(full_path, date_from, date_to)
+            return get_legacy(
+                username, password, full_path, date_from, date_to
+            )
 
         return {}
 

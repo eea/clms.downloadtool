@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """ control panel to save some download settings"""
+from clms.downloadtool import _
+from clms.downloadtool.interfaces import IClmsDownloadtoolLayer
 from plone.app.registry.browser.controlpanel import (
     ControlPanelFormWrapper,
     RegistryEditForm,
@@ -10,19 +12,16 @@ from zope import schema
 from zope.component import adapter
 from zope.interface import Interface
 
-from clms.downloadtool import _
-from clms.downloadtool.interfaces import IClmsDownloadtoolLayer
-
 
 class IAuxiliaryAPIControlPanel(Interface):
     """control panel schema"""
 
     wekeo_api_url = schema.TextLine(
         title=_(
-            u"Wekeo API URL",
+            "Wekeo API URL",
         ),
         description=_(
-            u"",
+            "",
         ),
         default=u"",
         required=True,
@@ -36,31 +35,55 @@ class IAuxiliaryAPIControlPanel(Interface):
         description=_(
             u"",
         ),
-        default=u"",
+        default="",
         required=True,
         readonly=False,
     )
 
     wekeo_api_password = schema.TextLine(
         title=_(
-            u"Wekeo API password",
+            "Wekeo API password",
         ),
         description=_(
-            u"",
+            "",
         ),
-        default=u"",
+        default="",
         required=True,
         readonly=False,
     )
 
     landcover_api_url = schema.TextLine(
         title=_(
-            u"LandCover API URL",
+            "LandCover API URL",
         ),
         description=_(
-            u"",
+            "",
         ),
-        default=u"",
+        default="",
+        required=True,
+        readonly=False,
+    )
+
+    legacy_username = schema.TextLine(
+        title=_(
+            "LEGACY ftp server username",
+        ),
+        description=_(
+            "",
+        ),
+        default="",
+        required=True,
+        readonly=False,
+    )
+
+    legacy_password = schema.TextLine(
+        title=_(
+            "LEGACY ftp server password",
+        ),
+        description=_(
+            "",
+        ),
+        default="",
         required=True,
         readonly=False,
     )
