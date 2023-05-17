@@ -340,6 +340,22 @@ class DataRequestPost(Service):
                     dataset_object, download_information_id
                 )
 
+                if "Layer" in dataset_json:
+                    # Check if we have a layer and it is valid
+                    layers = get_full_dataset_layers(
+                        dataset_object, download_information_id
+                    )
+                    if dataset_json.get("Layer") in layers:
+                        response_json["Layer"] = dataset_json["Layer"]
+                    else:
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": (
+                                "Error, the requested band/layer is not valid"
+                            ),
+                        }
+
                 # Check full dataset download restrictions
                 # pylint: disable=line-too-long
                 if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json and "TemporalFilter" not in dataset_json):  # noqa
@@ -682,3 +698,19 @@ def get_full_dataset_wekeo_choices(dataset_object, download_information_id):
             return download_information.get("wekeo_choices", "")
 
     return None
+
+
+def get_full_dataset_layers(dataset_object, download_information_id):
+    """get the available layers/bands based on the requested
+    download_information_id
+    """
+    dataset_download_information_json = (
+        dataset_object.dataset_download_information
+    )
+    for download_information in dataset_download_information_json.get(
+        "items", []
+    ):
+        if download_information.get("@id") == download_information_id:
+            return download_information.get("layers", [])
+
+    return []
