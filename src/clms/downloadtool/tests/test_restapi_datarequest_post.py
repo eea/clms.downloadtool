@@ -13,6 +13,7 @@ from clms.downloadtool.api.services.datarequest_post.post import (
     extract_dates_from_temporal_filter,
     get_dataset_file_path_from_file_id,
     get_full_dataset_format,
+    get_full_dataset_layers,
     get_full_dataset_path,
     get_full_dataset_source,
     get_full_dataset_wekeo_choices,
@@ -92,6 +93,7 @@ class TestDatarequestPost(unittest.TestCase):
                         "full_path": "/this/is/a/path/to/dataset1",
                         "full_source": "EEA",
                         "wekeo_choices": "choice-1",
+                        "layers": ["layer-1", "layer-2"],
                     }
                 ]
             },
@@ -975,6 +977,42 @@ class TestDatarequestPost(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("status", response.json())
 
+    def test_download_with_layer(self):
+        """test a download request with a band"""
+
+        data = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                    "Layer": "layer-1",
+                },
+            ]
+        }
+        response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()["TaskIds"]), 1)
+
+    def test_download_with_invalid_layer(self):
+        """test that requesting an invalid band raises an error"""
+        data = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "this-is-an-invalid-id",
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                    "Layer": "this band does not exist",
+                },
+            ]
+        }
+        response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("status", response.json())
+
     def test_download_prepackaged_file_id(self):
         """some files can be downloaded directly, providing their file_id"""
 
@@ -1280,6 +1318,7 @@ class TestDatarequestPostUtilMethods(unittest.TestCase):
                         "full_path": "/this/is/a/path/to/dataset1",
                         "full_source": "EEA",
                         "wekeo_choices": "choice-1",
+                        "layers": ["this-layer", "that-layer"],
                     }
                 ]
             },
@@ -1417,3 +1456,21 @@ class TestDatarequestPostUtilMethods(unittest.TestCase):
         """with an invalid id, None is returned"""
         item = get_full_dataset_format(self.dataset1, "invalid-id")
         self.assertIsNone(item)
+
+    def test_get_full_dataset_layers(self):
+        """return the layers of the datased based on download_information_id"""
+        item = get_full_dataset_layers(self.dataset1, "id-1")
+        self.assertEqual(item, ["this-layer", "that-layer"])
+
+    def test_get_full_dataset_layers_empty_layers(self):
+        """return the layers of the datased based on download_information_id
+        of a item without any layers
+        """
+        item = get_full_dataset_layers(self.dataset1, "id-2")
+        self.assertEqual(item, [])
+
+    def test_get_full_dataset_layers_with_invalid_id(self):
+        """return the layers of the datased based on
+        download_information_id of an invalid id"""
+        item = get_full_dataset_layers(self.dataset1, "invalid-id")
+        self.assertEqual(item, [])
