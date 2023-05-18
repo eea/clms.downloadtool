@@ -60,6 +60,7 @@ setup(
         "requests",
         "clms.types",
         "clms.statstool",
+        "eea.cache",
     ],
     extras_require={
         "test": [
