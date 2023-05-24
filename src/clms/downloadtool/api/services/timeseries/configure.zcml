@@ -1,0 +1,14 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:plone="http://namespaces.plone.org/plone"
+    >
+
+  <plone:service
+      method="GET"
+      factory=".get.GetTimeSeriesMetadata"
+      for="Products.CMFCore.interfaces.ISiteRoot"
+      permission="clms.downloadtool.usedownloadtool"
+      name="@get-time-series-metadata"
+      />
+
+</configure>
