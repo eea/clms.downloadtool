@@ -16,5 +16,6 @@
   <include package=".nuts_name" />
   <include package=".projections" />
   <include package=".auxiliary_api" />
+  <include package=".timeseries" />
 </configure>
 
