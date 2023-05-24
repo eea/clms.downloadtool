@@ -41,11 +41,9 @@ def parse_wmts_service(url):
             period = "P1D"
             return {"start": start, "end": end, "period": period}
 
-        start = min([x.get("start") for x in data.values()])
-        end = max([x.get("end") for x in data.values()])
-
-        period = set(map(lambda x: x.get("period", "ZZZZZ"), data.values()))
-        period = set([x.get("period") for x in data.values()])
+        start = min({x.get("start") for x in data.values()})
+        end = max({x.get("end") for x in data.values()})
+        period = {x.get("period") for x in data.values()}
         return {"start": start, "end": end, "period": period}
 
     dimension = extract_dimension_from_global(tree)
