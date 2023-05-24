@@ -75,6 +75,7 @@ class TestTimeSeriesUtils(unittest.TestCase):
         self.assertEqual(result, "")
 
     def extract_dimension_wms(self):
+        """demo test"""
         xml = b"""<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <WMS_Capabilities version="1.3.0" xsi:schemaLocation="https:/inspire.ec.europa.eu/schemas/inspire_vs/1.0 https://inspire.ec.europa.eu/schemas/inspire_vs/1.0/inspire_vs.xsd" xmlns:inspire_common="https://inspire.ec.europa.eu/schemas/common/1.0" xmlns:inspire_vs="https://inspire.ec.europa.eu/schemas/inspire_vs/1.0" xmlns="http://www.opengis.net/wms" xmlns:sld="http://www.opengis.net/sld" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 <Service>
