@@ -80,7 +80,8 @@ def parse_wms_service(url):
 
 
 def extract_dimensions_from_wms_layers(tree):
-    """parse layer information to extract dimension data, if available, from them"""
+    """parse layer information to extract dimension data, if available,
+    from them"""
     data = {}
     layers = tree.xpath("//wms_default:Layer", namespaces=NAMESPACES)
     for layer in layers:
@@ -100,7 +101,8 @@ def extract_dimensions_from_wms_layers(tree):
 
 
 def extract_dimensions_from_wmts_layers(tree):
-    """parse layer information to extract dimension data, if available, from them"""
+    """parse layer information to extract dimension data, if available,
+    from them"""
     data = {}
     layers = tree.xpath("//wmts_default:Layer", namespaces=NAMESPACES)
     for layer in layers:
