@@ -41,20 +41,17 @@ def parse_wmts_service(url):
             period = "P1D"
             return {"start": start, "end": end, "period": period}
 
-        else:
-            start = min([x.get("start") for x in data.values()])
-            end = max([x.get("end") for x in data.values()])
+        start = min([x.get("start") for x in data.values()])
+        end = max([x.get("end") for x in data.values()])
 
-            period = set(
-                map(lambda x: x.get("period", "ZZZZZ"), data.values())
-            )
-            period = set([x.get("period") for x in data.values()])
-            return {"start": start, "end": end, "period": period}
-    else:
-        dimension = extract_dimension_from_global(tree)
-        data = extract_data_from_dimension(dimension)
+        period = set(map(lambda x: x.get("period", "ZZZZZ"), data.values()))
+        period = set([x.get("period") for x in data.values()])
+        return {"start": start, "end": end, "period": period}
 
-        return data
+    dimension = extract_dimension_from_global(tree)
+    data = extract_data_from_dimension(dimension)
+
+    return data
 
 
 def parse_wms_service(url):
@@ -72,11 +69,11 @@ def parse_wms_service(url):
         end = max(map(lambda x: x.get("end", "ZZZZZZZZZZZZ"), data.values()))
         period = set(map(lambda x: x.get("period", "ZZZZZ"), data.values()))
         return {"start": start, "end": end, "period": period}
-    else:
-        dimension = extract_dimension_from_global(tree)
-        data = extract_data_from_dimension(dimension)
 
-        return data
+    dimension = extract_dimension_from_global(tree)
+    data = extract_data_from_dimension(dimension)
+
+    return data
 
 
 def extract_dimensions_from_wms_layers(tree):
