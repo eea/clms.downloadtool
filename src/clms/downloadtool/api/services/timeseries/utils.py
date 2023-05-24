@@ -3,6 +3,7 @@ util functions to extract time series information from a WM(T)S service
 """
 # -*- coding: utf-8 -*-
 import itertools
+
 import requests
 from lxml import etree
 

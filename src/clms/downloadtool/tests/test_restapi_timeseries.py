@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 import unittest
 
+from clms.downloadtool.api.services.timeseries import utils
 from clms.downloadtool.testing import CLMS_DOWNLOADTOOL_RESTAPI_TESTING
-from clms.downloadtool.utils import GCS
+from lxml import etree
 from plone.app.testing import (
     SITE_OWNER_NAME,
     SITE_OWNER_PASSWORD,
@@ -11,8 +12,6 @@ from plone.app.testing import (
     setRoles,
 )
 from plone.restapi.testing import RelativeSession
-from clms.downloadtool.api.services.timeseries import utils
-from lxml import etree
 
 
 class TestTimeSeriesEndpoint(unittest.TestCase):
