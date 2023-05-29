@@ -1,16 +1,16 @@
 """ some util methods"""
 # -*- coding: utf-8 -*-
 
+import hashlib
+import json
+from typing import Any, Dict, List
+
 from plone import api
 from zope.component import getUtility
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.schema.interfaces import IVocabularyFactory
 from zope.site.hooks import getSite
-from typing import Dict, Any, List
-
-import hashlib
-import json
 
 
 def dict_hash(dictionary: Dict[str, Any]) -> str:
