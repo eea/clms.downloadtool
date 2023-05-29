@@ -1197,6 +1197,39 @@ class TestDatarequestPost(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
 
+    def test_downloading_duplicates_not_allowed(self):
+        """test that requesting the download of the same dataset with the same
+        restrictions is not allowed
+        """
+
+        data = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                    "NUTS": "ES",
+                },
+                {
+                    "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                    "NUTS": "ES",
+                },
+            ]
+        }
+        # Patch FME call to return an OK response
+        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+
+        response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(
+            response.headers.get("Content-Type"), "application/json"
+        )
+
+        self.assertEqual(response.status_code, 400)
+
 
 class TestDatarequestPostTemporalFilter(unittest.TestCase):
     """test temporal filter validator"""

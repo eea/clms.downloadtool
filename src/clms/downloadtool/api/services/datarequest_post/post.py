@@ -11,7 +11,10 @@ from datetime import datetime
 from logging import getLogger
 
 import requests
-from clms.downloadtool.api.services.utils import get_extra_data
+from clms.downloadtool.api.services.utils import (
+    get_extra_data,
+    duplicated_values_exist,
+)
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import COUNTRIES, FORMAT_CONVERSION_TABLE, GCS
 from clms.statstool.utility import IDownloadStatsUtility
@@ -417,6 +420,20 @@ class DataRequestPost(Service):
                 "msg": (
                     "The download queue can only process 5 items at a time."
                     " Please try again with fewer items."
+                ),
+            }
+
+        # Check that the request has no duplicates
+        if duplicated_values_exist(
+            general_download_data_object.get("Datasets", [])
+        ):
+            self.request.response.setStatus(400)
+            return {
+                "status": "error",
+                "msg": (
+                    "You have requested to download the same thing at least"
+                    " twice. Please check your download cart and remove any"
+                    " duplicates."
                 ),
             }
 
