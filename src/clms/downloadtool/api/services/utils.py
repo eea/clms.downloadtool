@@ -1,12 +1,26 @@
 """ some util methods"""
 # -*- coding: utf-8 -*-
 
+import hashlib
+import json
+from typing import Any, Dict, List
+
 from plone import api
 from zope.component import getUtility
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.schema.interfaces import IVocabularyFactory
 from zope.site.hooks import getSite
+
+
+def dict_hash(dictionary: Dict[str, Any]) -> str:
+    """SHA512 hash of a dictionary."""
+    dhash = hashlib.sha512()
+    # We need to sort arguments so {'a': 1, 'b': 2} is
+    # the same as {'b': 2, 'a': 1}
+    encoded = json.dumps(dictionary, sort_keys=True).encode()
+    dhash.update(encoded)
+    return dhash.hexdigest()
 
 
 def get_extra_data(data_json):
@@ -91,3 +105,15 @@ def get_user_profile_value_sector_of_activity(term):
     return get_values_from_vocabulary(
         term, "collective.taxonomy.user_profile_sector_of_activity"
     )
+
+
+def duplicated_values_exist(item_list: List[Dict]):
+    """check if any item in this list has a duplicate"""
+    seen = []
+    for item in item_list:
+        hashed_item = dict_hash(item)
+        if hashed_item in seen:
+            return True
+        seen.append(hashed_item)
+
+    return False
