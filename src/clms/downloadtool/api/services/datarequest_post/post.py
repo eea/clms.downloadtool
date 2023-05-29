@@ -409,6 +409,17 @@ class DataRequestPost(Service):
 
                 general_download_data_object["Datasets"].append(response_json)
 
+        # Check for a maximum of 5 items general download items
+        if len(general_download_data_object.get("Datasets", [])) > 5:
+            self.request.response.setStatus(400)
+            return {
+                "status": "error",
+                "msg": (
+                    "The download queue can only process 5 items at a time."
+                    " Please try again with fewer items."
+                ),
+            }
+
         fme_results = {
             "ok": [],
             "error": [],
