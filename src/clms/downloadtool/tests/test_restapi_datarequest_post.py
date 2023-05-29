@@ -1139,6 +1139,64 @@ class TestDatarequestPost(unittest.TestCase):
         self.assertIn("TaskIds", response.json())
         self.assertTrue(len(response.json()["TaskIds"]), 2)
 
+    def test_download_maximum_5_items(self):
+        """test that the download queue only allows 5 items"""
+        data = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                    "NUTS": "ES",
+                },
+                {
+                    "DatasetID": self.dataset2.UID(),
+                    "DatasetDownloadInformationID": "id-2",
+                    "OutputFormat": "GDB",
+                    "OutputGCS": "EPSG:4326",
+                    "NUTS": "FR",
+                },
+                {
+                    "DatasetID": self.dataset2.UID(),
+                    "DatasetDownloadInformationID": "id-2",
+                    "OutputFormat": "GDB",
+                    "OutputGCS": "EPSG:4326",
+                    "NUTS": "IT",
+                },
+                {
+                    "DatasetID": self.dataset2.UID(),
+                    "DatasetDownloadInformationID": "id-2",
+                    "OutputFormat": "GDB",
+                    "OutputGCS": "EPSG:4326",
+                    "NUTS": "NL",
+                },
+                {
+                    "DatasetID": self.dataset2.UID(),
+                    "DatasetDownloadInformationID": "id-2",
+                    "OutputFormat": "GDB",
+                    "OutputGCS": "EPSG:4326",
+                    "NUTS": "DE",
+                },
+                {
+                    "DatasetID": self.dataset2.UID(),
+                    "DatasetDownloadInformationID": "id-2",
+                    "OutputFormat": "GDB",
+                    "OutputGCS": "EPSG:4326",
+                    "NUTS": "SE",
+                },
+            ]
+        }
+        # Patch FME call to return an OK response
+        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+
+        response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(
+            response.headers.get("Content-Type"), "application/json"
+        )
+
+        self.assertEqual(response.status_code, 400)
+
 
 class TestDatarequestPostTemporalFilter(unittest.TestCase):
     """test temporal filter validator"""
