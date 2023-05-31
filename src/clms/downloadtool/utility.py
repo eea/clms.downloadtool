@@ -159,7 +159,7 @@ class DownloadToolUtility:
         return {}
 
     def datarequest_remove_task(self, task_id):
-        """ Remove all data about the given task"""
+        """Remove all data about the given task"""
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
@@ -172,3 +172,26 @@ class DownloadToolUtility:
         annotations[ANNOTATION_KEY] = registry
 
         return 1
+
+    def datarequest_inspect(self, **query):
+        """inspect the queries according to the query"""
+        site = getSite()
+        annotations = IAnnotations(site)
+        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        data_objects = []
+
+        for key in registry.keys():
+            value = registry.get(key)
+
+            if query:
+                for parameter, value in query.items():
+                    if value.get(parameter, "") == value:
+                        value.update({"TaskId": key})
+                        data_objects.append(value)
+                        continue
+            else:
+                value.update({"TaskId": key})
+
+                data_objects.append(value)
+
+        return data_objects

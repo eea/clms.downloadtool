@@ -2,7 +2,8 @@
     xmlns="http://namespaces.zope.org/zope"
     xmlns:browser="http://namespaces.zope.org/browser"
     xmlns:plone="http://namespaces.plone.org/plone"
-    i18n_domain="clms.downloadtool">
+    i18n_domain="clms.downloadtool"
+    >
 
   <!-- -*- extra stuff goes here -*- -->
 
@@ -17,5 +18,5 @@
   <include package=".projections" />
   <include package=".auxiliary_api" />
   <include package=".timeseries" />
+  <include package=".datarequest_inspect" />
 </configure>
-

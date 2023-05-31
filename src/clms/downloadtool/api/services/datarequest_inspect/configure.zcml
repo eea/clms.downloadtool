@@ -1,0 +1,14 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:plone="http://namespaces.plone.org/plone"
+    >
+
+  <plone:service
+      method="GET"
+      factory=".get.DatarequestInspect"
+      for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+      permission="clms.downloadtool.managedownloadtool"
+      name="@datarequest_inspect"
+      />
+
+</configure>
