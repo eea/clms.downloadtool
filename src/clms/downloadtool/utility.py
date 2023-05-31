@@ -175,23 +175,24 @@ class DownloadToolUtility:
 
     def datarequest_inspect(self, **query):
         """inspect the queries according to the query"""
+
         site = getSite()
         annotations = IAnnotations(site)
         registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
         data_objects = []
 
         for key in registry.keys():
-            value = registry.get(key)
+            db_value = registry.get(key)
 
             if query:
                 for parameter, value in query.items():
-                    if value.get(parameter, "") == value:
-                        value.update({"TaskId": key})
-                        data_objects.append(value)
+                    if db_value.get(parameter, "") == value:
+                        db_value.update({"TaskId": key})
+                        data_objects.append(db_value)
                         continue
             else:
-                value.update({"TaskId": key})
+                db_value.update({"TaskId": key})
 
-                data_objects.append(value)
+                data_objects.append(db_value)
 
         return data_objects

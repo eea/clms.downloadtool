@@ -10,7 +10,7 @@ from plone.restapi.services import Service
 from zope.component import getUtility
 
 
-AVAILABLE_FILTERS = ["status", "user"]
+AVAILABLE_FILTERS = ["Status", "UserID"]
 
 
 class DatarequestInspect(Service):
