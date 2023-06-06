@@ -31,6 +31,8 @@ def parse_wmts_service(url):
             "status_code": sock.status_code,
             "text": sock.text,
             "url": sock.url,
+            "status": "error",
+            "msg": "WTMS service request response is not ok",
         }
     tree = etree.fromstring(sock.content)
     data = {}
