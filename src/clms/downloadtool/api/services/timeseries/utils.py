@@ -26,6 +26,12 @@ def get_metadata_from_service(url):
 def parse_wmts_service(url):
     """Parse a WTMS service"""
     sock = requests.get(url, timeout=10)
+    if not sock.ok:
+        return {
+            "status_code": sock.status_code,
+            "text": sock.text,
+            "url": sock.url,
+        }
     tree = etree.fromstring(sock.content)
     data = {}
 
