@@ -31,6 +31,8 @@ class GetTimeSeriesMetadata(Service):
 
         service = dataset.mapviewer_viewservice
         if service.lower().find("getcapabilities") == -1:
+            if not service.endswith("?"):
+                service += "?"
             service += "REQUEST=GETCAPABILITIES"
 
         return get_metadata_from_service(service)
