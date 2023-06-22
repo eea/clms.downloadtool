@@ -166,6 +166,34 @@ class TestDatarequestPost(unittest.TestCase):
             },
         )
 
+        self.dataset4 = api.content.create(
+            container=self.product,
+            type="DataSet",
+            title="DataSet 4",
+            id="dataset4",
+            mapviewer_istimeseries=True,
+            geonetwork_identifiers={
+                "items": [
+                    {
+                        "@id": "some-id-2",
+                        "type": "VITO",
+                        "id": "some-geonetwork-id-2",
+                    }
+                ]
+            },
+            dataset_download_information={
+                "items": [
+                    {
+                        "@id": "id-2",
+                        "full_format": "GDB",
+                        "full_path": "/this/is/a/path/to/dataset2",
+                        "full_source": "WEKEO",
+                        "wekeo_choices": "choice-2",
+                    }
+                ]
+            },
+        )
+
         transaction.commit()
 
     def tearDown(self):
@@ -1220,6 +1248,32 @@ class TestDatarequestPost(unittest.TestCase):
                 },
             ]
         }
+        # Patch FME call to return an OK response
+        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+
+        response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(
+            response.headers.get("Content-Type"), "application/json"
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_download_timeseries_without_temporal_extent(self):
+        """test downloading a timeseries without temporal extent:
+        should be an error"""
+
+        data = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset4.UID(),
+                    "DatasetDownloadInformationID": "id-1",
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                    "NUTS": "ES",
+                },
+            ]
+        }
+
         # Patch FME call to return an OK response
         DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
 
