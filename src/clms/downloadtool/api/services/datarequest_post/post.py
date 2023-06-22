@@ -359,6 +359,24 @@ class DataRequestPost(Service):
                             ),
                         }
 
+                # check time series restrictions:
+                # if the dataset is a time_series enabled dataset
+                # the temporal filter option is mandatory
+                # pylint: disable=line-too-long
+                if dataset_object.mapviewer_istimeseries and "TemporalFilter" not in dataset_json:  # noqa
+                    self.request.response.setStatus(400)
+                    return {
+                            "status": "error",
+                            "msg": (
+                                "You are requesting to download a time series "
+                                "enabled dataset and you are required to "
+                                "request the download of an specific date "
+                                "range. Please check the download "
+                                "documentation to get more information"
+                            ),
+                        }
+
+
                 # Check full dataset download restrictions
                 # pylint: disable=line-too-long
                 if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json and "TemporalFilter" not in dataset_json):  # noqa
