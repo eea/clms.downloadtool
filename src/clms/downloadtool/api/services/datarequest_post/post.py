@@ -376,7 +376,6 @@ class DataRequestPost(Service):
                             ),
                         }
 
-
                 # Check full dataset download restrictions
                 # pylint: disable=line-too-long
                 if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json and "TemporalFilter" not in dataset_json):  # noqa
