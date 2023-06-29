@@ -69,13 +69,26 @@ class IFMEConfigControlPanel(Interface):
         readonly=False,
     )
 
+    countries_service = schema.TextLine(
+        title=_(
+            "Enter the URL of the Countries REST service",
+        ),
+        description=_(
+            "This service is used to get the names of non-European countries",
+        ),
+        # pylint: disable=line-too-long
+        default="https://land.discomap.eea.europa.eu/arcgis/rest/services/CLMS_Portal/World_countries_except_EU37/MapServer/0/query?f=json&text=&objectIds=&time=&timeRelation=esriTimeRelationOverlaps&geometry=&geometryType=esriGeometryEnvelope&inSR=&spatialRel=esriSpatialRelIntersects&distance=&units=esriSRUnit_Foot&relationParam=&outFields=*&returnGeometry=false&returnTrueCurves=false&maxAllowableOffset=&geometryPrecision=&outSR=&havingClause=&returnIdsOnly=false&returnCountOnly=false&orderByFields=&groupByFieldsForStatistics=&outStatistics=&returnZ=false&returnM=false&gdbVersion=&historicMoment=&returnDistinctValues=false&resultOffset=&resultRecordCount=&returnExtentOnly=false&sqlFormat=none&datumTransformation=&parameterValues=&rangeValues=&quantizationParameters=&featureEncoding=esriDefault&",  # noqa: E501
+        required=True,
+        readonly=False,
+    )
+
 
 class FMEConfigControlPanel(RegistryEditForm):
     """control panel rest API endpoint configuration"""
 
     schema = IFMEConfigControlPanel
     schema_prefix = "clms.downloadtool.fme_config_controlpanel"
-    label = _("FME Config Control Panel")
+    label = _("Download Tool Configuration Control Panel")
 
 
 FMEConfigControlPanelView = layout.wrap_form(
