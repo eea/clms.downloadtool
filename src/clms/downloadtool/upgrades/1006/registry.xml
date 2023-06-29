@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<registry
+    xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+    i18n:domain="clms.downloadtool">
+
+<!-- -*- extra stuff goes here -*- -->
+
+  <records interface="clms.downloadtool.controlpanels.fme_config_controlpanel.controlpanel.IFMEConfigControlPanel"
+           prefix="clms.downloadtool.fme_config_controlpanel">
+
+  <value key="countries_service" purge="false">https://land.discomap.eea.europa.eu/</value>
+
+  </records>
+
+
+</registry>
