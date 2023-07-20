@@ -25,10 +25,10 @@ from datetime import datetime
 from logging import getLogger
 
 from clms.downloadtool.utils import ANNOTATION_KEY, STATUS_LIST
-from persistent.mapping import PersistentMapping
 from zope.annotation.interfaces import IAnnotations
 from zope.component.hooks import getSite
 from zope.interface import Interface, implementer
+from BTrees.OOBTree import OOBTree
 
 log = getLogger(__name__)
 
@@ -48,7 +48,7 @@ class DownloadToolUtility:
         task_id = random.randint(0, 99999999999)
         str_task_id = str(task_id)
 
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        registry = annotations.get(ANNOTATION_KEY, OOBTree())
 
         while str_task_id in registry:
             task_id = random.randint(0, 99999999999)
@@ -63,7 +63,7 @@ class DownloadToolUtility:
         """cancel the download request"""
         site = getSite()
         annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        registry = annotations.get(ANNOTATION_KEY, OOBTree())
 
         data_object = None
 
@@ -86,7 +86,7 @@ class DownloadToolUtility:
         """search for download requests"""
         site = getSite()
         annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        registry = annotations.get(ANNOTATION_KEY, OOBTree())
         data_object = {}
 
         if not user_id:
@@ -115,7 +115,7 @@ class DownloadToolUtility:
         """get a given download task's information"""
         site = getSite()
         annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        registry = annotations.get(ANNOTATION_KEY, OOBTree())
         if task_id not in registry:
             return "Error, task not found"
         return registry.get(task_id)
@@ -124,7 +124,7 @@ class DownloadToolUtility:
         """modify a given download task's information"""
         site = getSite()
         annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        registry = annotations.get(ANNOTATION_KEY, OOBTree())
 
         if task_id not in registry:
             return "Error, task_id not registered"
@@ -155,14 +155,14 @@ class DownloadToolUtility:
         if annotations.get(ANNOTATION_KEY, None) is None:
             return {"status": "Error", "msg": "Registry is empty"}
 
-        annotations[ANNOTATION_KEY] = PersistentMapping()
+        annotations[ANNOTATION_KEY] = OOBTree()
         return {}
 
     def datarequest_remove_task(self, task_id):
         """Remove all data about the given task"""
         site = getSite()
         annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        registry = annotations.get(ANNOTATION_KEY, OOBTree())
 
         if task_id not in registry:
             return "Error, TaskID not registered"
@@ -178,7 +178,7 @@ class DownloadToolUtility:
 
         site = getSite()
         annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, PersistentMapping())
+        registry = annotations.get(ANNOTATION_KEY, OOBTree())
         data_objects = []
 
         for key in registry.keys():
