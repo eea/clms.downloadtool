@@ -1,8 +1,10 @@
 Changelog
 =========
 
-5.9-dev0 - (unreleased)
+5.9 - (2023-07-20)
 ---------------------------
+* Change: Use OOBTrees instead of PersistentMapping
+  [erral]
 
 5.8 - (2023-06-29)
 ---------------------------
