@@ -32,13 +32,13 @@ class GetDownloadFileUrls(Service):
                 "message": "Dataset does not exist",
             }
 
-        dataset_collection = self.request.get("dataset_collection")
-        if dataset_collection is None:
+        download_information_id = self.request.get("download_information_id")
+        if download_information_id is None:
             self.request.response.setStatus(400)
             return {
                 "status": "error",
                 "message": (
-                    "Required parameters are missing: dataset_collection"
+                    "Required parameters are missing: download_information_id"
                     " is mandatory"
                 ),
             }
@@ -46,16 +46,16 @@ class GetDownloadFileUrls(Service):
         download_information = dataset.dataset_download_information.get(
             "items", []
         )
-        collection = [item.get("collection") for item in download_information]
-        if dataset_collection not in collection:
+        ids = [item.get("@id") for item in download_information]
+        if download_information_id not in ids:
             self.request.response.setStatus(400)
             return {
                 "status": "error",
                 "message": "Dataset collection does not exist",
             }
 
-        dataset_download_info = self.get_dataset_download_information(
-            download_information, dataset_collection
+        dataset_download_info = get_dataset_download_information(
+            download_information, download_information_id
         )
 
         if dataset_download_info.get("full_source") == "WEKEO":
@@ -128,13 +128,14 @@ class GetDownloadFileUrls(Service):
 
         return {}
 
-    def get_dataset_download_information(
-        self, download_information, dataset_collection
-    ):
-        """get the download information related to the given
-        dataset_collection"""
-        for item in download_information:
-            if item.get("collection") == dataset_collection:
-                return item
 
-        return {}
+def get_dataset_download_information(
+    download_information, download_information_id
+):
+    """get the download information related to the given
+    download_information_id"""
+    for item in download_information:
+        if item.get("@id") == download_information_id:
+            return item
+
+    return {}
