@@ -1284,6 +1284,77 @@ class TestDatarequestPost(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
 
+    def test_no_outputgcs(self):
+        """test not sending the outputGCS parameter"""
+        data = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset4.UID(),
+                    "DatasetDownloadInformationID": "id-1",
+                    "OutputFormat": "Netcdf",
+                    "NUTS": "ES",
+                },
+            ]
+        }
+
+        # Patch FME call to return an OK response
+        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+
+        response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(
+            response.headers.get("Content-Type"), "application/json"
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_invalid_outputgcs(self):
+        """test outputGCS being invalid"""
+        data = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset4.UID(),
+                    "DatasetDownloadInformationID": "id-1",
+                    "OutputFormat": "Netcdf",
+                    "NUTS": "ES",
+                    "OutputGCS": "some-invalid-GCS",
+                },
+            ]
+        }
+
+        # Patch FME call to return an OK response
+        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+
+        response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(
+            response.headers.get("Content-Type"), "application/json"
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_empty_outputgcs(self):
+        """test outputgcs parameter being empty"""
+        data = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset4.UID(),
+                    "DatasetDownloadInformationID": "id-1",
+                    "OutputFormat": "Netcdf",
+                    "NUTS": "ES",
+                    "OutputGCS": "",
+                },
+            ]
+        }
+
+        # Patch FME call to return an OK response
+        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+
+        response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(
+            response.headers.get("Content-Type"), "application/json"
+        )
+
+        self.assertEqual(response.status_code, 400)
+
 
 class TestDatarequestPostTemporalFilter(unittest.TestCase):
     """test temporal filter validator"""

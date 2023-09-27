@@ -266,6 +266,13 @@ class DataRequestPost(Service):
                         {"OutputGCS": dataset_json["OutputGCS"]}
                     )
 
+                else:
+                    self.request.response.setStatus(400)
+                    return {
+                        "status": "error",
+                        "msg": "The OutputGCS parameter is mandatory.",
+                    }
+
                 if "DatasetDownloadInformationID" not in dataset_json:
                     self.request.response.setStatus(400)
                     return {
