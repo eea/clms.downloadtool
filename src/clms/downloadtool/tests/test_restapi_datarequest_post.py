@@ -1285,7 +1285,7 @@ class TestDatarequestPost(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_no_outputgcs(self):
-        """test outputGCS parameter"""
+        """test not sending the outputGCS parameter"""
         data = {
             "Datasets": [
                 {
@@ -1332,6 +1332,7 @@ class TestDatarequestPost(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_empty_outputgcs(self):
+        """test outputgcs parameter being empty"""
         data = {
             "Datasets": [
                 {
