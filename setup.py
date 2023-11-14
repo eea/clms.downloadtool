@@ -61,6 +61,7 @@ setup(
         "clms.types",
         "clms.statstool",
         "eea.cache",
+        "PyProj",
     ],
     extras_require={
         "test": [
