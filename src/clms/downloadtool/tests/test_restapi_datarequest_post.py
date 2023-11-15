@@ -1391,7 +1391,8 @@ class TestDatarequestPost(unittest.TestCase):
                     "DatasetSource": "EEA",
                     "DatasetTitle": "DataSet 1",
                     "Metadata": [
-                        "https://sdi.eea.europa.eu/catalogue/copernicus/api/records/some-geonetwork-id/formatters/xml?approved=true"
+                        # pylint: disable=line-too-long
+                        "https://sdi.eea.europa.eu/catalogue/copernicus/api/records/some-geonetwork-id/formatters/xml?approved=true"  # noqa
                     ],
                     "NUTSID": "ES",
                     "NUTSName": "España",
@@ -1406,7 +1407,8 @@ class TestDatarequestPost(unittest.TestCase):
                     "DatasetSource": "EEA",
                     "DatasetTitle": "DataSet 1",
                     "Metadata": [
-                        "https://sdi.eea.europa.eu/catalogue/copernicus/api/records/some-geonetwork-id/formatters/xml?approved=true"
+                        # pylint: disable=line-too-long
+                        "https://sdi.eea.europa.eu/catalogue/copernicus/api/records/some-geonetwork-id/formatters/xml?approved=true"  # noqa
                     ],
                     "NUTSID": "ES",
                     "NUTSName": "España",
