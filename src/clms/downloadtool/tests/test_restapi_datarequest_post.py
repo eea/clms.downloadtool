@@ -24,6 +24,7 @@ from clms.downloadtool.testing import (
     CLMS_DOWNLOADTOOL_INTEGRATION_TESTING,
     CLMS_DOWNLOADTOOL_RESTAPI_TESTING,
 )
+from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import DATASET_FORMATS, GCS
 from plone import api
 from plone.app.testing import (
@@ -33,6 +34,7 @@ from plone.app.testing import (
     setRoles,
 )
 from plone.restapi.testing import RelativeSession
+from zope.component import getUtility
 
 FME_TASK_ID = 123456
 
@@ -1372,6 +1374,114 @@ class TestDatarequestPost(unittest.TestCase):
         DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
 
         response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(
+            response.headers.get("Content-Type"), "application/json"
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_download_duplicated(self):
+        """try to download the same item twice"""
+        data = {
+            "Datasets": [
+                {
+                    "DatasetFormat": "Netcdf",
+                    "DatasetID": "64d1bd55caa0461da8e7a124b9382d70",
+                    "DatasetPath": "L3RoaXMvaXMvYS9wYXRoL3RvL2RhdGFzZXQx",
+                    "DatasetSource": "EEA",
+                    "DatasetTitle": "DataSet 1",
+                    "Metadata": [
+                        "https://sdi.eea.europa.eu/catalogue/copernicus/api/records/some-geonetwork-id/formatters/xml?approved=true"
+                    ],
+                    "NUTSID": "ES",
+                    "NUTSName": "España",
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                    "WekeoChoices": "choice-1",
+                },
+                {
+                    "DatasetFormat": "Netcdf",
+                    "DatasetID": "64d1bd55caa0461da8e7a124b9382d70",
+                    "DatasetPath": "L3RoaXMvaXMvYS9wYXRoL3RvL2RhdGFzZXQx",
+                    "DatasetSource": "EEA",
+                    "DatasetTitle": "DataSet 1",
+                    "Metadata": [
+                        "https://sdi.eea.europa.eu/catalogue/copernicus/api/records/some-geonetwork-id/formatters/xml?approved=true"
+                    ],
+                    "NUTSID": "ES",
+                    "NUTSName": "España",
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                    "WekeoChoices": "choice-1",
+                },
+            ]
+        }
+        # Patch FME call to return an OK response
+        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+
+        response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(
+            response.headers.get("Content-Type"), "application/json"
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_download_duplicated_items_already_queued(self):
+        """try to download the same item twice"""
+
+        utility = getUtility(IDownloadToolUtility)
+        data_queued = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                    "NUTS": "ES",
+                }
+            ],
+            "UserID": SITE_OWNER_NAME,
+            "Status": "Queued",
+        }
+        data_pending = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                    "NUTS": "ES",
+                }
+            ],
+            "UserID": SITE_OWNER_NAME,
+            "Status": "In_progress",
+        }
+
+        # register the request directly in the utility
+        # to mark that it exists
+        utility.datarequest_post(data_queued)
+        utility.datarequest_post(data_pending)
+
+        transaction.commit()
+
+        data_to_download = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                    "NUTS": "ES",
+                }
+            ],
+        }
+
+        # Patch FME call to return an OK response
+        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+
+        response = self.api_session.post(
+            "@datarequest_post", json=data_to_download
+        )
         self.assertEqual(
             response.headers.get("Content-Type"), "application/json"
         )
