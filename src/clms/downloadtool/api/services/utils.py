@@ -5,6 +5,7 @@ import hashlib
 import json
 from typing import Any, Dict, List
 
+import pyproj
 from plone import api
 from zope.component import getUtility
 from zope.globalrequest import getRequest
@@ -117,3 +118,28 @@ def duplicated_values_exist(item_list: List[Dict]):
         seen.append(hashed_item)
 
     return False
+
+
+def convert_to_epsg_3587(x: int, y: int) -> tuple:
+    """converted latitude and longited to X, Y in EPSG:3587"""
+    projection = pyproj.Proj(3587)
+    return projection(x, y)
+
+
+def calculate_bounding_box_area(bounding_box) -> int:
+    """calculate the area of a given bounding box"""
+    if len(bounding_box) == 4:
+        width_1, height_1, width_2, height_2 = bounding_box
+        converted_width_1, converted_height_1 = convert_to_epsg_3587(
+            int(width_1), int(height_1)
+        )
+        converted_width_2, converted_height_2 = convert_to_epsg_3587(
+            int(width_2), int(height_2)
+        )
+
+        return abs(
+            # pylint: disable=line-too-long
+            (converted_width_1 - converted_width_2) * (converted_height_1 - converted_height_2)  # noqa
+        )
+
+    return 0

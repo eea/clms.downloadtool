@@ -741,6 +741,29 @@ class TestDatarequestPost(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("status", response.json())
 
+    def test_too_big_bbox(self):
+        """test that too big bounding box creates an error"""
+        bbox = [51.463116, 11.145046, 33.15542, -16.542289]
+        data = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset1.UID(),
+                    "DatasetDownloadInformationID": "id-1",
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                    "BoundingBox": bbox,
+                },
+            ]
+        }
+
+        response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(
+            response.headers.get("Content-Type"), "application/json"
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("status", response.json())
+
     def test_bbox_and_nuts_are_mutually_exclusive(self):
         """test request with a bbox and a NUTS code"""
         valid_bbox = [1, 43, 2, 44]

@@ -17,6 +17,7 @@ from clms.downloadtool.api.services.utils import (
 )
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import COUNTRIES, FORMAT_CONVERSION_TABLE, GCS
+from clms.downloadtool.api.services.utils import calculate_bounding_box_area
 from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
 from plone.memoize.ram import cache
@@ -194,6 +195,21 @@ class DataRequestPost(Service):
                             "msg": "Error, BoundingBox is not valid",
                         }
 
+                    requested_area = calculate_bounding_box_area(
+                        dataset_json["BoundingBox"]
+                    )
+                    if (
+                        # pylint: disable=line-too-long
+                        requested_area > dataset_object.download_limit_area_extent  # noqa
+                    ):
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": "Error, the requested BoundingBox is too "
+                            "big. The limit is "
+                            # pylint: disable=line-too-long
+                            f"{dataset_object.download_limit_area_extent}.",  # noqa
+                        }
                     response_json.update(
                         {"BoundingBox": dataset_json["BoundingBox"]}
                     )
@@ -370,18 +386,18 @@ class DataRequestPost(Service):
                 # if the dataset is a time_series enabled dataset
                 # the temporal filter option is mandatory
                 # pylint: disable=line-too-long
-                if dataset_object.mapviewer_istimeseries and "TemporalFilter" not in dataset_json:  # noqa
+                if (dataset_object.mapviewer_istimeseries and "TemporalFilter" not in dataset_json):  # noqa
                     self.request.response.setStatus(400)
                     return {
-                            "status": "error",
-                            "msg": (
-                                "You are requesting to download a time series "
-                                "enabled dataset and you are required to "
-                                "request the download of an specific date "
-                                "range. Please check the download "
-                                "documentation to get more information"
-                            ),
-                        }
+                        "status": "error",
+                        "msg": (
+                            "You are requesting to download a time series "
+                            "enabled dataset and you are required to "
+                            "request the download of an specific date "
+                            "range. Please check the download "
+                            "documentation to get more information"
+                        ),
+                    }
 
                 # Check full dataset download restrictions
                 # pylint: disable=line-too-long
