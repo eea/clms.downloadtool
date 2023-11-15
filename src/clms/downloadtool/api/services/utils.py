@@ -128,7 +128,6 @@ def convert_to_epsg_3587(x: int, y: int) -> tuple:
 
 def calculate_bounding_box_area(bounding_box) -> int:
     """calculate the area of a given bounding box"""
-
     if len(bounding_box) == 4:
         width_1, height_1, width_2, height_2 = bounding_box
         converted_width_1, converted_height_1 = convert_to_epsg_3587(
@@ -138,7 +137,7 @@ def calculate_bounding_box_area(bounding_box) -> int:
             int(width_2), int(height_2)
         )
 
-        return int(
+        return abs(
             (converted_width_1 - converted_width_2)
             * (converted_height_1 - converted_height_2)
         )
