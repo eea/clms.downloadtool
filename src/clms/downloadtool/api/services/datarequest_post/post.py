@@ -8,6 +8,7 @@ import base64
 import json
 import re
 from datetime import datetime
+from functools import reduce
 from logging import getLogger
 
 import requests
@@ -470,7 +471,6 @@ class DataRequestPost(Service):
         queued_requests = utility.datarequest_search(
             user_id, "Queued"
         ).values()
-        from functools import reduce
 
         inprogress_datasets = reduce(
             lambda x, y: x + y,
@@ -484,9 +484,8 @@ class DataRequestPost(Service):
         )
         # Check that the request has no duplicates
         if duplicated_values_exist(
-            general_download_data_object.get("Datasets", [])
-            + inprogress_datasets
-            + queued_datasets
+            # pylint: disable=line-too-long
+            general_download_data_object.get("Datasets", []) + inprogress_datasets + queued_datasets # noqa
         ):
             self.request.response.setStatus(400)
             return {
