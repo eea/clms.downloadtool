@@ -685,8 +685,8 @@ def save_stats(stats_json):
         stats_json.update(get_extra_data(stats_json))
         utility.register_item(stats_json)
     except Exception as e:
-        # pylint: disable=line-too-long
         log.exception(e)
+        # pylint: disable=line-too-long
         log.info(
             "There was an error saving the stats: %s", json.dumps(stats_json)
         )  # noqa
