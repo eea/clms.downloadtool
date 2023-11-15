@@ -200,8 +200,7 @@ class DataRequestPost(Service):
                     )
                     if (
                         # pylint: disable=line-too-long
-                        requested_area
-                        > dataset_object.download_limit_area_extent  # noqa
+                        requested_area > dataset_object.download_limit_area_extent  # noqa
                     ):
                         self.request.response.setStatus(400)
                         return {
@@ -387,10 +386,7 @@ class DataRequestPost(Service):
                 # if the dataset is a time_series enabled dataset
                 # the temporal filter option is mandatory
                 # pylint: disable=line-too-long
-                if (
-                    dataset_object.mapviewer_istimeseries
-                    and "TemporalFilter" not in dataset_json
-                ):  # noqa
+                if (dataset_object.mapviewer_istimeseries and "TemporalFilter" not in dataset_json):  # noqa
                     self.request.response.setStatus(400)
                     return {
                         "status": "error",
@@ -405,21 +401,13 @@ class DataRequestPost(Service):
 
                 # Check full dataset download restrictions
                 # pylint: disable=line-too-long
-                if (
-                    "NUTS" not in dataset_json
-                    and "BoundingBox" not in dataset_json
-                    and "TemporalFilter" not in dataset_json
-                ):  # noqa
+                if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json and "TemporalFilter" not in dataset_json):  # noqa
                     # We are requesting a full dataset download
                     # We need to check if this dataset is a EEA dataset
                     # if so, we continue with the download, otherwiser
                     # we point the end-user to the specific endpoint
                     # pylint: disable=line-too-long
-                    if (
-                        full_dataset_source
-                        and full_dataset_source != "EEA"
-                        or not full_dataset_source
-                    ):  # noqa
+                    if (full_dataset_source and full_dataset_source != "EEA" or not full_dataset_source):  # noqa
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",

@@ -139,8 +139,7 @@ def calculate_bounding_box_area(bounding_box) -> int:
 
         return abs(
             # pylint: disable=line-too-long
-            (converted_width_1 - converted_width_2)
-            * (converted_height_1 - converted_height_2)  # noqa
+            (converted_width_1 - converted_width_2) * (converted_height_1 - converted_height_2)  # noqa
         )
 
     return 0
