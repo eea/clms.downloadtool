@@ -485,7 +485,7 @@ class DataRequestPost(Service):
         # Check that the request has no duplicates
         if duplicated_values_exist(
             # pylint: disable=line-too-long
-            general_download_data_object.get("Datasets", []) + inprogress_datasets + queued_datasets # noqa
+            general_download_data_object.get("Datasets", []) + inprogress_datasets + queued_datasets  # noqa
         ):
             self.request.response.setStatus(400)
             return {
