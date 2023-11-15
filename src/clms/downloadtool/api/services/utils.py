@@ -3,9 +3,9 @@
 
 import hashlib
 import json
-import pyproj
 from typing import Any, Dict, List
 
+import pyproj
 from plone import api
 from zope.component import getUtility
 from zope.globalrequest import getRequest
