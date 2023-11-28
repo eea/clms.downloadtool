@@ -1444,6 +1444,36 @@ class TestDatarequestPost(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
 
+    def test_download_timeseries_larger_temporal_extent_than_allowed(self):
+        """test downloading a timeseries with a larger temporal extent
+        than allowed"""
+
+        data = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset4.UID(),
+                    "DatasetDownloadInformationID": "id-1",
+                    "OutputFormat": "GDB",
+                    "OutputGCS": "EPSG:4326",
+                    "NUTS": "ES",
+                    "TemporalFilter": {
+                        "StartDate": 1546333200000,
+                        "EndDate": 1547974800000,
+                    },
+                },
+            ]
+        }
+
+        # Patch FME call to return an OK response
+        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+
+        response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(
+            response.headers.get("Content-Type"), "application/json"
+        )
+
+        self.assertEqual(response.status_code, 400)
+
 
 class TestDatarequestPostTemporalFilter(unittest.TestCase):
     """test temporal filter validator"""
