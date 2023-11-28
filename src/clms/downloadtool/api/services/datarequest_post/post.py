@@ -233,7 +233,7 @@ class DataRequestPost(Service):
                         return {
                             "status": "error",
                             "msg": "Error, TemporalFilter has too many "
-                                    "fields",
+                                   "fields",
                         }
 
                     if "StartDate" not in dataset_json["TemporalFilter"]:
@@ -433,8 +433,8 @@ class DataRequestPost(Service):
                             "status": "error",
                             "msg": (
                                 "You are requesting to download a time series "
-                                "enabled dataset and the requested date range is "
-                                "bigger than the allowed one"
+                                "enabled dataset and the requested date range "
+                                "is bigger than the allowed one"
                                 "Please check the download "
                                 "documentation to get more information"
                             ),
