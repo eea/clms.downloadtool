@@ -381,25 +381,15 @@ class TestDatarequestPost(unittest.TestCase):
         data = {
             "Datasets": [
                 {
-                    "DatasetID": self.dataset1.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
-                    "OutputGCS": "EPSG:4326",
-                    "TemporalFilter": {
-                        "StartDate": 1546333200000,
-                        "EndDate": 1559289600000,
-                    },
-                },
-                {
-                    "DatasetID": self.dataset2.UID(),
+                    "DatasetID": self.dataset4.UID(),
                     "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "TemporalFilter": {
                         "StartDate": 1546333200000,
-                        "EndDate": 1559289600000,
+                        "EndDate": 1547974800000,
                     },
-                },
+                }
             ]
         }
         # Patch FME call to return an OK response
@@ -420,27 +410,16 @@ class TestDatarequestPost(unittest.TestCase):
         data = {
             "Datasets": [
                 {
-                    "DatasetID": self.dataset1.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
+                    "DatasetID": self.dataset4.UID(),
+                    "DatasetDownloadInformationID": "id-2",
+                    "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "NUTS": "ITC11",
                     "TemporalFilter": {
                         "StartDate": 1546333200000,
-                        "EndDate": 1559289600000,
+                        "EndDate": 1547974800000,
                     },
-                },
-                {
-                    "DatasetID": self.dataset2.UID(),
-                    "DatasetDownloadInformationID": "id-2",
-                    "OutputFormat": "GDB",
-                    "OutputGCS": "EPSG:4326",
-                    "NUTS": "BE",
-                    "TemporalFilter": {
-                        "StartDate": 1546333200000,
-                        "EndDate": 1559289600000,
-                    },
-                },
+                }
             ]
         }
         # Patch FME call to return an OK response
@@ -461,29 +440,13 @@ class TestDatarequestPost(unittest.TestCase):
         data = {
             "Datasets": [
                 {
-                    "DatasetID": self.dataset1.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
-                    "OutputGCS": "EPSG:4326",
-                    "TemporalFilter": {
-                        "StartDate": 1546333200000,
-                        "EndDate": 1559289600000,
-                    },
-                    "BoundingBox": [
-                        2.354736328128108,
-                        46.852958688910306,
-                        4.639892578127501,
-                        45.88264619696234,
-                    ],
-                },
-                {
-                    "DatasetID": self.dataset2.UID(),
+                    "DatasetID": self.dataset4.UID(),
                     "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "TemporalFilter": {
                         "StartDate": 1546333200000,
-                        "EndDate": 1559289600000,
+                        "EndDate": 1547974800000,
                     },
                     "BoundingBox": [
                         2.354736328128108,
@@ -512,9 +475,9 @@ class TestDatarequestPost(unittest.TestCase):
         data = {
             "Datasets": [
                 {
-                    "DatasetID": self.dataset1.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
+                    "DatasetID": self.dataset4.UID(),
+                    "DatasetDownloadInformationID": "id-2",
+                    "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": [
                         2.354736328128108,
@@ -524,18 +487,18 @@ class TestDatarequestPost(unittest.TestCase):
                     ],
                     "TemporalFilter": {
                         "StartDate": 1546333200000,
-                        "EndDate": 1559289600000,
+                        "EndDate": 1547974800000,
                     },
                 },
                 {
-                    "DatasetID": self.dataset2.UID(),
+                    "DatasetID": self.dataset4.UID(),
                     "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "NUTS": "BE",
                     "TemporalFilter": {
                         "StartDate": 1546333200000,
-                        "EndDate": 1559289600000,
+                        "EndDate": 1547974800000,
                     },
                 },
                 {
@@ -564,9 +527,9 @@ class TestDatarequestPost(unittest.TestCase):
         data = {
             "Datasets": [
                 {
-                    "DatasetID": self.dataset1.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
+                    "DatasetID": self.dataset4.UID(),
+                    "DatasetDownloadInformationID": "id-2",
+                    "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": [
                         2.354736328128108,
@@ -576,18 +539,7 @@ class TestDatarequestPost(unittest.TestCase):
                     ],
                     "TemporalFilter": {
                         "StartDate": 1546333200000,
-                        "EndDate": 1559289600000,
-                    },
-                },
-                {
-                    "DatasetID": self.dataset2.UID(),
-                    "DatasetDownloadInformationID": "id-2",
-                    "OutputFormat": "GDB",
-                    "OutputGCS": "EPSG:4326",
-                    "NUTS": "BE",
-                    "TemporalFilter": {
-                        "StartDate": 1546333200000,
-                        "EndDate": 1559289600000,
+                        "EndDate": 1547974800000,
                     },
                 },
                 {
@@ -1145,14 +1097,16 @@ class TestDatarequestPost(unittest.TestCase):
 
     def test_download_general_and_prepackaged_file_id(self):
         """in a single query users can request a generic download
-        and also a download of a prepackaged file"""
+        and also a download of a prepackaged file.
+        In such a case two FME tasks will be created
+        """
 
         data = {
             "Datasets": [
                 {
-                    "DatasetID": self.dataset1.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
+                    "DatasetID": self.dataset4.UID(),
+                    "DatasetDownloadInformationID": "id-2",
+                    "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": [
                         2.354736328128108,
@@ -1162,7 +1116,7 @@ class TestDatarequestPost(unittest.TestCase):
                     ],
                     "TemporalFilter": {
                         "StartDate": 1546333200000,
-                        "EndDate": 1559289600000,
+                        "EndDate": 1547974800000,
                     },
                 },
                 {

@@ -8,6 +8,7 @@ import base64
 import json
 import re
 from datetime import datetime
+from datetime import timedelta
 from functools import reduce
 from logging import getLogger
 
@@ -27,6 +28,9 @@ from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
 from zope.component import getUtility
 from zope.interface import alsoProvides
+
+
+ISO8601_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 def _cache_key(fun, self, nutsid):
@@ -201,7 +205,8 @@ class DataRequestPost(Service):
                     )
                     if (
                         # pylint: disable=line-too-long
-                        requested_area > dataset_object.download_limit_area_extent  # noqa
+                        requested_area
+                        > dataset_object.download_limit_area_extent  # noqa
                     ):
                         self.request.response.setStatus(400)
                         return {
@@ -216,6 +221,13 @@ class DataRequestPost(Service):
                     )
 
                 if "TemporalFilter" in dataset_json:
+                    if not dataset_object.mapviewer_istimeseries:
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": "Error, temporal restriction is not allowed in not time-series enabled datasets",
+                        }
+
                     if len(dataset_json["TemporalFilter"].keys()) > 2:
                         self.request.response.setStatus(400)
                         return {
@@ -387,7 +399,10 @@ class DataRequestPost(Service):
                 # if the dataset is a time_series enabled dataset
                 # the temporal filter option is mandatory
                 # pylint: disable=line-too-long
-                if (dataset_object.mapviewer_istimeseries and "TemporalFilter" not in dataset_json):  # noqa
+                if (
+                    dataset_object.mapviewer_istimeseries
+                    and "TemporalFilter" not in dataset_json
+                ):  # noqa
                     self.request.response.setStatus(400)
                     return {
                         "status": "error",
@@ -400,15 +415,49 @@ class DataRequestPost(Service):
                         ),
                     }
 
+                # Check time series restrictions:
+                # if the dataset is a time-series enabled dataset
+                # the requested range should not be bigger than
+                # the limit set in the configuration
+                if dataset_object.mapviewer_istimeseries:
+                    end_date_datetime = datetime.strptime(
+                        end_date, ISO8601_DATETIME_FORMAT
+                    )
+                    start_date_datetime = datetime.strptime(
+                        start_date, ISO8601_DATETIME_FORMAT
+                    )
+                    if (end_date_datetime - start_date_datetime) > timedelta(
+                        days=dataset_object.download_limit_temporal_extent
+                    ):
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": (
+                                "You are requesting to download a time series "
+                                "enabled dataset and the requested date range is "
+                                "bigger than the allowed one"
+                                "Please check the download "
+                                "documentation to get more information"
+                            ),
+                        }
+
                 # Check full dataset download restrictions
                 # pylint: disable=line-too-long
-                if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json and "TemporalFilter" not in dataset_json):  # noqa
+                if (
+                    "NUTS" not in dataset_json
+                    and "BoundingBox" not in dataset_json
+                    and "TemporalFilter" not in dataset_json
+                ):  # noqa
                     # We are requesting a full dataset download
                     # We need to check if this dataset is a EEA dataset
                     # if so, we continue with the download, otherwiser
                     # we point the end-user to the specific endpoint
                     # pylint: disable=line-too-long
-                    if (full_dataset_source and full_dataset_source != "EEA" or not full_dataset_source):  # noqa
+                    if (
+                        full_dataset_source
+                        and full_dataset_source != "EEA"
+                        or not full_dataset_source
+                    ):  # noqa
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
@@ -485,7 +534,9 @@ class DataRequestPost(Service):
         # Check that the request has no duplicates
         if duplicated_values_exist(
             # pylint: disable=line-too-long
-            general_download_data_object.get("Datasets", []) + inprogress_datasets + queued_datasets  # noqa
+            general_download_data_object.get("Datasets", [])
+            + inprogress_datasets
+            + queued_datasets  # noqa
         ):
             self.request.response.setStatus(400)
             return {
@@ -649,8 +700,8 @@ def extract_dates_from_temporal_filter(temporal_filter):
         end_date_obj = datetime.fromtimestamp(end_date / 1000)
 
         return (
-            start_date_obj.strftime("%Y-%m-%d %H:%M:%S"),
-            end_date_obj.strftime("%Y-%m-%d %H:%M:%S"),
+            start_date_obj.strftime(ISO8601_DATETIME_FORMAT),
+            end_date_obj.strftime(ISO8601_DATETIME_FORMAT),
         )
     except (TypeError, ValueError):
         return None, None
