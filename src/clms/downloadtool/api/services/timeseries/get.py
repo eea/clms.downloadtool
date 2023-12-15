@@ -35,4 +35,12 @@ class GetTimeSeriesMetadata(Service):
                 service += "?"
             service += "REQUEST=GETCAPABILITIES"
 
-        return get_metadata_from_service(service)
+        value = get_metadata_from_service(service)
+        if isinstance(value, dict):
+            value.update(
+                {
+                    # pylint: disable=line-too-long
+                    "download_limit_temporal_extent": dataset.download_limit_temporal_extent  # noqa
+                }
+            )
+        return value
