@@ -37,7 +37,10 @@ class GetTimeSeriesMetadata(Service):
 
         value = get_metadata_from_service(service)
         if isinstance(value, dict):
-            value.update({
-            "download_limit_temporal_extent": dataset.download_limit_temporal_extent
-            })
+            value.update(
+                {
+                    # pylint: disable=line-too-long
+                    "download_limit_temporal_extent": dataset.download_limit_temporal_extent  # noqa
+                }
+            )
         return value
