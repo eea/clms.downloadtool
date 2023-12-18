@@ -2,9 +2,7 @@
 tests of the @datarequest_inspect endpoint
 """
 # -*- coding: utf-8 -*-
-import base64
 import unittest
-from datetime import datetime
 
 import transaction
 
