@@ -23,6 +23,7 @@ from clms.downloadtool.api.services.utils import calculate_bounding_box_area
 from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
 from plone.memoize.ram import cache
+from plone.memoize.view import memoize
 from plone.protect.interfaces import IDisableCSRFProtection
 from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
@@ -61,6 +62,13 @@ def base64_encode_path(path):
 
 class DataRequestPost(Service):
     """Set Data"""
+
+    @memoize
+    def max_area_extent(self):
+        """return the max area allowed to be downloaded"""
+        return api.portal.get_registry_record(
+            "clms.types.download_limits.area_extent", default=1600000000000
+        )
 
     def get_dataset_by_uid(self, uid):
         """get the dataset by UID"""
@@ -203,16 +211,13 @@ class DataRequestPost(Service):
                     requested_area = calculate_bounding_box_area(
                         dataset_json["BoundingBox"]
                     )
-                    if (
-                        # pylint: disable=line-too-long
-                        requested_area > dataset_object.download_limit_area_extent  # noqa
-                    ):
+                    if requested_area > self.max_area_extent():
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
                             "msg": "Error, the requested BoundingBox is too "
                             "big. The limit is "
-                            f"{dataset_object.download_limit_area_extent}.",
+                            f"{self.max_area_extent()}.",
                         }
                     response_json.update(
                         {"BoundingBox": dataset_json["BoundingBox"]}
