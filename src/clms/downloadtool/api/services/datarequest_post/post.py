@@ -18,7 +18,7 @@ from clms.downloadtool.api.services.utils import (
     duplicated_values_exist,
 )
 from clms.downloadtool.utility import IDownloadToolUtility
-from clms.downloadtool.utils import COUNTRIES, FORMAT_CONVERSION_TABLE, GCS
+from clms.downloadtool.utils import COUNTRIES, FORMAT_CONVERSION_TABLE
 from clms.downloadtool.api.services.utils import (
     calculate_bounding_box_area,
     get_available_gcs_values,

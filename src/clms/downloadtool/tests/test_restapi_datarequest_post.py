@@ -25,7 +25,7 @@ from clms.downloadtool.testing import (
     CLMS_DOWNLOADTOOL_RESTAPI_TESTING,
 )
 from clms.downloadtool.utility import IDownloadToolUtility
-from clms.downloadtool.utils import DATASET_FORMATS
+from clms.downloadtool.utils import DATASET_FORMATS, GCS
 from plone import api
 from plone.app.testing import (
     SITE_OWNER_NAME,
