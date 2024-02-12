@@ -154,6 +154,7 @@ def clean(item):
 
     return new_item
 
+
 def get_available_gcs_values(dataset_uid):
     """ given a dataset uid, compute the list of selectable
         GCSs.
