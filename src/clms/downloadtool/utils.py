@@ -255,11 +255,13 @@ COUNTRIES = {
     "UK": "GBR",
 }
 
-GCS = [
-    "EPSG:4326",
-    "EPSG:3035",
-    "EPSG:3857",
-    "EPSG:4258",
+
+GCS = ["EPSG:4326", "EPSG:3035", "EPSG:3857", "EPSG:4258"]
+
+OTHER_AVAILABLE_GCS = [
+    "EPSG:2740",
+    "EPSG:32620",
+    "EPSG:32622",
     "EPSG:32625",
     "EPSG:32626",
     "EPSG:32627",
@@ -274,11 +276,8 @@ GCS = [
     "EPSG:32636",
     "EPSG:32637",
     "EPSG:32638",
-    "EPSG:32740",
-    "EPSG:32620",
-    "EPSG:32622",
     "EPSG:32738",
-    "EPSG:2740",
+    "EPSG:32740",
 ]
 
 DATASET_FORMATS = [
