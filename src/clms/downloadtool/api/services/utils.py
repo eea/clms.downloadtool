@@ -159,8 +159,10 @@ def get_available_gcs_values(dataset_uid, bbox=[], nuts=None):
     """ given a dataset uid, compute the list of selectable
         GCSs.
 
-        When the dataset_object lists just one projection, return the standard set
-        When the dataset_object lists multiple, return the standard set + the listed ones
+        When the dataset_object lists just one projection, return the
+            standard set
+        When the dataset_object lists multiple, return the standard set +
+            the listed ones
     """
     brains = api.content.find(UID=dataset_uid)
     if brains:
@@ -171,6 +173,7 @@ def get_available_gcs_values(dataset_uid, bbox=[], nuts=None):
             return GCS
 
         cleaned_projections = map(clean, projections)
-        return GCS + [proj for proj in cleaned_projections if proj in OTHER_AVAILABLE_GCS]
+        # pylint: disable=line-too-long
+        return GCS + [proj for proj in cleaned_projections if proj in OTHER_AVAILABLE_GCS]  # noqa
 
     return []
