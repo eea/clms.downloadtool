@@ -19,7 +19,10 @@ from clms.downloadtool.api.services.utils import (
 )
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import COUNTRIES, FORMAT_CONVERSION_TABLE, GCS
-from clms.downloadtool.api.services.utils import calculate_bounding_box_area
+from clms.downloadtool.api.services.utils import (
+    calculate_bounding_box_area,
+    get_available_gcs_values,
+)
 from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
 from plone.memoize.ram import cache
@@ -292,7 +295,11 @@ class DataRequestPost(Service):
                     )
 
                 if "OutputGCS" in dataset_json:
-                    if dataset_json["OutputGCS"] not in GCS:
+                    available_gcs_values = get_available_gcs_values(
+                        dataset_json["DatasetID"]
+                    )
+
+                    if dataset_json["OutputGCS"] not in available_gcs_values:
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",

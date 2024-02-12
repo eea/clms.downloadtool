@@ -12,6 +12,7 @@ from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.schema.interfaces import IVocabularyFactory
 from zope.site.hooks import getSite
+from clms.downloadtool.utils import GCS, OTHER_AVAILABLE_GCS
 
 
 def dict_hash(dictionary: Dict[str, Any]) -> str:
@@ -143,3 +144,33 @@ def calculate_bounding_box_area(bounding_box) -> int:
         )
 
     return 0
+
+
+def clean(item):
+    """ clean a EPSG value"""
+    new_item = item.strip()
+    if not new_item.startswith('EPSG'):
+        new_item = f'EPSG:{new_item}'
+
+    return new_item
+
+
+def get_available_gcs_values(dataset_uid, bbox=[], nuts=None):
+    """ given a dataset uid, compute the list of selectable
+        GCSs.
+
+        When the dataset_object lists just one projection, return the standard set
+        When the dataset_object lists multiple, return the standard set + the listed ones
+    """
+    brains = api.content.find(UID=dataset_uid)
+    if brains:
+        dataset_object = brains[0].getObject()
+        dataset_projection = dataset_object.characteristics_projection
+        projections = dataset_projection.split('/')
+        if len(projections) == 1:
+            return GCS
+
+        cleaned_projections = map(clean, projections)
+        return GCS + [proj for proj in cleaned_projections if proj in OTHER_AVAILABLE_GCS]
+
+    return []
