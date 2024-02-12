@@ -118,7 +118,10 @@ class TestProjectionsEndpoint(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-        self.assertCountEqual(GCS + ['EPSG:32625', 'EPSG:32626', 'EPSG:32627'], response.json())
+        self.assertCountEqual(
+            GCS + ['EPSG:32625', 'EPSG:32626', 'EPSG:32627'],
+            response.json()
+        )
 
     def test_projections_with_dataset3_uid(self):
         """test that when calling the endpoint with the dataset_uid
