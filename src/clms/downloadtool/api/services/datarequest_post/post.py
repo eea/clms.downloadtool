@@ -330,6 +330,7 @@ class DataRequestPost(Service):
                     "DatasetDownloadInformationID"
                 )
                 # Check if the dataset format value is correct
+
                 full_dataset_format = get_full_dataset_format(
                     dataset_object, download_information_id
                 )
@@ -392,8 +393,17 @@ class DataRequestPost(Service):
                 wekeo_choices = get_full_dataset_wekeo_choices(
                     dataset_object, download_information_id
                 )
+                # Check if layer is mandatory
+                layers = get_full_dataset_layers(
+                    dataset_object, download_information_id
+                )
+                if layers and "Layer" not in dataset_json:
+                    # Check if user has not sent the Layer and
+                    # is mandatory, because this dataset
+                    # has layers
+                    dataset_json['Layer'] = "ALL BANDS"
 
-                if "Layer" in dataset_json:
+                elif layers and "Layer" in dataset_json:
                     # Check if we have a layer and it is valid
                     layers = get_full_dataset_layers(
                         dataset_object, download_information_id

@@ -95,7 +95,7 @@ class TestDatarequestPost(unittest.TestCase):
                         "full_path": "/this/is/a/path/to/dataset1",
                         "full_source": "EEA",
                         "wekeo_choices": "choice-1",
-                        "layers": ["layer-1", "layer-2"],
+                        "layers": [],
                     }
                 ]
             },
@@ -191,6 +191,34 @@ class TestDatarequestPost(unittest.TestCase):
                         "full_path": "/this/is/a/path/to/dataset2",
                         "full_source": "WEKEO",
                         "wekeo_choices": "choice-2",
+                    }
+                ]
+            },
+        )
+
+        self.dataset5 = api.content.create(
+            container=self.product,
+            type="DataSet",
+            title="DataSet 5",
+            id="dataset5",
+            geonetwork_identifiers={
+                "items": [
+                    {
+                        "@id": "some-id",
+                        "type": "EEA",
+                        "id": "some-geonetwork-id",
+                    }
+                ]
+            },
+            dataset_download_information={
+                "items": [
+                    {
+                        "@id": "id-1",
+                        "full_format": "Netcdf",
+                        "full_path": "/this/is/a/path/to/dataset1",
+                        "full_source": "EEA",
+                        "wekeo_choices": "choice-1",
+                        "layers": ["layer-1", "layer-2"],
                     }
                 ]
             },
@@ -988,7 +1016,7 @@ class TestDatarequestPost(unittest.TestCase):
         data = {
             "Datasets": [
                 {
-                    "DatasetID": self.dataset1.UID(),
+                    "DatasetID": self.dataset5.UID(),
                     "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
@@ -1006,7 +1034,7 @@ class TestDatarequestPost(unittest.TestCase):
         data = {
             "Datasets": [
                 {
-                    "DatasetID": self.dataset1.UID(),
+                    "DatasetID": self.dataset5.UID(),
                     "DatasetDownloadInformationID": "this-is-an-invalid-id",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
@@ -1017,6 +1045,24 @@ class TestDatarequestPost(unittest.TestCase):
         response = self.api_session.post("@datarequest_post", json=data)
         self.assertEqual(response.status_code, 400)
         self.assertIn("status", response.json())
+
+    def test_download_without_layer_when_dataset_has_layers(self):
+        """ in this case FME receives the 'ALL BANDS' layer as default"""
+        data = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset5.UID(),
+                    "DatasetDownloadInformationID": "id-1",
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                },
+            ]
+        }
+        response = self.api_session.post("@datarequest_post", json=data)
+
+        self.assertEqual(response.status_code, 201)
+        self.assertIn("TaskIds", response.json())
+        self.assertTrue(len(response.json()["TaskIds"]), 1)
 
     def test_download_prepackaged_file_id(self):
         """some files can be downloaded directly, providing their file_id"""
