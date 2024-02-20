@@ -9,6 +9,7 @@ from clms.downloadtool.api.services.auxiliary_api.main import (
 )
 from datetime import datetime
 
+
 class GetDownloadFileUrls(Service):
     """REST API for m2m users to obtain direct download links"""
 
@@ -126,7 +127,8 @@ class GetDownloadFileUrls(Service):
                 self.request.response.setStatus(400)
                 return {
                     "status": "error",
-                    "msg": "Error, both date_from and date_to parameters are required",
+                    "msg": "Error, both date_from and date_to parameters "
+                           "are required",
                 }
 
             try:
@@ -135,7 +137,8 @@ class GetDownloadFileUrls(Service):
                 self.request.response.setStatus(400)
                 return {
                     "status": "error",
-                    "msg": "Error, date_to parameter must be a date in YYYY-MM-DD format"
+                    "msg": "Error, date_to parameter must be a date in "
+                           "YYYY-MM-DD format"
                 }
             try:
                 datetime.strptime(date_from, "%Y-%m-%d")
@@ -143,16 +146,17 @@ class GetDownloadFileUrls(Service):
                 self.request.response.setStatus(400)
                 return {
                     "status": "error",
-                    "msg": "Error, date_from parameter must be a date in YYYY-MM-DD format",
+                    "msg": "Error, date_from parameter must be a date in "
+                           "YYYY-MM-DD format",
                 }
 
             if date_to < date_from:
                 self.request.response.setStatus(400)
                 return {
                     "status": "error",
-                    "msg": "Error, date_from parameter must be smaller than date_to"
+                    "msg": "Error, date_from parameter must be smaller "
+                           "than date_to"
                 }
-
 
             return get_legacy(
                 username, password, full_path, date_from, date_to
