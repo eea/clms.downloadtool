@@ -105,7 +105,9 @@ class TestAuxiliaryAPI(unittest.TestCase):
 
     def test_no_dataset_information_uid(self):
         """dataset_uid is required"""
-        response = self.api_session.get(f"@get-download-file-urls?dataset_uid={self.dataset1.UID()}")
+        response = self.api_session.get(
+            f"@get-download-file-urls?dataset_uid={self.dataset1.UID()}"
+        )
         self.assertEqual(
             response.headers.get("Content-Type"), "application/json"
         )
@@ -114,6 +116,7 @@ class TestAuxiliaryAPI(unittest.TestCase):
     def test_invalid_download_information_id(self):
         """dataset_uid is required"""
         response = self.api_session.get(
+            # pylint: disable=line-too-long
             f"@get-download-file-urls?dataset_uid={self.dataset1.UID()}&download_information_id=invalid"
         )
         self.assertEqual(
@@ -124,6 +127,7 @@ class TestAuxiliaryAPI(unittest.TestCase):
     def test_legacy_no_dates(self):
         """test anonymous usage"""
         response = self.api_session.get(
+            # pylint: disable=line-too-long
             f"@get-download-file-urls?dataset_uid={self.dataset1.UID()}&download_information_id=id-1"
         )
         self.assertEqual(
@@ -134,6 +138,7 @@ class TestAuxiliaryAPI(unittest.TestCase):
     def test_legacy_no_date_to(self):
         """test anonymous usage"""
         response = self.api_session.get(
+            # pylint: disable=line-too-long
             f"@get-download-file-urls?dataset_uid={self.dataset1.UID()}&download_information_id=id-1&date_from=2022/04/04"
         )
         self.assertEqual(
@@ -144,6 +149,7 @@ class TestAuxiliaryAPI(unittest.TestCase):
     def test_legacy_no_date_from(self):
         """test anonymous usage"""
         response = self.api_session.get(
+            # pylint: disable=line-too-long
             f"@get-download-file-urls?dataset_uid={self.dataset1.UID()}&download_information_id=id-1&date_to=2022/04/04"
         )
         self.assertEqual(
@@ -154,6 +160,7 @@ class TestAuxiliaryAPI(unittest.TestCase):
     def test_legacy_incorrect_date_to(self):
         """test anonymous usage"""
         response = self.api_session.get(
+            # pylint: disable=line-too-long
             f"@get-download-file-urls?dataset_uid={self.dataset1.UID()}&download_information_id=id-1&date_to=johndoe&date_from=2022/04/04"
         )
         self.assertEqual(
@@ -164,6 +171,7 @@ class TestAuxiliaryAPI(unittest.TestCase):
     def test_legacy_incorrect_date_from(self):
         """test anonymous usage"""
         response = self.api_session.get(
+            # pylint: disable=line-too-long
             f"@get-download-file-urls?dataset_uid={self.dataset1.UID()}&download_information_id=id-1&date_to=2022/04/04&date_from=johndoe"
         )
         self.assertEqual(
@@ -174,6 +182,7 @@ class TestAuxiliaryAPI(unittest.TestCase):
     def test_legacy_incorrect_dates(self):
         """test anonymous usage"""
         response = self.api_session.get(
+            # pylint: disable=line-too-long
             f"@get-download-file-urls?dataset_uid={self.dataset1.UID()}&download_information_id=id-1&date_to=janedoe&date_from=johndoe"
         )
         self.assertEqual(
@@ -184,6 +193,7 @@ class TestAuxiliaryAPI(unittest.TestCase):
     def test_legacy_incorrect_date_to_less_than_date_from(self):
         """test anonymous usage"""
         response = self.api_session.get(
+            # pylint: disable=line-too-long
             f"@get-download-file-urls?dataset_uid={self.dataset1.UID()}&download_information_id=id-1&date_to=2022-04-01&date_from=2022-04-30"
         )
         self.assertEqual(
@@ -195,6 +205,7 @@ class TestAuxiliaryAPI(unittest.TestCase):
         """test anonymous usage"""
 
         response = self.api_session.get(
+            # pylint: disable=line-too-long
             f"@get-download-file-urls?dataset_uid={self.dataset1.UID()}&download_information_id=id-1&date_from=2022-04-01&date_to=2022-04-30"
         )
         self.assertEqual(
