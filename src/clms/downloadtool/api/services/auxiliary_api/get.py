@@ -1,12 +1,12 @@
 """ auxiliary endpoint REST API"""
 # -*- coding: utf-8 -*-
+from datetime import datetime
+
+from clms.downloadtool.api.services.auxiliary_api.main import (get_landcover,
+                                                               get_legacy,
+                                                               get_wekeo)
 from plone import api
 from plone.restapi.services import Service
-from clms.downloadtool.api.services.auxiliary_api.main import (
-    get_landcover,
-    get_wekeo,
-    get_legacy,
-)
 
 
 class GetDownloadFileUrls(Service):
@@ -121,6 +121,41 @@ class GetDownloadFileUrls(Service):
             full_path = dataset_download_info.get("full_path")
             date_from = self.request.get("date_from", "")
             date_to = self.request.get("date_to", "")
+
+            if not date_from or not date_to:
+                self.request.response.setStatus(400)
+                return {
+                    "status": "error",
+                    "msg": "Error, both date_from and date_to parameters "
+                           "are required",
+                }
+
+            try:
+                datetime.strptime(date_to, "%Y-%m-%d")
+            except ValueError:
+                self.request.response.setStatus(400)
+                return {
+                    "status": "error",
+                    "msg": "Error, date_to parameter must be a date in "
+                           "YYYY-MM-DD format"
+                }
+            try:
+                datetime.strptime(date_from, "%Y-%m-%d")
+            except ValueError:
+                self.request.response.setStatus(400)
+                return {
+                    "status": "error",
+                    "msg": "Error, date_from parameter must be a date in "
+                           "YYYY-MM-DD format",
+                }
+
+            if date_to < date_from:
+                self.request.response.setStatus(400)
+                return {
+                    "status": "error",
+                    "msg": "Error, date_from parameter must be smaller "
+                           "than date_to"
+                }
 
             return get_legacy(
                 username, password, full_path, date_from, date_to
