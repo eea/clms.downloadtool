@@ -5,16 +5,20 @@ Test the delete_data endpoint
 import unittest
 
 import transaction
+from clms.downloadtool.api.services.auxiliary_api import main
 from clms.downloadtool.testing import CLMS_DOWNLOADTOOL_RESTAPI_TESTING
 from plone import api
 from plone.app.testing import (SITE_OWNER_NAME, SITE_OWNER_PASSWORD,
                                TEST_USER_ID, setRoles)
 from plone.restapi.testing import RelativeSession
-from clms.downloadtool.api.services.auxiliary_api import main
 
 
 # patch for tests
 def my_get_legacy(*args, **kargs):
+    """ custom function to get urls from legacy
+        that returns a list instead of going to the FTP or HTTP
+        services
+    """
     return []
 
 main.get_legacy = my_get_legacy

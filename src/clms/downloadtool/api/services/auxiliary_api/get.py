@@ -1,13 +1,12 @@
 """ auxiliary endpoint REST API"""
 # -*- coding: utf-8 -*-
+from datetime import datetime
+
+from clms.downloadtool.api.services.auxiliary_api.main import (get_landcover,
+                                                               get_legacy,
+                                                               get_wekeo)
 from plone import api
 from plone.restapi.services import Service
-from clms.downloadtool.api.services.auxiliary_api.main import (
-    get_landcover,
-    get_wekeo,
-    get_legacy,
-)
-from datetime import datetime
 
 
 class GetDownloadFileUrls(Service):
