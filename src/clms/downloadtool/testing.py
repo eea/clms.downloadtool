@@ -8,7 +8,6 @@ from plone.app.testing import (FunctionalTesting, IntegrationTesting,
                                PloneSandboxLayer, applyProfile)
 from plone.testing.zope import WSGI_SERVER_FIXTURE
 
-
 class ClmsDownloadtoolLayer(PloneSandboxLayer):
     """Plone sandbox"""
 
@@ -22,10 +21,12 @@ class ClmsDownloadtoolLayer(PloneSandboxLayer):
 
         self.loadZCML(package=plone.restapi)
         self.loadZCML(package=clms.downloadtool)
+        self.loadZCML(package=clms.downloadtool, name="testing.zcml")
 
     def setUpPloneSite(self, portal):
         """ Setup cms site """
         applyProfile(portal, "clms.downloadtool:default")
+
 
 
 CLMS_DOWNLOADTOOL_FIXTURE = ClmsDownloadtoolLayer()

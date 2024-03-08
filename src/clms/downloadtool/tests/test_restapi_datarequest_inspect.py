@@ -17,6 +17,8 @@ from plone.app.testing import (
     setRoles,
 )
 from plone.restapi.testing import RelativeSession
+from clms.downloadtool.orm import Session, DownloadRegistry
+from sqlalchemy import delete
 
 FME_TASK_ID = 123456
 
@@ -178,12 +180,14 @@ class TestDatarequestPost(unittest.TestCase):
             },
         )
 
-        transaction.commit()
+        # transaction.commit()
 
     def tearDown(self):
         """tear down cleanup"""
         self.api_session.close()
         self.anonymous_session.close()
+        session = Session()
+        session.execute(delete(DownloadRegistry))
 
     def test_status_method_as_anonymous(self):
         """test anonymous user cannot access datarequest_post endpoint"""

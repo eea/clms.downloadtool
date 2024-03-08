@@ -11,7 +11,8 @@ from plone.app.testing import (SITE_OWNER_NAME, SITE_OWNER_PASSWORD,
                                TEST_USER_ID, setRoles)
 from plone.restapi.testing import RelativeSession
 from zope.component import getUtility
-
+from clms.downloadtool.orm import Session, DownloadRegistry
+from sqlalchemy import delete
 
 class TestDeleteData(unittest.TestCase):
     """ base class"""
@@ -34,6 +35,8 @@ class TestDeleteData(unittest.TestCase):
         """ tear down cleanup"""
         self.api_session.close()
         self.anonymous_session.close()
+        session = Session()
+        session.execute(delete(DownloadRegistry))
 
     def test_delete_method_as_anonymous(self):
         """ test anonymous user cannot access datarequest_delete endpoint """
@@ -60,7 +63,7 @@ class TestDeleteData(unittest.TestCase):
         utility.datarequest_post(data_dict)
         utility.datarequest_post(data_dict)
 
-        transaction.commit()
+        # transaction.commit()
 
         response = self.api_session.delete("@delete_data")
         self.assertEqual(response.status_code, 204)

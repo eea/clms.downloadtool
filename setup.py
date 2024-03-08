@@ -62,6 +62,8 @@ setup(
         "clms.statstool",
         "eea.cache",
         "PyProj",
+        "z3c.saconfig",
+        "psycopg2-binary",
     ],
     extras_require={
         "test": [

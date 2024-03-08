@@ -8,6 +8,8 @@ from clms.downloadtool.testing import CLMS_DOWNLOADTOOL_INTEGRATION_TESTING
 from clms.downloadtool.utility import IDownloadToolUtility
 from zope.component import getUtility
 
+from clms.downloadtool.orm import Session, DownloadRegistry
+from sqlalchemy import delete
 
 class TestUtility(unittest.TestCase):
     """ base class for testing """
@@ -18,6 +20,11 @@ class TestUtility(unittest.TestCase):
         """ setup """
         self.portal = self.layer["portal"]
         self.utility = getUtility(IDownloadToolUtility)
+
+    def tearDown(self):
+        """ cleanup the database """
+        session = Session()
+        session.execute(delete(DownloadRegistry))
 
     def test_datarequest_post(self):
         """ test datarequest_post method """

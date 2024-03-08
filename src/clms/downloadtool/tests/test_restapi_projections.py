@@ -66,7 +66,7 @@ class TestProjectionsEndpoint(unittest.TestCase):
             characteristics_projection="EPSG:9999/ 32626/ ",
         )
 
-        transaction.commit()
+        # transaction.commit()
 
     def tearDown(self):
         """tear down cleanup"""

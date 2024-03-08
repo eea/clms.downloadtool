@@ -35,7 +35,8 @@ from plone.app.testing import (
 )
 from plone.restapi.testing import RelativeSession
 from zope.component import getUtility
-
+from clms.downloadtool.orm import Session, DownloadRegistry
+from sqlalchemy import delete, not_
 FME_TASK_ID = 123456
 
 
@@ -224,12 +225,15 @@ class TestDatarequestPost(unittest.TestCase):
             },
         )
 
-        transaction.commit()
+        self.utility = getUtility(IDownloadToolUtility)
+
+        # transaction.commit()
 
     def tearDown(self):
         """tear down cleanup"""
         self.api_session.close()
         self.anonymous_session.close()
+        self.utility.delete_data()
 
     def test_status_method_as_anonymous(self):
         """test anonymous user cannot access datarequest_post endpoint"""
@@ -1464,7 +1468,7 @@ class TestDatarequestPost(unittest.TestCase):
         utility.datarequest_post(data_queued)
         utility.datarequest_post(data_pending)
 
-        transaction.commit()
+        # transaction.commit()
 
         data_to_download = {
             "Datasets": [

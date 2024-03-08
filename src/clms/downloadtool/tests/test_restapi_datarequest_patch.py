@@ -13,7 +13,8 @@ from plone.app.testing import (SITE_OWNER_NAME, SITE_OWNER_PASSWORD,
                                TEST_USER_ID, TEST_USER_PASSWORD)
 from plone.restapi.testing import RelativeSession
 from zope.component import getUtility
-
+from clms.downloadtool.orm import Session, DownloadRegistry
+from sqlalchemy import delete
 
 class TestDatarequestPatch(unittest.TestCase):
     """base class"""
@@ -47,13 +48,15 @@ class TestDatarequestPatch(unittest.TestCase):
         result = self.utility.datarequest_post(data)
         self.task_id = list(result.keys())[0]
 
-        transaction.commit()
+        # transaction.commit()
 
     def tearDown(self):
         """tear down cleanup"""
         self.api_session.close()
         self.anonymous_session.close()
         self.manager_api_session.close()
+        session = Session()
+        session.execute(delete(DownloadRegistry))
 
     def test_user_roles(self):
         """test the user roles to be used in these tests"""

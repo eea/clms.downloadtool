@@ -20,15 +20,17 @@ and call its method.
 We have to understand the utility as being a Singleton object.
 
 """
+import json
 import random
 from datetime import datetime
 from logging import getLogger
 
-from clms.downloadtool.utils import ANNOTATION_KEY, STATUS_LIST
-from zope.annotation.interfaces import IAnnotations
-from zope.component.hooks import getSite
+from clms.downloadtool.orm import Session
+from clms.downloadtool.utils import STATUS_LIST
+from sqlalchemy import delete, update
 from zope.interface import Interface, implementer
-from BTrees.OOBTree import OOBTree
+from clms.downloadtool.orm import Session, DownloadRegistry
+from sqlalchemy import delete
 
 log = getLogger(__name__)
 
@@ -43,93 +45,84 @@ class DownloadToolUtility:
 
     def datarequest_post(self, data_request):
         """register new download request"""
-        site = getSite()
-        annotations = IAnnotations(site)
+        session = Session()
+
         task_id = random.randint(0, 99999999999)
         str_task_id = str(task_id)
-
-        registry = annotations.get(ANNOTATION_KEY, OOBTree())
-
-        while str_task_id in registry:
+        while session.query(DownloadRegistry).filter_by(
+            id=str_task_id
+        ).all():
             task_id = random.randint(0, 99999999999)
             str_task_id = str(task_id)
 
-        registry[str_task_id] = data_request
-        annotations[ANNOTATION_KEY] = registry
+        session.add(DownloadRegistry(id=str_task_id, content=json.dumps(data_request)))
 
         return {str_task_id: data_request}
 
     def datarequest_delete(self, task_id, user_id):
         """cancel the download request"""
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, OOBTree())
-
+        session = Session()
         data_object = None
-
-        if task_id not in registry:
+        tasks = session.query(DownloadRegistry).filter_by(id=task_id).all()
+        if not tasks:
             return "Error, TaskID not registered"
 
-        data_object = registry.get(str(task_id))
-        if user_id not in data_object["UserID"]:
+        data_object = json.loads(tasks[0].content)
+        if user_id not in data_object.get("UserID"):
             return "Error, permission denied"
 
         data_object["Status"] = "Cancelled"
         data_object["FinalizationDateTime"] = datetime.utcnow().isoformat()
 
-        registry[str(task_id)] = data_object
-        annotations[ANNOTATION_KEY] = registry
+        session.execute(update(DownloadRegistry).filter_by(id=task_id).values(content=json.dumps(data_object)))
 
         return data_object
 
     def datarequest_search(self, user_id, status):
         """search for download requests"""
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, OOBTree())
+        session = Session()
         data_object = {}
 
         if not user_id:
             return "Error, UserID not defined"
 
         if not status:
-            for key in registry.keys():
-                values = registry.get(key)
+            items = session.query(DownloadRegistry).all()
+            for item in items:
+                values = json.loads(item.content)
                 if str(user_id) == values.get("UserID"):
-                    data_object[key] = values
+                    data_object[item.id] = values
             return data_object
 
         if status not in STATUS_LIST:
             return "Error, status not recognized"
 
-        for key in registry.keys():
-            values = registry.get(key)
+        items = session.query(DownloadRegistry).all()
+        for item in items:
+            values = json.loads(item.content)
             if status == values.get("Status") and str(user_id) == values.get(
                 "UserID"
             ):
-                data_object[key] = values
+                data_object[item.id] = values
 
         return data_object
 
     def datarequest_status_get(self, task_id):
         """get a given download task's information"""
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, OOBTree())
-        if task_id not in registry:
+        session = Session()
+        items = session.query(DownloadRegistry).filter_by(id=task_id).all()
+        if not items:
             return "Error, task not found"
-        return registry.get(task_id)
+        return json.loads(items[0].content)
 
     def datarequest_status_patch(self, data_object, task_id):
         """modify a given download task's information"""
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, OOBTree())
-
-        if task_id not in registry:
+        session = Session()
+        items = session.query(DownloadRegistry).filter_by(id=task_id).all()
+        if not items:
             return "Error, task_id not registered"
 
-        registry_item = registry.get(task_id, None)
+        registry_item = json.loads(items[0].content)
 
         if "Status" in data_object:
             registry_item["Status"] = data_object["Status"]
@@ -143,55 +136,50 @@ class DownloadToolUtility:
             ]
         if "Message" in data_object:
             registry_item["Message"] = data_object["Message"]
-        registry[task_id] = registry_item
-        annotations[ANNOTATION_KEY] = registry
+
+        session.execute(update(DownloadRegistry).filter_by(id=task_id).values(content=json.dumps(registry_item)))
+
         return registry_item
 
     def delete_data(self):
         """a method to delete all data from the registry"""
-        site = getSite()
-        annotations = IAnnotations(site)
+        session = Session()
 
-        if annotations.get(ANNOTATION_KEY, None) is None:
+        items = session.query(DownloadRegistry).all()
+        if not items:
             return {"status": "Error", "msg": "Registry is empty"}
 
-        annotations[ANNOTATION_KEY] = OOBTree()
+        session.execute(delete(DownloadRegistry))
+
         return {}
 
     def datarequest_remove_task(self, task_id):
         """Remove all data about the given task"""
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, OOBTree())
-
-        if task_id not in registry:
+        session = Session()
+        items = session.query(DownloadRegistry).filter_by(id=task_id).all()
+        if not items:
             return "Error, TaskID not registered"
 
-        del registry[str(task_id)]
-
-        annotations[ANNOTATION_KEY] = registry
-
+        session.execute(delete(DownloadRegistry).filter_by(id=task_id))
         return 1
 
     def datarequest_inspect(self, **query):
         """inspect the queries according to the query"""
-
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, OOBTree())
+        session = Session()
+        items = session.query(DownloadRegistry).all()
         data_objects = []
 
-        for key in registry.keys():
-            db_value = registry.get(key)
+        for item in items:
+            db_value = json.loads(item.content)
 
             if query:
                 for parameter, value in query.items():
                     if db_value.get(parameter, "") == value:
-                        db_value.update({"TaskId": key})
+                        db_value.update({"TaskId": item.id})
                         data_objects.append(db_value)
                         continue
             else:
-                db_value.update({"TaskId": key})
+                db_value.update({"TaskId": item.id})
 
                 data_objects.append(db_value)
 

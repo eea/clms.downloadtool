@@ -211,7 +211,6 @@ def get_legacy(username, password, path, date_from, date_to):
     else:
         # pylint: disable=consider-using-with
         data = urllib.request.urlopen(path)
-
         for line in data:
             file = line.decode("utf-8").strip("\n")
             if file != "":
@@ -221,11 +220,18 @@ def get_legacy(username, password, path, date_from, date_to):
                         date_from, "%Y-%m-%d"
                     )
                     date_to_datetime = datetime.strptime(date_to, "%Y-%m-%d")
+                    from logging import getLogger
+                    log = getLogger(__name__)
+                    log.info("date_from_datetime %s", date_from_datetime)
+                    log.info("date_to_datetime %s", date_to_datetime)
+                    log.info("date_file_aux %s", date_file_aux)
+                    log.info('------------------------------')
                     # pylint: disable=line-too-long
                     if (
                         date_from_datetime <= date_file_aux <= date_to_datetime
                     ):  # noqa
                         files_to_download.append(file)
+                        log.info('Downloadable: %s', file)
                 else:
                     if len(files_to_download) == 0:
                         files_to_download.append(file)

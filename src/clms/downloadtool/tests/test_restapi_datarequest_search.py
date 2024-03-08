@@ -12,7 +12,8 @@ from plone.app.testing import (SITE_OWNER_NAME, SITE_OWNER_PASSWORD,
                                TEST_USER_ID, setRoles)
 from plone.restapi.testing import RelativeSession
 from zope.component import getUtility
-
+from clms.downloadtool.orm import Session, DownloadRegistry
+from sqlalchemy import delete
 
 class TestDatarequestStatusGet(unittest.TestCase):
     """ base class"""
@@ -35,6 +36,8 @@ class TestDatarequestStatusGet(unittest.TestCase):
         """ tear down cleanup"""
         self.api_session.close()
         self.anonymous_session.close()
+        session = Session()
+        session.execute(delete(DownloadRegistry))
 
     def test_status_method_as_anonymous(self):
         """test anonymous user cannot access datarequest_status_get
@@ -76,7 +79,7 @@ class TestDatarequestStatusGet(unittest.TestCase):
         utility.datarequest_post(data_dict_3)
         utility.datarequest_post(data_dict_4)
 
-        transaction.commit()
+        # transaction.commit()
 
         response = self.api_session.get(
             "@datarequest_search", params={"status": "In_progress"}
