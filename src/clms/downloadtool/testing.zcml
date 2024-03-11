@@ -16,7 +16,7 @@
       name="download_registry"
       echo="True"
       setup="clms.downloadtool.orm_prepare.prepare"
-      url="sqlite://"
+      url="sqlite:///:memory:"
       />
   <db:session
       name="download_registry"

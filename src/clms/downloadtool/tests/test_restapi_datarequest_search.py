@@ -79,7 +79,7 @@ class TestDatarequestStatusGet(unittest.TestCase):
         utility.datarequest_post(data_dict_3)
         utility.datarequest_post(data_dict_4)
 
-        # transaction.commit()
+        transaction.commit()
 
         response = self.api_session.get(
             "@datarequest_search", params={"status": "In_progress"}

@@ -180,7 +180,7 @@ class TestDatarequestPost(unittest.TestCase):
             },
         )
 
-        # transaction.commit()
+        transaction.commit()
 
     def tearDown(self):
         """tear down cleanup"""

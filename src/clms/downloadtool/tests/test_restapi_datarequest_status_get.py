@@ -72,7 +72,7 @@ class TestDatarequestStatusGet(unittest.TestCase):
         result = utility.datarequest_post(data_dict)
         key = list(result.keys())[0]
 
-        # transaction.commit()
+        transaction.commit()
         response = self.api_session.get(
             "@datarequest_status_get", params={"TaskID": key}
         )

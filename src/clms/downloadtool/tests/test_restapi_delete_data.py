@@ -63,7 +63,7 @@ class TestDeleteData(unittest.TestCase):
         utility.datarequest_post(data_dict)
         utility.datarequest_post(data_dict)
 
-        # transaction.commit()
+        transaction.commit()
 
         response = self.api_session.delete("@delete_data")
         self.assertEqual(response.status_code, 204)

@@ -87,7 +87,7 @@ class TestDatarequestDelete(unittest.TestCase):
         result = utility.datarequest_post(data_dict_1)
         key_1 = list(result.keys())[0]
 
-        # transaction.commit()
+        transaction.commit()
 
         data = {"TaskID": key_1}
         response = self.api_session.delete("@datarequest_delete", json=data)
@@ -107,7 +107,7 @@ class TestDatarequestDelete(unittest.TestCase):
         result = utility.datarequest_post(data_dict_1)
         key_1 = list(result.keys())[0]
 
-        # transaction.commit()
+        transaction.commit()
 
         data = {"UserID": SITE_OWNER_NAME, "TaskID": key_1}
         response = self.api_session.delete("@datarequest_delete", json=data)
@@ -138,7 +138,7 @@ class TestDatarequestDelete(unittest.TestCase):
             my_signal_finalization_to_fme
         )
 
-        # transaction.commit()
+        transaction.commit()
 
         data = {
             "UserID": SITE_OWNER_NAME,

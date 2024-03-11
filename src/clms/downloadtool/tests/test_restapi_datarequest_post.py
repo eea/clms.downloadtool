@@ -227,7 +227,7 @@ class TestDatarequestPost(unittest.TestCase):
 
         self.utility = getUtility(IDownloadToolUtility)
 
-        # transaction.commit()
+        transaction.commit()
 
     def tearDown(self):
         """tear down cleanup"""
@@ -446,7 +446,7 @@ class TestDatarequestPost(unittest.TestCase):
                     "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
-                    "NUTS": "ITC11",
+                    "NUTS": "ITC12",
                     "TemporalFilter": {
                         "StartDate": 1546333200000,
                         "EndDate": 1547974800000,
@@ -481,10 +481,10 @@ class TestDatarequestPost(unittest.TestCase):
                         "EndDate": 1547974800000,
                     },
                     "BoundingBox": [
-                        2.354736328128108,
-                        46.852958688910306,
-                        4.639892578127501,
-                        45.88264619696234,
+                        2.35473632812810,
+                        46.8529586889103,
+                        4.63989257812750,
+                        45.8826461969623,
                     ],
                 },
             ]
@@ -512,10 +512,10 @@ class TestDatarequestPost(unittest.TestCase):
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": [
-                        2.354736328128108,
-                        46.852958688910306,
-                        4.639892578127501,
-                        45.88264619696234,
+                        2.354736328128,
+                        46.85295868891,
+                        4.6398925781271,
+                        45.8826461964,
                     ],
                     "TemporalFilter": {
                         "StartDate": 1546333200000,
@@ -529,7 +529,7 @@ class TestDatarequestPost(unittest.TestCase):
                     "OutputGCS": "EPSG:4326",
                     "NUTS": "BE",
                     "TemporalFilter": {
-                        "StartDate": 1546333200000,
+                        "StartDate": 1546334200000,
                         "EndDate": 1547974800000,
                     },
                 },
@@ -538,7 +538,7 @@ class TestDatarequestPost(unittest.TestCase):
                     "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
-                    "NUTS": "ES",
+                    "NUTS": "DE",
                 },
             ]
         }
@@ -564,10 +564,10 @@ class TestDatarequestPost(unittest.TestCase):
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": [
-                        2.354736328128108,
-                        46.852958688910306,
-                        4.639892578127501,
-                        45.88264619696234,
+                        2.3547363,
+                        46.852958,
+                        4.6398925,
+                        45.882646,
                     ],
                     "TemporalFilter": {
                         "StartDate": 1546333200000,
@@ -579,7 +579,7 @@ class TestDatarequestPost(unittest.TestCase):
                     "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
-                    "NUTS": "ES",
+                    "NUTS": "DK",
                 },
             ]
         }
@@ -604,10 +604,10 @@ class TestDatarequestPost(unittest.TestCase):
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": [
-                        2.354736328128108,
-                        46.852958688910306,
-                        4.639892578127501,
-                        45.88264619696234,
+                        2.35,
+                        46.8,
+                        4.63,
+                        45.8,
                     ],
                     "TemporalFilter": {
                         "StartDate": 1546333200000,
@@ -620,7 +620,7 @@ class TestDatarequestPost(unittest.TestCase):
                     "DatasetDownloadInformationID": "id-2",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
-                    "NUTS": "BE",
+                    "NUTS": "NL",
                     "TemporalFilter": {
                         "StartDate": 1546333200000,
                         "EndDate": 1559289600000,
@@ -631,7 +631,7 @@ class TestDatarequestPost(unittest.TestCase):
                     "DatasetID": "",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
-                    "NUTS": "ES",
+                    "NUTS": "PT",
                 },
             ]
         }
@@ -655,10 +655,10 @@ class TestDatarequestPost(unittest.TestCase):
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "BoundingBox": [
-                        2.354736328128108,
-                        46.852958688910306,
-                        4.639892578127501,
-                        45.88264619696234,
+                        2.3547,
+                        46.8529,
+                        4.6398,
+                        45.8,
                     ],
                     "TemporalFilter": {
                         "StartDate": 1546333200000,
@@ -1468,7 +1468,7 @@ class TestDatarequestPost(unittest.TestCase):
         utility.datarequest_post(data_queued)
         utility.datarequest_post(data_pending)
 
-        # transaction.commit()
+        transaction.commit()
 
         data_to_download = {
             "Datasets": [

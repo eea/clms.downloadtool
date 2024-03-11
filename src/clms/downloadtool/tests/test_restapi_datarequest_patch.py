@@ -48,7 +48,7 @@ class TestDatarequestPatch(unittest.TestCase):
         result = self.utility.datarequest_post(data)
         self.task_id = list(result.keys())[0]
 
-        # transaction.commit()
+        transaction.commit()
 
     def tearDown(self):
         """tear down cleanup"""
