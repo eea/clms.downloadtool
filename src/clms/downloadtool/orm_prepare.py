@@ -8,5 +8,6 @@ def prepare(engine):
     # Need to import models so Base.metadata is aware of their existence
     from .orm import Base, DownloadRegistry  # noqa
 
-    # Binds the SQLAlchemy engine to the models' metadata so they can be accessed
+    # Binds the SQLAlchemy engine to the models' metadata so they can be
+    # accessed
     Base.metadata.create_all(engine)
