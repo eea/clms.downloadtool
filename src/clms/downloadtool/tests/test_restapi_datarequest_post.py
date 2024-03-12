@@ -35,8 +35,6 @@ from plone.app.testing import (
 )
 from plone.restapi.testing import RelativeSession
 from zope.component import getUtility
-from clms.downloadtool.orm import Session, DownloadRegistry
-from sqlalchemy import delete, not_
 FME_TASK_ID = 123456
 
 

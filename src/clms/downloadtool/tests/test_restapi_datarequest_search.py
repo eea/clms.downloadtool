@@ -4,14 +4,11 @@ Test the datarequest_status_search endpoint
 # -*- coding: utf-8 -*-
 import unittest
 
-import transaction
 from clms.downloadtool.testing import CLMS_DOWNLOADTOOL_RESTAPI_TESTING
-from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.utils import STATUS_LIST
 from plone.app.testing import (SITE_OWNER_NAME, SITE_OWNER_PASSWORD,
                                TEST_USER_ID, setRoles)
 from plone.restapi.testing import RelativeSession
-from zope.component import getUtility
 from clms.downloadtool.orm import Session, DownloadRegistry
 from sqlalchemy import delete
 
