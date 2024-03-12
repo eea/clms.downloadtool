@@ -29,7 +29,6 @@ class ClmsDownloadtoolLayer(PloneSandboxLayer):
         applyProfile(portal, "clms.downloadtool:default")
 
 
-
 CLMS_DOWNLOADTOOL_FIXTURE = ClmsDownloadtoolLayer()
 
 

@@ -147,7 +147,11 @@ class DownloadToolUtility:
         if "Message" in data_object:
             registry_item["Message"] = data_object["Message"]
 
-        session.execute(update(DownloadRegistry).filter_by(id=task_id).values(content=json.dumps(registry_item)))
+        session.execute(
+            update(DownloadRegistry).filter_by(id=task_id).values(
+                content=json.dumps(registry_item)
+            )
+        )
 
         return registry_item
 
