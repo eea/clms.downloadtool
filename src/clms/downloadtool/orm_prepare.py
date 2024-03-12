@@ -9,7 +9,7 @@ def prepare(engine):
     # ``Base`` is a declarative_base object used for ORM classes.
     # Need to import models so Base.metadata is aware of their existence
 
-    # pylint disable=unused-import,import-outside-toplevel
+    # pylint: disable=unused-import,import-outside-toplevel
     from .orm import Base, DownloadRegistry  # noqa
 
     # Binds the SQLAlchemy engine to the models' metadata so they can be

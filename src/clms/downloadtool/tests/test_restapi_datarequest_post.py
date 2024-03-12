@@ -569,6 +569,7 @@ class TestDatarequestPost(unittest.TestCase):
     #         ]
     #     }
     #     # Patch FME call to return an OK response
+    # pylint: disable=line-too-long
     #     DataRequestPost.post_request_to_fme = custom_not_ok_post_request_to_fme
 
     #     response = self.api_session.post("@datarequest_post", json=data)

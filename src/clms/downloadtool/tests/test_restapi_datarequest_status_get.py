@@ -60,6 +60,7 @@ class TestDatarequestStatusGet(unittest.TestCase):
     #     result = utility.datarequest_status_get(invalid_task_id)
     #     self.assertEqual(result, "Error, task not found")
 
+    # pylint: disable=line-too-long
     #     response = self.api_session.get("@datarequest_status_get", params=data)
     #     self.assertEqual(response.status_code, 404)
 
