@@ -4,12 +4,12 @@ The utility holds all operations of the download tool
 # -*- coding: utf-8 -*-
 import unittest
 
+from clms.downloadtool.orm import DownloadRegistry, Session
 from clms.downloadtool.testing import CLMS_DOWNLOADTOOL_INTEGRATION_TESTING
 from clms.downloadtool.utility import IDownloadToolUtility
+from sqlalchemy import delete
 from zope.component import getUtility
 
-from clms.downloadtool.orm import Session, DownloadRegistry
-from sqlalchemy import delete
 
 class TestUtility(unittest.TestCase):
     """ base class for testing """
