@@ -7,6 +7,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from ftplib import FTP
+from logging import getLogger
 
 import requests
 
@@ -220,7 +221,7 @@ def get_legacy(username, password, path, date_from, date_to):
                         date_from, "%Y-%m-%d"
                     )
                     date_to_datetime = datetime.strptime(date_to, "%Y-%m-%d")
-                    from logging import getLogger
+
                     log = getLogger(__name__)
                     log.info("date_from_datetime %s", date_from_datetime)
                     log.info("date_to_datetime %s", date_to_datetime)

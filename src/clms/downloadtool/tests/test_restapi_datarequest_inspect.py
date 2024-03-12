@@ -5,19 +5,12 @@ tests of the @datarequest_inspect endpoint
 import unittest
 
 import transaction
-
-from clms.downloadtool.testing import (
-    CLMS_DOWNLOADTOOL_RESTAPI_TESTING,
-)
+from clms.downloadtool.orm import DownloadRegistry, Session
+from clms.downloadtool.testing import CLMS_DOWNLOADTOOL_RESTAPI_TESTING
 from plone import api
-from plone.app.testing import (
-    SITE_OWNER_NAME,
-    SITE_OWNER_PASSWORD,
-    TEST_USER_ID,
-    setRoles,
-)
+from plone.app.testing import (SITE_OWNER_NAME, SITE_OWNER_PASSWORD,
+                               TEST_USER_ID, setRoles)
 from plone.restapi.testing import RelativeSession
-from clms.downloadtool.orm import Session, DownloadRegistry
 from sqlalchemy import delete
 
 FME_TASK_ID = 123456

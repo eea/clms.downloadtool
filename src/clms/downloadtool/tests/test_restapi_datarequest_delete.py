@@ -4,12 +4,13 @@ Test the datarequest_delete endpoint
 # -*- coding: utf-8 -*-
 import unittest
 
+from clms.downloadtool.orm import DownloadRegistry, Session
 from clms.downloadtool.testing import CLMS_DOWNLOADTOOL_RESTAPI_TESTING
 from plone.app.testing import (SITE_OWNER_NAME, SITE_OWNER_PASSWORD,
                                TEST_USER_ID, setRoles)
 from plone.restapi.testing import RelativeSession
-from clms.downloadtool.orm import Session, DownloadRegistry
 from sqlalchemy import delete
+
 
 class TestDatarequestDelete(unittest.TestCase):
     """ base class"""
