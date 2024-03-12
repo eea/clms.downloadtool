@@ -25,12 +25,10 @@ import random
 from datetime import datetime
 from logging import getLogger
 
-from clms.downloadtool.orm import Session
+from clms.downloadtool.orm import DownloadRegistry, Session
 from clms.downloadtool.utils import STATUS_LIST
 from sqlalchemy import delete, update
 from zope.interface import Interface, implementer
-from clms.downloadtool.orm import Session, DownloadRegistry
-from sqlalchemy import delete
 
 log = getLogger(__name__)
 
@@ -55,7 +53,12 @@ class DownloadToolUtility:
             task_id = random.randint(0, 99999999999)
             str_task_id = str(task_id)
 
-        session.add(DownloadRegistry(id=str_task_id, content=json.dumps(data_request)))
+        session.add(
+            DownloadRegistry(
+                id=str_task_id,
+                content=json.dumps(data_request)
+            )
+        )
 
         return {str_task_id: data_request}
 
@@ -63,7 +66,10 @@ class DownloadToolUtility:
         """cancel the download request"""
         session = Session()
         data_object = None
-        tasks = session.query(DownloadRegistry).filter_by(id=task_id).all()
+        tasks = session.query(
+            DownloadRegistry
+        ).filter_by(id=task_id).all()
+
         if not tasks:
             return "Error, TaskID not registered"
 
@@ -74,7 +80,11 @@ class DownloadToolUtility:
         data_object["Status"] = "Cancelled"
         data_object["FinalizationDateTime"] = datetime.utcnow().isoformat()
 
-        session.execute(update(DownloadRegistry).filter_by(id=task_id).values(content=json.dumps(data_object)))
+        session.execute(
+            update(DownloadRegistry).filter_by(
+                id=task_id
+            ).values(content=json.dumps(data_object))
+        )
 
         return data_object
 

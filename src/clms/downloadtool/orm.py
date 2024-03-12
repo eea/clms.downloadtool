@@ -14,8 +14,8 @@ class DownloadRegistry(Base):
     """ base class """
     __tablename__ = 'downloadregistry'
 
-    id: Mapped[str] = mapped_column(primary_key=True)
-    content: Mapped[str] = mapped_column()
+    id: Mapped[str] = mapped_column(primary_key=True)  # noqa
+    content: Mapped[str] = mapped_column()  # noqa
 
 
 Session = named_scoped_session("download_registry")
