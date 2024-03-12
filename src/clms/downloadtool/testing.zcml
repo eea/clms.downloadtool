@@ -14,7 +14,6 @@
       />
   <db:engine
       name="download_registry"
-      echo="True"
       setup="clms.downloadtool.orm_prepare.prepare"
       url="sqlite:///:memory:"
       />

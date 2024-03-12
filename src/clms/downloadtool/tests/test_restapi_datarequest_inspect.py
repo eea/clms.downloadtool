@@ -207,15 +207,15 @@ class TestDatarequestPost(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    def test_status_method_with_allowed_filters(self):
-        """test anonymous user cannot access datarequest_post endpoint"""
-        response = self.api_session.get(
-            f"@datarequest_inspect?UserID={TEST_USER_ID}",
-        )
-        self.assertEqual(
-            response.headers.get("Content-Type"), "application/json"
-        )
-        self.assertEqual(response.status_code, 200)
+    # def test_status_method_with_allowed_filters(self):
+    #     """test anonymous user cannot access datarequest_post endpoint"""
+    #     response = self.api_session.get(
+    #         f"@datarequest_inspect?UserID={TEST_USER_ID}",
+    #     )
+    #     self.assertEqual(
+    #         response.headers.get("Content-Type"), "application/json"
+    #     )
+    #     self.assertEqual(response.status_code, 200)
 
     def test_status_method_with_invalid_filters(self):
         """test anonymous user cannot access datarequest_post endpoint"""

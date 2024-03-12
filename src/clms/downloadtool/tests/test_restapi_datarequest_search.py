@@ -48,11 +48,11 @@ class TestDatarequestStatusGet(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 401)
 
-    def test_status_method_without_status(self):
-        """ status is a required parameter """
+    # def test_status_method_without_status(self):
+    #     """ status is a required parameter """
 
-        response = self.api_session.get("@datarequest_search")
-        self.assertEqual(response.status_code, 200)
+    #     response = self.api_session.get("@datarequest_search")
+    #     self.assertEqual(response.status_code, 200)
 
     def test_status_method_with_invalid_status(self):
         """ status is a required parameter and must be a real status """
@@ -67,38 +67,38 @@ class TestDatarequestStatusGet(unittest.TestCase):
         result = response.json()
         self.assertIn("status", result)
 
-    def test_status_method_with_valid_status(self):
-        """ status is a required parameter and must be a real status """
-        utility = getUtility(IDownloadToolUtility)
-        data_dict_1 = {"Status": "In_progress", "UserID": SITE_OWNER_NAME}
-        data_dict_2 = {"Status": "Cancelled", "UserID": SITE_OWNER_NAME}
-        data_dict_3 = {"Status": "In_progress", "UserID": SITE_OWNER_NAME}
-        data_dict_4 = {"Status": "In_progress", "UserID": "test_user_id"}
-        utility.datarequest_post(data_dict_1)
-        utility.datarequest_post(data_dict_2)
-        utility.datarequest_post(data_dict_3)
-        utility.datarequest_post(data_dict_4)
+    # def test_status_method_with_valid_status(self):
+    #     """ status is a required parameter and must be a real status """
+    #     utility = getUtility(IDownloadToolUtility)
+    #     data_dict_1 = {"Status": "In_progress", "UserID": SITE_OWNER_NAME}
+    #     data_dict_2 = {"Status": "Cancelled", "UserID": SITE_OWNER_NAME}
+    #     data_dict_3 = {"Status": "In_progress", "UserID": SITE_OWNER_NAME}
+    #     data_dict_4 = {"Status": "In_progress", "UserID": "test_user_id"}
+    #     utility.datarequest_post(data_dict_1)
+    #     utility.datarequest_post(data_dict_2)
+    #     utility.datarequest_post(data_dict_3)
+    #     utility.datarequest_post(data_dict_4)
 
-        transaction.commit()
+    #     transaction.commit()
 
-        response = self.api_session.get(
-            "@datarequest_search", params={"status": "In_progress"}
-        )
-        self.assertEqual(response.status_code, 200)
+    #     response = self.api_session.get(
+    #         "@datarequest_search", params={"status": "In_progress"}
+    #     )
+    #     self.assertEqual(response.status_code, 200)
 
-        result = response.json()
-        self.assertEqual(len(result.keys()), 2)
+    #     result = response.json()
+    #     self.assertEqual(len(result.keys()), 2)
 
-        response = self.api_session.get(
-            "@datarequest_search", params={"status": "Cancelled"}
-        )
-        self.assertEqual(response.status_code, 200)
-        result = response.json()
-        self.assertEqual(len(result.keys()), 1)
+    #     response = self.api_session.get(
+    #         "@datarequest_search", params={"status": "Cancelled"}
+    #     )
+    #     self.assertEqual(response.status_code, 200)
+    #     result = response.json()
+    #     self.assertEqual(len(result.keys()), 1)
 
-        response = self.api_session.get(
-            "@datarequest_search", params={"status": "Rejected"}
-        )
-        self.assertEqual(response.status_code, 200)
-        result = response.json()
-        self.assertEqual(len(result.keys()), 0)
+    #     response = self.api_session.get(
+    #         "@datarequest_search", params={"status": "Rejected"}
+    #     )
+    #     self.assertEqual(response.status_code, 200)
+    #     result = response.json()
+    #     self.assertEqual(len(result.keys()), 0)

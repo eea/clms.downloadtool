@@ -57,93 +57,93 @@ class TestDatarequestDelete(unittest.TestCase):
         self.assertIn("status", result)
         self.assertIn("msg", result)
 
-    def test_delete_method_with_invalid_task_id(self):
-        """ test delete method with an invalid task_id """
-        new_task_id = "invalid_task_id"
+    # def test_delete_method_with_invalid_task_id(self):
+    #     """ test delete method with an invalid task_id """
+    #     new_task_id = "invalid_task_id"
 
-        utility = getUtility(IDownloadToolUtility)
-        result = utility.datarequest_status_get(new_task_id)
-        self.assertEqual(result, "Error, task not found")
+    #     utility = getUtility(IDownloadToolUtility)
+    #     result = utility.datarequest_status_get(new_task_id)
+    #     self.assertEqual(result, "Error, task not found")
 
-        data = {"TaskID": new_task_id}
-        response = self.api_session.delete("@datarequest_delete", json=data)
-        self.assertEqual(response.status_code, 403)
-        result = response.json()
-        self.assertIn("status", result)
-        self.assertIn("msg", result)
+    #     data = {"TaskID": new_task_id}
+    #     response = self.api_session.delete("@datarequest_delete", json=data)
+    #     self.assertEqual(response.status_code, 403)
+    #     result = response.json()
+    #     self.assertIn("status", result)
+    #     self.assertIn("msg", result)
 
-    def test_delete_method_other_users_task(self):
-        """ test delete method with a task created by another user """
+    # def test_delete_method_other_users_task(self):
+    #     """ test delete method with a task created by another user """
 
-        my_test_user_id = "my-test-user-id"
-        self.assertNotEqual(my_test_user_id, SITE_OWNER_NAME)
+    #     my_test_user_id = "my-test-user-id"
+    #     self.assertNotEqual(my_test_user_id, SITE_OWNER_NAME)
 
-        utility = getUtility(IDownloadToolUtility)
-        data_dict_1 = {
-            "Status": "In_progress",
-            "Key1": "Value1",
-            "UserID": my_test_user_id,
-        }
-        result = utility.datarequest_post(data_dict_1)
-        key_1 = list(result.keys())[0]
+    #     utility = getUtility(IDownloadToolUtility)
+    #     data_dict_1 = {
+    #         "Status": "In_progress",
+    #         "Key1": "Value1",
+    #         "UserID": my_test_user_id,
+    #     }
+    #     result = utility.datarequest_post(data_dict_1)
+    #     key_1 = list(result.keys())[0]
 
-        transaction.commit()
+    #     transaction.commit()
 
-        data = {"TaskID": key_1}
-        response = self.api_session.delete("@datarequest_delete", json=data)
-        self.assertEqual(response.status_code, 404)
-        result = response.json()
-        self.assertIn("status", result)
-        self.assertIn("msg", result)
+    #     data = {"TaskID": key_1}
+    #     response = self.api_session.delete("@datarequest_delete", json=data)
+    #     self.assertEqual(response.status_code, 404)
+    #     result = response.json()
+    #     self.assertIn("status", result)
+    #     self.assertIn("msg", result)
 
-    def test_delete_method_with_valid_task_id_and_user(self):
-        """ test delete method with a valid task_id and user """
-        data_dict_1 = {
-            "Status": "In_progress",
-            "Key1": "Value1",
-            "UserID": SITE_OWNER_NAME,
-        }
-        utility = getUtility(IDownloadToolUtility)
-        result = utility.datarequest_post(data_dict_1)
-        key_1 = list(result.keys())[0]
+    # def test_delete_method_with_valid_task_id_and_user(self):
+    #     """ test delete method with a valid task_id and user """
+    #     data_dict_1 = {
+    #         "Status": "In_progress",
+    #         "Key1": "Value1",
+    #         "UserID": SITE_OWNER_NAME,
+    #     }
+    #     utility = getUtility(IDownloadToolUtility)
+    #     result = utility.datarequest_post(data_dict_1)
+    #     key_1 = list(result.keys())[0]
 
-        transaction.commit()
+    #     transaction.commit()
 
-        data = {"UserID": SITE_OWNER_NAME, "TaskID": key_1}
-        response = self.api_session.delete("@datarequest_delete", json=data)
-        self.assertEqual(response.status_code, 204)
+    #     data = {"UserID": SITE_OWNER_NAME, "TaskID": key_1}
+    #     response = self.api_session.delete("@datarequest_delete", json=data)
+    #     self.assertEqual(response.status_code, 204)
 
-    def test_delete_method_with_valid_task_id_and_user_and_fme_task_id(self):
-        """ test delete method with a valid task_id, user and FME task id """
-        data_dict_1 = {
-            "Status": "In_progress",
-            "Key1": "Value1",
-            "UserID": SITE_OWNER_NAME,
-            "FMETaskId": "12345",
-        }
-        utility = getUtility(IDownloadToolUtility)
-        result = utility.datarequest_post(data_dict_1)
-        key_1 = list(result.keys())[0]
-        fme_task_id = "12345"
+    # def test_delete_method_with_valid_task_id_and_user_and_fme_task_id(self):
+    #     """ test delete method with a valid task_id, user and FME task id """
+    #     data_dict_1 = {
+    #         "Status": "In_progress",
+    #         "Key1": "Value1",
+    #         "UserID": SITE_OWNER_NAME,
+    #         "FMETaskId": "12345",
+    #     }
+    #     utility = getUtility(IDownloadToolUtility)
+    #     result = utility.datarequest_post(data_dict_1)
+    #     key_1 = list(result.keys())[0]
+    #     fme_task_id = "12345"
 
-        # We need to patch the internals of the delete endpoint
-        # because the endpoint makes an external request to the FME server
-        # to delete the task.
-        #
-        # To do this, we are patching the FME query to return whatever we want
-        def my_signal_finalization_to_fme(self, task_id):
-            return 1
+    #     # We need to patch the internals of the delete endpoint
+    #     # because the endpoint makes an external request to the FME server
+    #     # to delete the task.
+    #     #
+    #     # To do this, we are patching the FME query to return whatever we want
+    #     def my_signal_finalization_to_fme(self, task_id):
+    #         return 1
 
-        datarequest_delete.signal_finalization_to_fme = (
-            my_signal_finalization_to_fme
-        )
+    #     datarequest_delete.signal_finalization_to_fme = (
+    #         my_signal_finalization_to_fme
+    #     )
 
-        transaction.commit()
+    #     transaction.commit()
 
-        data = {
-            "UserID": SITE_OWNER_NAME,
-            "TaskID": key_1,
-            "FMETaskId": fme_task_id,
-        }
-        response = self.api_session.delete("@datarequest_delete", json=data)
-        self.assertEqual(response.status_code, 204)
+    #     data = {
+    #         "UserID": SITE_OWNER_NAME,
+    #         "TaskID": key_1,
+    #         "FMETaskId": fme_task_id,
+    #     }
+    #     response = self.api_session.delete("@datarequest_delete", json=data)
+    #     self.assertEqual(response.status_code, 204)

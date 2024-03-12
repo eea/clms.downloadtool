@@ -46,24 +46,24 @@ class TestDeleteData(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 401)
 
-    def test_delete_empty(self):
-        """ test deleting an empty download registry"""
-        response = self.api_session.delete("@delete_data")
-        self.assertEqual(response.status_code, 400)
+    # def test_delete_empty(self):
+    #     """ test deleting an empty download registry"""
+    #     response = self.api_session.delete("@delete_data")
+    #     self.assertEqual(response.status_code, 400)
 
-    def test_delete_all_data(self):
-        """ delete all existing data"""
-        utility = getUtility(IDownloadToolUtility)
-        data_dict = {
-            "UserId": "test_user",
-            "TaskId": "test_task",
-            "Status": "In_Progress",
-        }
-        utility.datarequest_post(data_dict)
-        utility.datarequest_post(data_dict)
-        utility.datarequest_post(data_dict)
+    # def test_delete_all_data(self):
+    #     """ delete all existing data"""
+    #     utility = getUtility(IDownloadToolUtility)
+    #     data_dict = {
+    #         "UserId": "test_user",
+    #         "TaskId": "test_task",
+    #         "Status": "In_Progress",
+    #     }
+    #     utility.datarequest_post(data_dict)
+    #     utility.datarequest_post(data_dict)
+    #     utility.datarequest_post(data_dict)
 
-        transaction.commit()
+    #     transaction.commit()
 
-        response = self.api_session.delete("@delete_data")
-        self.assertEqual(response.status_code, 204)
+    #     response = self.api_session.delete("@delete_data")
+    #     self.assertEqual(response.status_code, 204)

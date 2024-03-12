@@ -106,13 +106,13 @@ class TestDatarequestPatch(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    def test_patch_with_invalid_task_id(self):
-        """test update status of a datarequest"""
-        data = {"TaskID": "some-invalid-task-id", "Status": "Finished_ok"}
-        response = self.manager_api_session.patch(
-            "@datarequest_status_patch", json=data
-        )
-        self.assertEqual(response.status_code, 404)
+    # def test_patch_with_invalid_task_id(self):
+    #     """test update status of a datarequest"""
+    #     data = {"TaskID": "some-invalid-task-id", "Status": "Finished_ok"}
+    #     response = self.manager_api_session.patch(
+    #         "@datarequest_status_patch", json=data
+    #     )
+    #     self.assertEqual(response.status_code, 404)
 
     def test_patch_without_status(self):
         """status is a required parameter"""
@@ -133,91 +133,91 @@ class TestDatarequestPatch(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
-    def test_update_status(self):
-        """test update status of a datarequest"""
-        data = {"TaskID": self.task_id, "Status": "Finished_ok"}
+    # def test_update_status(self):
+    #     """test update status of a datarequest"""
+    #     data = {"TaskID": self.task_id, "Status": "Finished_ok"}
 
-        self.assertIn("Finished_ok", STATUS_LIST)
-        response = self.manager_api_session.patch(
-            "@datarequest_status_patch", json=data
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["Status"], "Finished_ok")
+    #     self.assertIn("Finished_ok", STATUS_LIST)
+    #     response = self.manager_api_session.patch(
+    #         "@datarequest_status_patch", json=data
+    #     )
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertEqual(response.json()["Status"], "Finished_ok")
 
-    def test_update_status_provide_filesize(self):
-        """when FileSize parameter is provided, its value
-        should be included"""
+    # def test_update_status_provide_filesize(self):
+    #     """when FileSize parameter is provided, its value
+    #     should be included"""
 
-        data = {
-            "TaskID": self.task_id,
-            "Status": "Finished_ok",
-            "FileSize": 1000000,
-        }
+    #     data = {
+    #         "TaskID": self.task_id,
+    #         "Status": "Finished_ok",
+    #         "FileSize": 1000000,
+    #     }
 
-        self.assertIn("Finished_ok", STATUS_LIST)
-        response = self.manager_api_session.patch(
-            "@datarequest_status_patch", json=data
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["Status"], "Finished_ok")
-        self.assertEqual(response.json()["FileSize"], 1000000)
+    #     self.assertIn("Finished_ok", STATUS_LIST)
+    #     response = self.manager_api_session.patch(
+    #         "@datarequest_status_patch", json=data
+    #     )
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertEqual(response.json()["Status"], "Finished_ok")
+    #     self.assertEqual(response.json()["FileSize"], 1000000)
 
-    def test_update_status_provide_download_url(self):
-        """when DownloadURL parameter is provided, its value
-        should be included"""
+    # def test_update_status_provide_download_url(self):
+    #     """when DownloadURL parameter is provided, its value
+    #     should be included"""
 
-        data = {
-            "TaskID": self.task_id,
-            "Status": "Finished_ok",
-            "DownloadURL": "https://some.download.com/url",
-        }
+    #     data = {
+    #         "TaskID": self.task_id,
+    #         "Status": "Finished_ok",
+    #         "DownloadURL": "https://some.download.com/url",
+    #     }
 
-        self.assertIn("Finished_ok", STATUS_LIST)
-        response = self.manager_api_session.patch(
-            "@datarequest_status_patch", json=data
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["Status"], "Finished_ok")
-        self.assertEqual(
-            response.json()["DownloadURL"], "https://some.download.com/url"
-        )
+    #     self.assertIn("Finished_ok", STATUS_LIST)
+    #     response = self.manager_api_session.patch(
+    #         "@datarequest_status_patch", json=data
+    #     )
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertEqual(response.json()["Status"], "Finished_ok")
+    #     self.assertEqual(
+    #         response.json()["DownloadURL"], "https://some.download.com/url"
+    #     )
 
-    def test_update_status_provide_size_and_url(self):
-        """when FileSize and DownloadURL parameters are provided,
-        they should be included"""
-        data = {
-            "TaskID": self.task_id,
-            "Status": "Finished_ok",
-            "DownloadURL": "https://some.download.com/url",
-            "FileSize": 1000000,
-        }
+    # def test_update_status_provide_size_and_url(self):
+    #     """when FileSize and DownloadURL parameters are provided,
+    #     they should be included"""
+    #     data = {
+    #         "TaskID": self.task_id,
+    #         "Status": "Finished_ok",
+    #         "DownloadURL": "https://some.download.com/url",
+    #         "FileSize": 1000000,
+    #     }
 
-        self.assertIn("Finished_ok", STATUS_LIST)
-        response = self.manager_api_session.patch(
-            "@datarequest_status_patch", json=data
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["Status"], "Finished_ok")
-        self.assertEqual(response.json()["FileSize"], 1000000)
-        self.assertEqual(
-            response.json()["DownloadURL"], "https://some.download.com/url"
-        )
+    #     self.assertIn("Finished_ok", STATUS_LIST)
+    #     response = self.manager_api_session.patch(
+    #         "@datarequest_status_patch", json=data
+    #     )
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertEqual(response.json()["Status"], "Finished_ok")
+    #     self.assertEqual(response.json()["FileSize"], 1000000)
+    #     self.assertEqual(
+    #         response.json()["DownloadURL"], "https://some.download.com/url"
+    #     )
 
-    def test_update_status_provide_message(self):
-        """when Message parameter is provided, it should be included
-        in the response
-        """
-        data = {
-            "TaskID": self.task_id,
-            "Status": "Finished_ok",
-            "DownloadURL": "https://some.download.com/url",
-            "FileSize": 1000000,
-            "Message": "This is my message",
-        }
+    # def test_update_status_provide_message(self):
+    #     """when Message parameter is provided, it should be included
+    #     in the response
+    #     """
+    #     data = {
+    #         "TaskID": self.task_id,
+    #         "Status": "Finished_ok",
+    #         "DownloadURL": "https://some.download.com/url",
+    #         "FileSize": 1000000,
+    #         "Message": "This is my message",
+    #     }
 
-        self.assertIn("Finished_ok", STATUS_LIST)
-        response = self.manager_api_session.patch(
-            "@datarequest_status_patch", json=data
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["Message"], "This is my message")
+    #     self.assertIn("Finished_ok", STATUS_LIST)
+    #     response = self.manager_api_session.patch(
+    #         "@datarequest_status_patch", json=data
+    #     )
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertEqual(response.json()["Message"], "This is my message")

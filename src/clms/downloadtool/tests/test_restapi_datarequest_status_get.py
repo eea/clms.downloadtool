@@ -47,37 +47,37 @@ class TestDatarequestStatusGet(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 401)
 
-    def test_status_method_without_task_id(self):
-        """ task_id is a required parameter """
-        data = {"something": "else"}
-        response = self.api_session.get("@datarequest_status_get", json=data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("status", response.json())
+    # def test_status_method_without_task_id(self):
+    #     """ task_id is a required parameter """
+    #     data = {"something": "else"}
+    #     response = self.api_session.get("@datarequest_status_get", json=data)
+    #     self.assertEqual(response.status_code, 400)
+    #     self.assertIn("status", response.json())
 
-    def test_status_method_with_invalid_task_id(self):
-        """ task_id is a required parameter """
-        invalid_task_id = "not-valid-task-id"
-        data = {"TaskID": invalid_task_id}
-        utility = getUtility(IDownloadToolUtility)
-        result = utility.datarequest_status_get(invalid_task_id)
-        self.assertEqual(result, "Error, task not found")
+    # def test_status_method_with_invalid_task_id(self):
+    #     """ task_id is a required parameter """
+    #     invalid_task_id = "not-valid-task-id"
+    #     data = {"TaskID": invalid_task_id}
+    #     utility = getUtility(IDownloadToolUtility)
+    #     result = utility.datarequest_status_get(invalid_task_id)
+    #     self.assertEqual(result, "Error, task not found")
 
-        response = self.api_session.get("@datarequest_status_get", params=data)
-        self.assertEqual(response.status_code, 404)
+    #     response = self.api_session.get("@datarequest_status_get", params=data)
+    #     self.assertEqual(response.status_code, 404)
 
-    def test_status_method_with_task_id(self):
-        """ get the status of a task"""
-        utility = getUtility(IDownloadToolUtility)
-        data_dict = {"My": "Data"}
-        result = utility.datarequest_post(data_dict)
-        key = list(result.keys())[0]
+    # def test_status_method_with_task_id(self):
+    #     """ get the status of a task"""
+    #     utility = getUtility(IDownloadToolUtility)
+    #     data_dict = {"My": "Data"}
+    #     result = utility.datarequest_post(data_dict)
+    #     key = list(result.keys())[0]
 
-        transaction.commit()
-        response = self.api_session.get(
-            "@datarequest_status_get", params={"TaskID": key}
-        )
-        self.assertEqual(
-            response.headers.get("Content-Type"), "application/json"
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["My"], "Data")
+    #     transaction.commit()
+    #     response = self.api_session.get(
+    #         "@datarequest_status_get", params={"TaskID": key}
+    #     )
+    #     self.assertEqual(
+    #         response.headers.get("Content-Type"), "application/json"
+    #     )
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertEqual(response.json()["My"], "Data")

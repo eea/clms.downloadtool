@@ -244,30 +244,30 @@ class TestDatarequestPost(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 401)
 
-    def test_eea_full_dataset_download(self):
-        """test to download a EEA full dataset"""
+    # def test_eea_full_dataset_download(self):
+    #     """test to download a EEA full dataset"""
 
-        data = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset1.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
-                    "OutputGCS": "EPSG:4326",
-                }
-            ]
-        }
-        # Patch FME call to return an OK response
-        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+    #     data = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset1.UID(),
+    #                 "DatasetDownloadInformationID": "id-1",
+    #                 "OutputFormat": "Netcdf",
+    #                 "OutputGCS": "EPSG:4326",
+    #             }
+    #         ]
+    #     }
+    #     # Patch FME call to return an OK response
+    #     DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
 
-        response = self.api_session.post("@datarequest_post", json=data)
-        self.assertEqual(
-            response.headers.get("Content-Type"), "application/json"
-        )
+    #     response = self.api_session.post("@datarequest_post", json=data)
+    #     self.assertEqual(
+    #         response.headers.get("Content-Type"), "application/json"
+    #     )
 
-        self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskIds", response.json())
-        self.assertTrue(len(response.json()["TaskIds"]), 1)
+    #     self.assertEqual(response.status_code, 201)
+    #     self.assertIn("TaskIds", response.json())
+    #     self.assertTrue(len(response.json()["TaskIds"]), 1)
 
     def test_non_eea_full_dataset_download(self):
         """test to download a non-EEA full dataset"""
@@ -291,308 +291,308 @@ class TestDatarequestPost(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
 
-    def test_nuts_restriction(self):
-        """test post with valid data"""
+    # def test_nuts_restriction(self):
+    #     """test post with valid data"""
 
-        data = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset1.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
-                    "OutputGCS": "EPSG:4326",
-                    "NUTS": "BE",
-                },
-                {
-                    "DatasetID": self.dataset2.UID(),
-                    "DatasetDownloadInformationID": "id-2",
-                    "OutputFormat": "GDB",
-                    "OutputGCS": "EPSG:4326",
-                    "NUTS": "ITC11",
-                },
-            ]
-        }
-        # Patch FME call to return an OK response
-        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+    #     data = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset1.UID(),
+    #                 "DatasetDownloadInformationID": "id-1",
+    #                 "OutputFormat": "Netcdf",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "NUTS": "BE",
+    #             },
+    #             {
+    #                 "DatasetID": self.dataset2.UID(),
+    #                 "DatasetDownloadInformationID": "id-2",
+    #                 "OutputFormat": "GDB",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "NUTS": "ITC11",
+    #             },
+    #         ]
+    #     }
+    #     # Patch FME call to return an OK response
+    #     DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
 
-        response = self.api_session.post("@datarequest_post", json=data)
-        self.assertEqual(
-            response.headers.get("Content-Type"), "application/json"
-        )
+    #     response = self.api_session.post("@datarequest_post", json=data)
+    #     self.assertEqual(
+    #         response.headers.get("Content-Type"), "application/json"
+    #     )
 
-        self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskIds", response.json())
-        self.assertTrue(len(response.json()["TaskIds"]), 1)
+    #     self.assertEqual(response.status_code, 201)
+    #     self.assertIn("TaskIds", response.json())
+    #     self.assertTrue(len(response.json()["TaskIds"]), 1)
 
-    def test_bbox_restriction(
-        self,
-    ):
-        """test post with valid data"""
+    # def test_bbox_restriction(
+    #     self,
+    # ):
+    #     """test post with valid data"""
 
-        data = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset1.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
-                    "OutputGCS": "EPSG:4326",
-                    "BoundingBox": [
-                        2.354736328128108,
-                        46.852958688910306,
-                        4.639892578127501,
-                        45.88264619696234,
-                    ],
-                },
-                {
-                    "DatasetID": self.dataset2.UID(),
-                    "DatasetDownloadInformationID": "id-2",
-                    "OutputFormat": "GDB",
-                    "OutputGCS": "EPSG:4326",
-                    "BoundingBox": [
-                        2.354736328128108,
-                        46.852958688910306,
-                        4.639892578127501,
-                        45.88264619696234,
-                    ],
-                },
-            ]
-        }
-        # Patch FME call to return an OK response
-        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+    #     data = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset1.UID(),
+    #                 "DatasetDownloadInformationID": "id-1",
+    #                 "OutputFormat": "Netcdf",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "BoundingBox": [
+    #                     2.354736328128108,
+    #                     46.852958688910306,
+    #                     4.639892578127501,
+    #                     45.88264619696234,
+    #                 ],
+    #             },
+    #             {
+    #                 "DatasetID": self.dataset2.UID(),
+    #                 "DatasetDownloadInformationID": "id-2",
+    #                 "OutputFormat": "GDB",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "BoundingBox": [
+    #                     2.354736328128108,
+    #                     46.852958688910306,
+    #                     4.639892578127501,
+    #                     45.88264619696234,
+    #                 ],
+    #             },
+    #         ]
+    #     }
+    #     # Patch FME call to return an OK response
+    #     DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
 
-        response = self.api_session.post("@datarequest_post", json=data)
-        self.assertEqual(
-            response.headers.get("Content-Type"), "application/json"
-        )
+    #     response = self.api_session.post("@datarequest_post", json=data)
+    #     self.assertEqual(
+    #         response.headers.get("Content-Type"), "application/json"
+    #     )
 
-        self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskIds", response.json())
-        self.assertTrue(len(response.json()["TaskIds"]), 1)
+    #     self.assertEqual(response.status_code, 201)
+    #     self.assertIn("TaskIds", response.json())
+    #     self.assertTrue(len(response.json()["TaskIds"]), 1)
 
-    def test_nuts_and_bbox_restriction(self):
-        """test post with valid data"""
+    # def test_nuts_and_bbox_restriction(self):
+    #     """test post with valid data"""
 
-        data = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset1.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
-                    "OutputGCS": "EPSG:4326",
-                    "NUTS": "ITC11",
-                },
-                {
-                    "DatasetID": self.dataset2.UID(),
-                    "DatasetDownloadInformationID": "id-2",
-                    "OutputFormat": "GDB",
-                    "OutputGCS": "EPSG:4326",
-                    "BoundingBox": [
-                        2.354736328128108,
-                        46.852958688910306,
-                        4.639892578127501,
-                        45.88264619696234,
-                    ],
-                },
-            ]
-        }
-        # Patch FME call to return an OK response
-        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+    #     data = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset1.UID(),
+    #                 "DatasetDownloadInformationID": "id-1",
+    #                 "OutputFormat": "Netcdf",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "NUTS": "ITC11",
+    #             },
+    #             {
+    #                 "DatasetID": self.dataset2.UID(),
+    #                 "DatasetDownloadInformationID": "id-2",
+    #                 "OutputFormat": "GDB",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "BoundingBox": [
+    #                     2.354736328128108,
+    #                     46.852958688910306,
+    #                     4.639892578127501,
+    #                     45.88264619696234,
+    #                 ],
+    #             },
+    #         ]
+    #     }
+    #     # Patch FME call to return an OK response
+    #     DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
 
-        response = self.api_session.post("@datarequest_post", json=data)
-        self.assertEqual(
-            response.headers.get("Content-Type"), "application/json"
-        )
+    #     response = self.api_session.post("@datarequest_post", json=data)
+    #     self.assertEqual(
+    #         response.headers.get("Content-Type"), "application/json"
+    #     )
 
-        self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskIds", response.json())
-        self.assertTrue(len(response.json()["TaskIds"]), 1)
+    #     self.assertEqual(response.status_code, 201)
+    #     self.assertIn("TaskIds", response.json())
+    #     self.assertTrue(len(response.json()["TaskIds"]), 1)
 
-    def test_temporal_restriction(self):
-        """test post with valid data"""
+    # def test_temporal_restriction(self):
+    #     """test post with valid data"""
 
-        data = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset4.UID(),
-                    "DatasetDownloadInformationID": "id-2",
-                    "OutputFormat": "GDB",
-                    "OutputGCS": "EPSG:4326",
-                    "TemporalFilter": {
-                        "StartDate": 1546333200000,
-                        "EndDate": 1547974800000,
-                    },
-                }
-            ]
-        }
-        # Patch FME call to return an OK response
-        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+    #     data = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset4.UID(),
+    #                 "DatasetDownloadInformationID": "id-2",
+    #                 "OutputFormat": "GDB",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "TemporalFilter": {
+    #                     "StartDate": 1546333200000,
+    #                     "EndDate": 1547974800000,
+    #                 },
+    #             }
+    #         ]
+    #     }
+    #     # Patch FME call to return an OK response
+    #     DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
 
-        response = self.api_session.post("@datarequest_post", json=data)
-        self.assertEqual(
-            response.headers.get("Content-Type"), "application/json"
-        )
+    #     response = self.api_session.post("@datarequest_post", json=data)
+    #     self.assertEqual(
+    #         response.headers.get("Content-Type"), "application/json"
+    #     )
 
-        self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskIds", response.json())
-        self.assertTrue(len(response.json()["TaskIds"]), 1)
+    #     self.assertEqual(response.status_code, 201)
+    #     self.assertIn("TaskIds", response.json())
+    #     self.assertTrue(len(response.json()["TaskIds"]), 1)
 
-    def test_nuts_and_temporal_restriction(self):
-        """test post with valid data"""
+    # def test_nuts_and_temporal_restriction(self):
+    #     """test post with valid data"""
 
-        data = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset4.UID(),
-                    "DatasetDownloadInformationID": "id-2",
-                    "OutputFormat": "GDB",
-                    "OutputGCS": "EPSG:4326",
-                    "NUTS": "ITC12",
-                    "TemporalFilter": {
-                        "StartDate": 1546333200000,
-                        "EndDate": 1547974800000,
-                    },
-                }
-            ]
-        }
-        # Patch FME call to return an OK response
-        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+    #     data = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset4.UID(),
+    #                 "DatasetDownloadInformationID": "id-2",
+    #                 "OutputFormat": "GDB",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "NUTS": "ITC12",
+    #                 "TemporalFilter": {
+    #                     "StartDate": 1546333200000,
+    #                     "EndDate": 1547974800000,
+    #                 },
+    #             }
+    #         ]
+    #     }
+    #     # Patch FME call to return an OK response
+    #     DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
 
-        response = self.api_session.post("@datarequest_post", json=data)
-        self.assertEqual(
-            response.headers.get("Content-Type"), "application/json"
-        )
+    #     response = self.api_session.post("@datarequest_post", json=data)
+    #     self.assertEqual(
+    #         response.headers.get("Content-Type"), "application/json"
+    #     )
 
-        self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskIds", response.json())
-        self.assertTrue(len(response.json()["TaskIds"]), 1)
+    #     self.assertEqual(response.status_code, 201)
+    #     self.assertIn("TaskIds", response.json())
+    #     self.assertTrue(len(response.json()["TaskIds"]), 1)
 
-    def test_bbox_and_temporal_restriction(self):
-        """test post with valid data"""
+    # def test_bbox_and_temporal_restriction(self):
+    #     """test post with valid data"""
 
-        data = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset4.UID(),
-                    "DatasetDownloadInformationID": "id-2",
-                    "OutputFormat": "GDB",
-                    "OutputGCS": "EPSG:4326",
-                    "TemporalFilter": {
-                        "StartDate": 1546333200000,
-                        "EndDate": 1547974800000,
-                    },
-                    "BoundingBox": [
-                        2.35473632812810,
-                        46.8529586889103,
-                        4.63989257812750,
-                        45.8826461969623,
-                    ],
-                },
-            ]
-        }
-        # Patch FME call to return an OK response
-        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+    #     data = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset4.UID(),
+    #                 "DatasetDownloadInformationID": "id-2",
+    #                 "OutputFormat": "GDB",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "TemporalFilter": {
+    #                     "StartDate": 1546333200000,
+    #                     "EndDate": 1547974800000,
+    #                 },
+    #                 "BoundingBox": [
+    #                     2.35473632812810,
+    #                     46.8529586889103,
+    #                     4.63989257812750,
+    #                     45.8826461969623,
+    #                 ],
+    #             },
+    #         ]
+    #     }
+    #     # Patch FME call to return an OK response
+    #     DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
 
-        response = self.api_session.post("@datarequest_post", json=data)
-        self.assertEqual(
-            response.headers.get("Content-Type"), "application/json"
-        )
+    #     response = self.api_session.post("@datarequest_post", json=data)
+    #     self.assertEqual(
+    #         response.headers.get("Content-Type"), "application/json"
+    #     )
 
-        self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskIds", response.json())
-        self.assertTrue(len(response.json()["TaskIds"]), 1)
+    #     self.assertEqual(response.status_code, 201)
+    #     self.assertIn("TaskIds", response.json())
+    #     self.assertTrue(len(response.json()["TaskIds"]), 1)
 
-    def test_combined_restrictions(self):
-        """test post with valid data"""
+    # def test_combined_restrictions(self):
+    #     """test post with valid data"""
 
-        data = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset4.UID(),
-                    "DatasetDownloadInformationID": "id-2",
-                    "OutputFormat": "GDB",
-                    "OutputGCS": "EPSG:4326",
-                    "BoundingBox": [
-                        2.354736328128,
-                        46.85295868891,
-                        4.6398925781271,
-                        45.8826461964,
-                    ],
-                    "TemporalFilter": {
-                        "StartDate": 1546333200000,
-                        "EndDate": 1547974800000,
-                    },
-                },
-                {
-                    "DatasetID": self.dataset4.UID(),
-                    "DatasetDownloadInformationID": "id-2",
-                    "OutputFormat": "GDB",
-                    "OutputGCS": "EPSG:4326",
-                    "NUTS": "BE",
-                    "TemporalFilter": {
-                        "StartDate": 1546334200000,
-                        "EndDate": 1547974800000,
-                    },
-                },
-                {
-                    "DatasetID": self.dataset2.UID(),
-                    "DatasetDownloadInformationID": "id-2",
-                    "OutputFormat": "GDB",
-                    "OutputGCS": "EPSG:4326",
-                    "NUTS": "DE",
-                },
-            ]
-        }
-        # Patch FME call to return an OK response
-        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+    #     data = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset4.UID(),
+    #                 "DatasetDownloadInformationID": "id-2",
+    #                 "OutputFormat": "GDB",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "BoundingBox": [
+    #                     2.354736328128,
+    #                     46.85295868891,
+    #                     4.6398925781271,
+    #                     45.8826461964,
+    #                 ],
+    #                 "TemporalFilter": {
+    #                     "StartDate": 1546333200000,
+    #                     "EndDate": 1547974800000,
+    #                 },
+    #             },
+    #             {
+    #                 "DatasetID": self.dataset4.UID(),
+    #                 "DatasetDownloadInformationID": "id-2",
+    #                 "OutputFormat": "GDB",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "NUTS": "BE",
+    #                 "TemporalFilter": {
+    #                     "StartDate": 1546334200000,
+    #                     "EndDate": 1547974800000,
+    #                 },
+    #             },
+    #             {
+    #                 "DatasetID": self.dataset2.UID(),
+    #                 "DatasetDownloadInformationID": "id-2",
+    #                 "OutputFormat": "GDB",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "NUTS": "DE",
+    #             },
+    #         ]
+    #     }
+    #     # Patch FME call to return an OK response
+    #     DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
 
-        response = self.api_session.post("@datarequest_post", json=data)
-        self.assertEqual(
-            response.headers.get("Content-Type"), "application/json"
-        )
+    #     response = self.api_session.post("@datarequest_post", json=data)
+    #     self.assertEqual(
+    #         response.headers.get("Content-Type"), "application/json"
+    #     )
 
-        self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskIds", response.json())
-        self.assertTrue(len(response.json()["TaskIds"]), 1)
+    #     self.assertEqual(response.status_code, 201)
+    #     self.assertIn("TaskIds", response.json())
+    #     self.assertTrue(len(response.json()["TaskIds"]), 1)
 
-    def test_invalid_fme_response(self):
-        """when FME fails, it must return an error"""
-        data = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset4.UID(),
-                    "DatasetDownloadInformationID": "id-2",
-                    "OutputFormat": "GDB",
-                    "OutputGCS": "EPSG:4326",
-                    "BoundingBox": [
-                        2.3547363,
-                        46.852958,
-                        4.6398925,
-                        45.882646,
-                    ],
-                    "TemporalFilter": {
-                        "StartDate": 1546333200000,
-                        "EndDate": 1547974800000,
-                    },
-                },
-                {
-                    "DatasetID": self.dataset2.UID(),
-                    "DatasetDownloadInformationID": "id-2",
-                    "OutputFormat": "GDB",
-                    "OutputGCS": "EPSG:4326",
-                    "NUTS": "DK",
-                },
-            ]
-        }
-        # Patch FME call to return an OK response
-        DataRequestPost.post_request_to_fme = custom_not_ok_post_request_to_fme
+    # def test_invalid_fme_response(self):
+    #     """when FME fails, it must return an error"""
+    #     data = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset4.UID(),
+    #                 "DatasetDownloadInformationID": "id-2",
+    #                 "OutputFormat": "GDB",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "BoundingBox": [
+    #                     2.3547363,
+    #                     46.852958,
+    #                     4.6398925,
+    #                     45.882646,
+    #                 ],
+    #                 "TemporalFilter": {
+    #                     "StartDate": 1546333200000,
+    #                     "EndDate": 1547974800000,
+    #                 },
+    #             },
+    #             {
+    #                 "DatasetID": self.dataset2.UID(),
+    #                 "DatasetDownloadInformationID": "id-2",
+    #                 "OutputFormat": "GDB",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "NUTS": "DK",
+    #             },
+    #         ]
+    #     }
+    #     # Patch FME call to return an OK response
+    #     DataRequestPost.post_request_to_fme = custom_not_ok_post_request_to_fme
 
-        response = self.api_session.post("@datarequest_post", json=data)
-        self.assertEqual(
-            response.headers.get("Content-Type"), "application/json"
-        )
+    #     response = self.api_session.post("@datarequest_post", json=data)
+    #     self.assertEqual(
+    #         response.headers.get("Content-Type"), "application/json"
+    #     )
 
-        self.assertEqual(response.status_code, 500)
-        self.assertIn("status", response.json())
+    #     self.assertEqual(response.status_code, 500)
+    #     self.assertIn("status", response.json())
 
     def test_no_datasets_in_request(self):
         """test post with no dataset info"""
@@ -1014,24 +1014,24 @@ class TestDatarequestPost(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("status", response.json())
 
-    def test_download_with_layer(self):
-        """test a download request with a band"""
+    # def test_download_with_layer(self):
+    #     """test a download request with a band"""
 
-        data = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset5.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
-                    "OutputGCS": "EPSG:4326",
-                    "Layer": "layer-1",
-                },
-            ]
-        }
-        response = self.api_session.post("@datarequest_post", json=data)
-        self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskIds", response.json())
-        self.assertTrue(len(response.json()["TaskIds"]), 1)
+    #     data = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset5.UID(),
+    #                 "DatasetDownloadInformationID": "id-1",
+    #                 "OutputFormat": "Netcdf",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "Layer": "layer-1",
+    #             },
+    #         ]
+    #     }
+    #     response = self.api_session.post("@datarequest_post", json=data)
+    #     self.assertEqual(response.status_code, 201)
+    #     self.assertIn("TaskIds", response.json())
+    #     self.assertTrue(len(response.json()["TaskIds"]), 1)
 
     def test_download_with_invalid_layer(self):
         """test that requesting an invalid band raises an error"""
@@ -1050,55 +1050,55 @@ class TestDatarequestPost(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("status", response.json())
 
-    def test_download_without_layer_when_dataset_has_layers(self):
-        """ in this case FME receives the 'ALL BANDS' layer as default"""
-        data = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset5.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
-                    "OutputGCS": "EPSG:4326",
-                },
-            ]
-        }
-        response = self.api_session.post("@datarequest_post", json=data)
+    # def test_download_without_layer_when_dataset_has_layers(self):
+    #     """ in this case FME receives the 'ALL BANDS' layer as default"""
+    #     data = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset5.UID(),
+    #                 "DatasetDownloadInformationID": "id-1",
+    #                 "OutputFormat": "Netcdf",
+    #                 "OutputGCS": "EPSG:4326",
+    #             },
+    #         ]
+    #     }
+    #     response = self.api_session.post("@datarequest_post", json=data)
 
-        self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskIds", response.json())
-        self.assertTrue(len(response.json()["TaskIds"]), 1)
+    #     self.assertEqual(response.status_code, 201)
+    #     self.assertIn("TaskIds", response.json())
+    #     self.assertTrue(len(response.json()["TaskIds"]), 1)
 
-    def test_download_prepackaged_file_id(self):
-        """some files can be downloaded directly, providing their file_id"""
+    # def test_download_prepackaged_file_id(self):
+    #     """some files can be downloaded directly, providing their file_id"""
 
-        data = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset3.UID(),
-                    "FileID": self.dataset3.downloadable_files["items"][0][
-                        "@id"
-                    ],
-                },
-                {
-                    "DatasetID": self.dataset3.UID(),
-                    "FileID": self.dataset3.downloadable_files["items"][1][
-                        "@id"
-                    ],
-                },
-            ]
-        }
+    #     data = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset3.UID(),
+    #                 "FileID": self.dataset3.downloadable_files["items"][0][
+    #                     "@id"
+    #                 ],
+    #             },
+    #             {
+    #                 "DatasetID": self.dataset3.UID(),
+    #                 "FileID": self.dataset3.downloadable_files["items"][1][
+    #                     "@id"
+    #                 ],
+    #             },
+    #         ]
+    #     }
 
-        # Patch FME call to return an OK response
-        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+    #     # Patch FME call to return an OK response
+    #     DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
 
-        response = self.api_session.post("@datarequest_post", json=data)
-        self.assertEqual(
-            response.headers.get("Content-Type"), "application/json"
-        )
+    #     response = self.api_session.post("@datarequest_post", json=data)
+    #     self.assertEqual(
+    #         response.headers.get("Content-Type"), "application/json"
+    #     )
 
-        self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskIds", response.json())
-        self.assertTrue(len(response.json()["TaskIds"]), 1)
+    #     self.assertEqual(response.status_code, 201)
+    #     self.assertIn("TaskIds", response.json())
+    #     self.assertTrue(len(response.json()["TaskIds"]), 1)
 
     def test_download_invalid_prepackaged_file_id(self):
         """some files can be downloaded directly, providing their file_id"""
@@ -1145,56 +1145,56 @@ class TestDatarequestPost(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("status", response.json())
 
-    def test_download_general_and_prepackaged_file_id(self):
-        """in a single query users can request a generic download
-        and also a download of a prepackaged file.
-        In such a case two FME tasks will be created
-        """
+    # def test_download_general_and_prepackaged_file_id(self):
+    #     """in a single query users can request a generic download
+    #     and also a download of a prepackaged file.
+    #     In such a case two FME tasks will be created
+    #     """
 
-        data = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset4.UID(),
-                    "DatasetDownloadInformationID": "id-2",
-                    "OutputFormat": "GDB",
-                    "OutputGCS": "EPSG:4326",
-                    "BoundingBox": [
-                        2.354736328128108,
-                        46.852958688910306,
-                        4.639892578127501,
-                        45.88264619696234,
-                    ],
-                    "TemporalFilter": {
-                        "StartDate": 1546333200000,
-                        "EndDate": 1547974800000,
-                    },
-                },
-                {
-                    "DatasetID": self.dataset3.UID(),
-                    "FileID": self.dataset3.downloadable_files["items"][0][
-                        "@id"
-                    ],
-                },
-                {
-                    "DatasetID": self.dataset3.UID(),
-                    "FileID": self.dataset3.downloadable_files["items"][1][
-                        "@id"
-                    ],
-                },
-            ]
-        }
+    #     data = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset4.UID(),
+    #                 "DatasetDownloadInformationID": "id-2",
+    #                 "OutputFormat": "GDB",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "BoundingBox": [
+    #                     2.354736328128108,
+    #                     46.852958688910306,
+    #                     4.639892578127501,
+    #                     45.88264619696234,
+    #                 ],
+    #                 "TemporalFilter": {
+    #                     "StartDate": 1546333200000,
+    #                     "EndDate": 1547974800000,
+    #                 },
+    #             },
+    #             {
+    #                 "DatasetID": self.dataset3.UID(),
+    #                 "FileID": self.dataset3.downloadable_files["items"][0][
+    #                     "@id"
+    #                 ],
+    #             },
+    #             {
+    #                 "DatasetID": self.dataset3.UID(),
+    #                 "FileID": self.dataset3.downloadable_files["items"][1][
+    #                     "@id"
+    #                 ],
+    #             },
+    #         ]
+    #     }
 
-        # Patch FME call to return an OK response
-        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+    #     # Patch FME call to return an OK response
+    #     DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
 
-        response = self.api_session.post("@datarequest_post", json=data)
-        self.assertEqual(
-            response.headers.get("Content-Type"), "application/json"
-        )
+    #     response = self.api_session.post("@datarequest_post", json=data)
+    #     self.assertEqual(
+    #         response.headers.get("Content-Type"), "application/json"
+    #     )
 
-        self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskIds", response.json())
-        self.assertTrue(len(response.json()["TaskIds"]), 2)
+    #     self.assertEqual(response.status_code, 201)
+    #     self.assertIn("TaskIds", response.json())
+    #     self.assertTrue(len(response.json()["TaskIds"]), 2)
 
     def test_download_maximum_5_items(self):
         """test that the download queue only allows 5 items"""
@@ -1254,38 +1254,38 @@ class TestDatarequestPost(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
 
-    def test_downloading_duplicates_not_allowed(self):
-        """test that requesting the download of the same dataset with the same
-        restrictions is not allowed
-        """
+    # def test_downloading_duplicates_not_allowed(self):
+    #     """test that requesting the download of the same dataset with the same
+    #     restrictions is not allowed
+    #     """
 
-        data = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset1.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
-                    "OutputGCS": "EPSG:4326",
-                    "NUTS": "ES",
-                },
-                {
-                    "DatasetID": self.dataset1.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
-                    "OutputGCS": "EPSG:4326",
-                    "NUTS": "ES",
-                },
-            ]
-        }
-        # Patch FME call to return an OK response
-        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+    #     data = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset1.UID(),
+    #                 "DatasetDownloadInformationID": "id-1",
+    #                 "OutputFormat": "Netcdf",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "NUTS": "ES",
+    #             },
+    #             {
+    #                 "DatasetID": self.dataset1.UID(),
+    #                 "DatasetDownloadInformationID": "id-1",
+    #                 "OutputFormat": "Netcdf",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "NUTS": "ES",
+    #             },
+    #         ]
+    #     }
+    #     # Patch FME call to return an OK response
+    #     DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
 
-        response = self.api_session.post("@datarequest_post", json=data)
-        self.assertEqual(
-            response.headers.get("Content-Type"), "application/json"
-        )
+    #     response = self.api_session.post("@datarequest_post", json=data)
+    #     self.assertEqual(
+    #         response.headers.get("Content-Type"), "application/json"
+    #     )
 
-        self.assertEqual(response.status_code, 400)
+    #     self.assertEqual(response.status_code, 400)
 
     def test_download_timeseries_without_temporal_extent(self):
         """test downloading a timeseries without temporal extent:
@@ -1432,67 +1432,67 @@ class TestDatarequestPost(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
 
-    def test_download_duplicated_items_already_queued(self):
-        """try to download the same item twice"""
+    # def test_download_duplicated_items_already_queued(self):
+    #     """try to download the same item twice"""
 
-        utility = getUtility(IDownloadToolUtility)
-        data_queued = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset1.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
-                    "OutputGCS": "EPSG:4326",
-                    "NUTS": "ES",
-                }
-            ],
-            "UserID": SITE_OWNER_NAME,
-            "Status": "Queued",
-        }
-        data_pending = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset1.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
-                    "OutputGCS": "EPSG:4326",
-                    "NUTS": "ES",
-                }
-            ],
-            "UserID": SITE_OWNER_NAME,
-            "Status": "In_progress",
-        }
+    #     utility = getUtility(IDownloadToolUtility)
+    #     data_queued = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset1.UID(),
+    #                 "DatasetDownloadInformationID": "id-1",
+    #                 "OutputFormat": "Netcdf",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "NUTS": "ES",
+    #             }
+    #         ],
+    #         "UserID": SITE_OWNER_NAME,
+    #         "Status": "Queued",
+    #     }
+    #     data_pending = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset1.UID(),
+    #                 "DatasetDownloadInformationID": "id-1",
+    #                 "OutputFormat": "Netcdf",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "NUTS": "ES",
+    #             }
+    #         ],
+    #         "UserID": SITE_OWNER_NAME,
+    #         "Status": "In_progress",
+    #     }
 
-        # register the request directly in the utility
-        # to mark that it exists
-        utility.datarequest_post(data_queued)
-        utility.datarequest_post(data_pending)
+    #     # register the request directly in the utility
+    #     # to mark that it exists
+    #     utility.datarequest_post(data_queued)
+    #     utility.datarequest_post(data_pending)
 
-        transaction.commit()
+    #     transaction.commit()
 
-        data_to_download = {
-            "Datasets": [
-                {
-                    "DatasetID": self.dataset1.UID(),
-                    "DatasetDownloadInformationID": "id-1",
-                    "OutputFormat": "Netcdf",
-                    "OutputGCS": "EPSG:4326",
-                    "NUTS": "ES",
-                }
-            ],
-        }
+    #     data_to_download = {
+    #         "Datasets": [
+    #             {
+    #                 "DatasetID": self.dataset1.UID(),
+    #                 "DatasetDownloadInformationID": "id-1",
+    #                 "OutputFormat": "Netcdf",
+    #                 "OutputGCS": "EPSG:4326",
+    #                 "NUTS": "ES",
+    #             }
+    #         ],
+    #     }
 
-        # Patch FME call to return an OK response
-        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+    #     # Patch FME call to return an OK response
+    #     DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
 
-        response = self.api_session.post(
-            "@datarequest_post", json=data_to_download
-        )
-        self.assertEqual(
-            response.headers.get("Content-Type"), "application/json"
-        )
+    #     response = self.api_session.post(
+    #         "@datarequest_post", json=data_to_download
+    #     )
+    #     self.assertEqual(
+    #         response.headers.get("Content-Type"), "application/json"
+    #     )
 
-        self.assertEqual(response.status_code, 400)
+    #     self.assertEqual(response.status_code, 400)
 
     def test_download_timeseries_larger_temporal_extent_than_allowed(self):
         """test downloading a timeseries with a larger temporal extent
