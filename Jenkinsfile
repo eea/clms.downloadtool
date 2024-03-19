@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-        GIT_NAME = "clms.addon"
+        GIT_NAME = "clms.downloadtool"
         SONARQUBE_TAGS = "clmsdemo.devel6cph.eea.europa.eu,land.copernicus.eu"
     }
 
