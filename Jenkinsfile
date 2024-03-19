@@ -107,7 +107,7 @@ pipeline {
                 // sh '''mkdir -p xunit-reports'''
                 try {
                   sh '''docker pull eeacms/plone-test:6'''
-                  sh '''docker run -i --name="$BUILD_TAG-python3" -e GIT_USER="eea" -e GIT_NAME=eea/$GIT_NAME -e GIT_BRANCH="$BRANCH_NAME" -e ADDONS="eea/$GIT_NAME[test]" -e DEVELOP="eea/$GIT_NAME/src" -e GIT_CHANGE_ID="$CHANGE_ID" -e PIP_PARAMS="-f https://eggrepo.eea.europa.eu/simple/ -f https://code.codesyntax.com/static/public/" eeacms/plone-test:6'''
+                  sh '''docker run -i --name="$BUILD_TAG-python3" -e GIT_USER="eea" -e GIT_NAME=$GIT_NAME -e GIT_BRANCH="$BRANCH_NAME" -e ADDONS="$GIT_NAME[test]" -e DEVELOP="/app/eea/$GIT_NAME" -e GIT_CHANGE_ID="$CHANGE_ID" -e PIP_PARAMS="-f https://eggrepo.eea.europa.eu/simple/ -f https://code.codesyntax.com/static/public/" eeacms/plone-test:6'''
                   // sh '''docker cp $BUILD_TAG-python3:/plone/instance/parts/xmltestreport/testreports/. xunit-reports/'''
                   // stash name: "xunit-reports", includes: "xunit-reports/*.xml"
                   // sh '''docker cp $BUILD_TAG-python3:/plone/instance/src/$GIT_NAME/coverage.xml coverage.xml'''
@@ -141,7 +141,7 @@ pipeline {
     //         def nodeJS = tool 'NodeJS11';
     //         withSonarQubeEnv('Sonarqube') {
     //             sh '''sed -i "s|/plone/instance/src/$GIT_NAME|$(pwd)|g" coverage.xml'''
-    //             sh "export PATH=$PATH:${scannerHome}/bin:${nodeJS}/bin; sonar-scanner -Dsonar.python.xunit.skipDetails=true -Dsonar.python.xunit.reportPath=xunit-reports/*.xml -Dsonar.python.coverage.reportPaths=coverage.xml -Dsonar.sources=./src -Dsonar.projectKey=$GIT_NAME-$BRANCH_NAME -Dsonar.projectVersion=$BRANCH_NAME-$BUILD_NUMBER"
+    //             sh "export PATH=$PATH:${scannerHome}/bin:${nodeJS}/bin; sonar-scanner -Dsonar.python.xunit.skipDetails=true -Dsonar.python.xunit.reportPath=xunit-reports/*.xml -Dsonar.python.coverage.reportPaths=coverage.xml -Dsonar.sources=./clms -Dsonar.projectKey=$GIT_NAME-$BRANCH_NAME -Dsonar.projectVersion=$BRANCH_NAME-$BUILD_NUMBER"
     //             sh '''try=2; while [ \$try -gt 0 ]; do curl -s -XPOST -u "${SONAR_AUTH_TOKEN}:" "${SONAR_HOST_URL}api/project_tags/set?project=${GIT_NAME}-${BRANCH_NAME}&tags=${SONARQUBE_TAGS},${BRANCH_NAME}" > set_tags_result; if [ \$(grep -ic error set_tags_result ) -eq 0 ]; then try=0; else cat set_tags_result; echo "... Will retry"; sleep 60; try=\$(( \$try - 1 )); fi; done'''
     //         }
     //       }
