@@ -1021,6 +1021,7 @@ class TestDatarequestPost(unittest.TestCase):
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
                     "Layer": "layer-1",
+                    "NUTS": "ES"
                 },
             ]
         }
@@ -1055,6 +1056,7 @@ class TestDatarequestPost(unittest.TestCase):
                     "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
+                    "NUTS": "ES"
                 },
             ]
         }
