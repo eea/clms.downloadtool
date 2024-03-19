@@ -9,7 +9,7 @@ history = ""
 version = ""
 
 NAME = "clms.downloadtool"
-PATH = ["src"] + NAME.split(".") + ["version.txt"]
+PATH = NAME.split(".") + ["version.txt"]
 
 with open("README.rst") as readme_file:
     readme = readme_file.read()
@@ -45,9 +45,8 @@ setup(
         "Tracker": "https://github.com/collective/clms.downloadtool/issues",
     },
     license="GPL version 2",
-    packages=find_packages("src", exclude=["ez_setup"]),
+    packages=find_packages(exclude=["ez_setup"]),
     namespace_packages=["clms"],
-    package_dir={"": "src"},
     include_package_data=True,
     zip_safe=False,
     python_requires=">=3.7",
