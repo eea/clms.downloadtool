@@ -467,8 +467,7 @@ class DataRequestPost(Service):
                 if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json and "TemporalFilter" not in dataset_json):  # noqa
                     # We are requesting a full dataset download
                     # We need to check if this dataset is a EEA dataset
-                    # if so, we continue with the download, otherwiser
-                    # we point the end-user to the specific endpoint
+                    # to show an specific message
                     # pylint: disable=line-too-long
                     if (full_dataset_source and full_dataset_source != "EEA" or not full_dataset_source):  # noqa
                         self.request.response.setStatus(400)
@@ -482,6 +481,16 @@ class DataRequestPost(Service):
                                 " Please check the API documentation to get"
                                 " more information about this specific"
                                 " endpoint."
+                            ),
+                        }
+                    if (full_dataset_source and full_dataset_source == "EEA" or not full_dataset_source):  # noqa
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": (
+                                "To download the full dataset, please download "
+                                "it through the corresponding pre-packaged data "
+                                "collection"
                             ),
                         }
 

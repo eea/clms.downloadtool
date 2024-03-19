@@ -261,9 +261,7 @@ class TestDatarequestPost(unittest.TestCase):
             response.headers.get("Content-Type"), "application/json"
         )
 
-        self.assertEqual(response.status_code, 201)
-        self.assertIn("TaskIds", response.json())
-        self.assertTrue(len(response.json()["TaskIds"]), 1)
+        self.assertEqual(response.status_code, 400)
 
     def test_non_eea_full_dataset_download(self):
         """test to download a non-EEA full dataset"""
