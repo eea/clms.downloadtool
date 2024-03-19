@@ -107,7 +107,7 @@ pipeline {
                 // sh '''mkdir -p xunit-reports'''
                 try {
                   sh '''docker pull eeacms/plone-test:6'''
-                  sh '''docker run -i --name="$BUILD_TAG-python3" -e GIT_USER="eea" -e GIT_NAME=$GIT_NAME -e GIT_BRANCH="$BRANCH_NAME" -e ADDONS="eea/$GIT_NAME[test]" -e DEVELOP="eea/$GIT_NAME" -e GIT_CHANGE_ID="$CHANGE_ID" -e PIP_PARAMS="-f https://eggrepo.eea.europa.eu/simple/ -f https://code.codesyntax.com/static/public/" eeacms/plone-test:6'''
+                  sh '''docker run -i --name="$BUILD_TAG-python3" -e GIT_USER="eea" -e GIT_NAME=eea/$GIT_NAME -e GIT_BRANCH="$BRANCH_NAME" -e ADDONS="eea/$GIT_NAME[test]" -e DEVELOP="eea/$GIT_NAME" -e GIT_CHANGE_ID="$CHANGE_ID" -e PIP_PARAMS="-f https://eggrepo.eea.europa.eu/simple/ -f https://code.codesyntax.com/static/public/" eeacms/plone-test:6'''
                   // sh '''docker cp $BUILD_TAG-python3:/plone/instance/parts/xmltestreport/testreports/. xunit-reports/'''
                   // stash name: "xunit-reports", includes: "xunit-reports/*.xml"
                   // sh '''docker cp $BUILD_TAG-python3:/plone/instance/src/$GIT_NAME/coverage.xml coverage.xml'''
