@@ -488,9 +488,9 @@ class DataRequestPost(Service):
                         return {
                             "status": "error",
                             "msg": (
-                                "To download the full dataset, please download "
-                                "it through the corresponding pre-packaged data "
-                                "collection"
+                                "To download the full dataset, please "
+                                "download it through the corresponding "
+                                "pre-packaged data collection"
                             ),
                         }
 
