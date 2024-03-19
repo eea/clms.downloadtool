@@ -181,6 +181,16 @@ class DownloadToolUtility:
         registry = annotations.get(ANNOTATION_KEY, OOBTree())
         data_objects = []
 
+        if "TaskID" in query:
+            task_id = query.get("TaskID")
+            task = registry.get(task_id, None)
+            if task is not None:
+                task.update({'TaskId': task_id})
+
+                return [task]
+
+            return []
+
         for key in registry.keys():
             db_value = registry.get(key)
 
