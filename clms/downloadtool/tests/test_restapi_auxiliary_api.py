@@ -216,7 +216,9 @@ class TestAuxiliaryAPI(unittest.TestCase):
             response.headers.get("Content-Type"), "application/json"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), [])
+        self.assertTrue(isinstance(response.json(), dict))
+        self.assertIn('status', response.json())
+        self.assertEqual(response.json().get('status', ''), 'error')
 
     def tearDown(self):
         """ tear down cleanup"""
