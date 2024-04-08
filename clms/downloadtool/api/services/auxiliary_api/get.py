@@ -58,6 +58,8 @@ class GetDownloadFileUrls(Service):
             download_information, download_information_id
         )
 
+        results = []
+
         if dataset_download_info.get("full_source") == "WEKEO":
             api_url = api.portal.get_registry_record(
                 "clms.downloadtool.auxiliary_api_control_panel.wekeo_api_url"
@@ -81,7 +83,7 @@ class GetDownloadFileUrls(Service):
             x_min = self.request.get("x_min", "")
             y_min = self.request.get("y_min", "")
 
-            return get_wekeo(
+            results = get_wekeo(
                 api_url,
                 api_username,
                 api_password,
@@ -105,7 +107,7 @@ class GetDownloadFileUrls(Service):
             x_min = self.request.get("x_min", "")
             y_min = self.request.get("y_min", "")
             full_path = dataset_download_info.get("full_path")
-            return get_landcover(
+            results = get_landcover(
                 api_url, full_path, x_max, y_max, x_min, y_min
             )
 
@@ -157,11 +159,17 @@ class GetDownloadFileUrls(Service):
                            "than date_to"
                 }
 
-            return get_legacy(
+            results = get_legacy(
                 username, password, full_path, date_from, date_to
             )
 
-        return {}
+        if not results:
+            return {
+                "status": "error",
+                "msg": "Error, there are no files in the specified range"
+            }
+
+        return results
 
 
 def get_dataset_download_information(

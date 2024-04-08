@@ -50,7 +50,7 @@ EEA_GEONETWORK_BASE_URL = (
     "api/records/{uid}/formatters/xml?approved=true"
 )
 VITO_GEONETWORK_BASE_URL = (
-    "https://land.copernicus.vgt.vito.be/geonetwork/"
+    "https://globalland.vito.be/geonetwork/"
     "srv/api/records/{uid}/formatters/xml?approved=true"
 )
 
