@@ -334,11 +334,11 @@ class DataRequestPost(Service):
                 full_dataset_format = get_full_dataset_format(
                     dataset_object, download_information_id
                 )
-                if full_dataset_format is None:
+                if not full_dataset_format is None:
                     self.request.response.setStatus(400)
                     return {
                         "status": "error",
-                        "msg": "Error, the dataset format is not valid",
+                        "msg": "Error, this dataset is not downloadable",
                     }
 
                 requested_output_format = dataset_json.get(
@@ -386,7 +386,7 @@ class DataRequestPost(Service):
                     self.request.response.setStatus(400)
                     return {
                         "status": "error",
-                        "msg": "Error, the dataset path is not valid",
+                        "msg": "Error, this dataset is not downloadable",
                     }
 
                 # Check if we have wekeo_choices
