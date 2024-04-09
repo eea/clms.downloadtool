@@ -334,7 +334,7 @@ class DataRequestPost(Service):
                 full_dataset_format = get_full_dataset_format(
                     dataset_object, download_information_id
                 )
-                if not full_dataset_format is None:
+                if not full_dataset_format:
                     self.request.response.setStatus(400)
                     return {
                         "status": "error",
