@@ -1613,6 +1613,7 @@ class TestDatarequestPostNuts(unittest.TestCase):
         self.assertTrue(validate_nuts("IT10"))
         self.assertTrue(validate_nuts("DE101"))
         self.assertTrue(validate_nuts("FRI10"))
+        self.assertTrue(validate_nuts("DK56"))
 
         # Invalid codes
 
@@ -1621,7 +1622,10 @@ class TestDatarequestPostNuts(unittest.TestCase):
         self.assertFalse(validate_nuts("45FR"))
 
         # invalid country code
-        self.assertFalse(validate_nuts("W21W10"))
+        self.assertFalse(validate_nuts("WE21W10"))
+
+        # invalid chars
+        self.assertFalse(validate_nuts("NUTS:DK56"))
 
 
 class TestDatarequestPostEncodePath(unittest.TestCase):
