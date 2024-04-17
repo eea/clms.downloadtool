@@ -11,7 +11,6 @@ from datetime import datetime
 from datetime import timedelta
 from functools import reduce
 from logging import getLogger
-import string
 
 import requests
 from clms.downloadtool.api.services.utils import (
