@@ -11,6 +11,7 @@ from datetime import datetime
 from datetime import timedelta
 from functools import reduce
 from logging import getLogger
+import string
 
 import requests
 from clms.downloadtool.api.services.utils import (
@@ -737,6 +738,9 @@ def validate_spatial_extent(bounding_box):
 
 def validate_nuts(nuts_id):
     """validate nuts"""
+    if not nuts_id.isalnum():
+        return False
+
     match = re.match(r"([A-Z]+)([0-9]*)", nuts_id, re.I)
     if match:
         items = match.groups()
