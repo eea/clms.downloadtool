@@ -16,7 +16,21 @@ class IFMEConfigControlPanel(Interface):
 
     url = schema.TextLine(
         title=_(
-            "Enter the URL of the FME server",
+            "Enter the URL of the FME server (general download)",
+        ),
+        description=_(
+            "This url will be used to make dataset download and "
+            "transformation requests",
+        ),
+        # pylint: disable=line-too-long
+        default="https://copernicus-fme.eea.europa.eu/fmerest/v3/transformations/submit/CLMS/CLMS_Download.fmw",  # noqa: E501
+        required=True,
+        readonly=False,
+    )
+
+    url_prepackaged = schema.TextLine(
+        title=_(
+            "Enter the URL of the FME server (prepackaged files)",
         ),
         description=_(
             "This url will be used to make dataset download and "
