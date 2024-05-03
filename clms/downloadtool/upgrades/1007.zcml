@@ -1,0 +1,35 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:gs="http://namespaces.zope.org/genericsetup"
+    >
+
+  <gs:registerProfile
+      name="1007"
+      title="New field in the FME control panel"
+      description="Configuration for version 1007"
+      provides="Products.GenericSetup.interfaces.EXTENSION"
+      for="Products.CMFPlone.interfaces.IMigratingPloneSiteRoot"
+      directory="1007"
+      />
+
+  <gs:upgradeSteps
+      profile="clms.downloadtool:default"
+      source="1006"
+      destination="1007"
+      >
+
+    <gs:upgradeStep
+        title="New field in the FME control panel"
+        description="New field in the FME control panel "
+        handler=".v1007.upgrade"
+        />
+
+    <gs:upgradeDepends
+        title="New field in the FME control panel (GS profile)"
+        description="New field in the FME control panel "
+        import_profile="clms.downloadtool.upgrades:1007"
+        />
+
+  </gs:upgradeSteps>
+
+</configure>

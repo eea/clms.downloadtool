@@ -21,12 +21,12 @@ from plone.restapi.testing import RelativeSession
 FME_TASK_ID = 123456
 
 
-def custom_ok_post_request_to_fme(self, params):
+def custom_ok_post_request_to_fme(self, params, is_prepackaged):
     """return a custom response for the post request to FME"""
     return FME_TASK_ID
 
 
-def custom_not_ok_post_request_to_fme(self, params):
+def custom_not_ok_post_request_to_fme(self, params, is_prepackaged):
     """return a custom response for the post request to FME"""
     return None
 
