@@ -573,9 +573,9 @@ class DataRequestPost(Service):
             "error": [],
         }
 
-        for data_object in [
-            prepacked_download_data_object,
-            general_download_data_object,
+        for data_object, is_prepackaged in [
+            (prepacked_download_data_object, True),
+            (general_download_data_object, False),
         ]:
             if data_object["Datasets"]:
                 data_object["Status"] = "Queued"
@@ -625,7 +625,7 @@ class DataRequestPost(Service):
                     "Status": "Queued",
                 }
                 save_stats(stats_params)
-                fme_result = self.post_request_to_fme(params)
+                fme_result = self.post_request_to_fme(params, is_prepackaged)
                 if fme_result:
                     data_object["FMETaskId"] = fme_result
                     utility.datarequest_status_patch(
@@ -650,11 +650,16 @@ class DataRequestPost(Service):
             "ErrorTaskIds": fme_results["error"],
         }
 
-    def post_request_to_fme(self, params):
+    def post_request_to_fme(self, params, is_prepackaged=False):
         """send the request to FME and let it process it"""
-        FME_URL = api.portal.get_registry_record(
-            "clms.downloadtool.fme_config_controlpanel.url"
-        )
+        if is_prepackaged:
+            FME_URL = api.portal.get_registry_record(
+                "clms.downloadtool.fme_config_controlpanel.url_prepackaged"
+            )
+        else:
+            FME_URL = api.portal.get_registry_record(
+                "clms.downloadtool.fme_config_controlpanel.url"
+            )
         FME_TOKEN = api.portal.get_registry_record(
             "clms.downloadtool.fme_config_controlpanel.fme_token"
         )
