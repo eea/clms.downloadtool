@@ -653,24 +653,24 @@ class DataRequestPost(Service):
     def post_request_to_fme(self, params, is_prepackaged=False):
         """send the request to FME and let it process it"""
         if is_prepackaged:
-            FME_URL = api.portal.get_registry_record(
+            fme_url = api.portal.get_registry_record(
                 "clms.downloadtool.fme_config_controlpanel.url_prepackaged"
             )
         else:
-            FME_URL = api.portal.get_registry_record(
+            fme_url = api.portal.get_registry_record(
                 "clms.downloadtool.fme_config_controlpanel.url"
             )
-        FME_TOKEN = api.portal.get_registry_record(
+        fme_token = api.portal.get_registry_record(
             "clms.downloadtool.fme_config_controlpanel.fme_token"
         )
         headers = {
             "Content-Type": "application/json; charset=utf-8",
             "Accept": "application/json",
-            "Authorization": "fmetoken token={0}".format(FME_TOKEN),
+            "Authorization": "fmetoken token={0}".format(fme_token),
         }
         try:
             resp = requests.post(
-                FME_URL, json=params, headers=headers, timeout=10
+                fme_url, json=params, headers=headers, timeout=10
             )
             if resp.ok:
                 fme_task_id = resp.json().get("id", None)
