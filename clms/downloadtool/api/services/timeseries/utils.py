@@ -17,7 +17,7 @@ NAMESPACES = {
 def get_metadata_from_service(url):
     """extract information"""
 
-    if url.find("wmts"):
+    if url.find("wmts") != -1:
         return parse_wmts_service(url)
 
     return parse_wms_service(url)
@@ -133,7 +133,7 @@ def extract_dimensions_from_wmts_layers(tree):
 
 def extract_data_from_dimension(dimension):
     """extract start/end/period data from a dimension string"""
-    value = ""
+    value = {}
     if dimension:
         if "/P" in dimension:
             start, end, period = dimension.split("/")
