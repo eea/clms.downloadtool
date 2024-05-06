@@ -62,16 +62,16 @@ class TestTimeSeriesUtils(unittest.TestCase):
     def test_extract_data_from_dimension_no_value(self):
         """test when the dimension parameter is empty"""
         result = utils.extract_data_from_dimension("")
-        self.assertEqual(result, "")
+        self.assertEqual(result, {})
 
         result = utils.extract_data_from_dimension(None)
-        self.assertEqual(result, "")
+        self.assertEqual(result, {})
 
         result = utils.extract_data_from_dimension([])
-        self.assertEqual(result, "")
+        self.assertEqual(result, {})
 
         result = utils.extract_data_from_dimension({})
-        self.assertEqual(result, "")
+        self.assertEqual(result, {})
 
     def extract_dimension_wms(self):
         """demo test"""
