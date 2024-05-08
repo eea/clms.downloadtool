@@ -227,7 +227,8 @@ class DataRequestPost(Service):
                     )
 
                 if "TemporalFilter" in dataset_json:
-                    if not dataset_object.mapviewer_istimeseries:
+                    # pylint: disable=line-too-long
+                    if not dataset_object.mapviewer_istimeseries and not dataset_object.download_show_auxiliary_calendar:  # noqa
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
