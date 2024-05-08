@@ -16,11 +16,13 @@ NAMESPACES = {
 
 def get_metadata_from_service(url):
     """extract information"""
+    if url:
+        if url.find("wmts") != -1:
+            return parse_wmts_service(url)
 
-    if url.find("wmts") != -1:
-        return parse_wmts_service(url)
+        return parse_wms_service(url)
 
-    return parse_wms_service(url)
+    return {}
 
 
 def parse_wmts_service(url):
