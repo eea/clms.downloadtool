@@ -1369,6 +1369,10 @@ class TestDatarequestPost(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_temporal_filter_in_non_timeseries_dataset_but_show_calendar(self):
+        """
+        requesting temportal filter in a dataset that is not timeseries enabled
+        but has the show_calendar attribute set
+        """
         data = {
             "Datasets": [
                 {
@@ -1392,6 +1396,10 @@ class TestDatarequestPost(unittest.TestCase):
         self.assertEqual(response.status_code, 201)
 
     def test_temporal_filter_in_non_timeseries_dataset(self):
+        """
+        requesting temportal filter in a dataset that is not timeseries enabled
+        should return an error
+        """
         data = {
             "Datasets": [
                 {
