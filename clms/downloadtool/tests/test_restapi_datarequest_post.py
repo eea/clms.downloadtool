@@ -224,6 +224,65 @@ class TestDatarequestPost(unittest.TestCase):
             },
         )
 
+        self.dataset6 = api.content.create(
+            container=self.product,
+            type="DataSet",
+            title="DataSet 6",
+            id="dataset6",
+            geonetwork_identifiers={
+                "items": [
+                    {
+                        "@id": "some-id",
+                        "type": "EEA",
+                        "id": "some-geonetwork-id",
+                    }
+                ]
+            },
+            mapviewer_istimeseries=True,
+            dataset_download_information={
+                "items": [
+                    {
+                        "@id": "id-1",
+                        "full_format": "Netcdf",
+                        "full_path": "/this/is/a/path/to/dataset1",
+                        "full_source": "EEA",
+                        "wekeo_choices": "choice-1",
+                        "layers": ["layer-1", "layer-2"],
+                    }
+                ]
+            },
+        )
+
+        self.dataset7 = api.content.create(
+            container=self.product,
+            type="DataSet",
+            title="DataSet 7",
+            id="dataset7",
+            geonetwork_identifiers={
+                "items": [
+                    {
+                        "@id": "some-id",
+                        "type": "EEA",
+                        "id": "some-geonetwork-id",
+                    }
+                ]
+            },
+            mapviewer_istimeseries=False,
+            download_show_auxiliary_calendar=True,
+            dataset_download_information={
+                "items": [
+                    {
+                        "@id": "id-1",
+                        "full_format": "Netcdf",
+                        "full_path": "/this/is/a/path/to/dataset1",
+                        "full_source": "EEA",
+                        "wekeo_choices": "choice-1",
+                        "layers": ["layer-1", "layer-2"],
+                    }
+                ]
+            },
+        )
+
         transaction.commit()
 
     def tearDown(self):
@@ -779,7 +838,7 @@ class TestDatarequestPost(unittest.TestCase):
         data = {
             "Datasets": [
                 {
-                    "DatasetID": self.dataset1.UID(),
+                    "DatasetID": self.dataset4.UID(),
                     "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
@@ -811,7 +870,7 @@ class TestDatarequestPost(unittest.TestCase):
         data = {
             "Datasets": [
                 {
-                    "DatasetID": self.dataset1.UID(),
+                    "DatasetID": self.dataset4.UID(),
                     "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
@@ -841,7 +900,7 @@ class TestDatarequestPost(unittest.TestCase):
         data = {
             "Datasets": [
                 {
-                    "DatasetID": self.dataset1.UID(),
+                    "DatasetID": self.dataset4.UID(),
                     "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
@@ -871,7 +930,7 @@ class TestDatarequestPost(unittest.TestCase):
         data = {
             "Datasets": [
                 {
-                    "DatasetID": self.dataset1.UID(),
+                    "DatasetID": self.dataset4.UID(),
                     "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
@@ -902,7 +961,7 @@ class TestDatarequestPost(unittest.TestCase):
         data = {
             "Datasets": [
                 {
-                    "DatasetID": self.dataset1.UID(),
+                    "DatasetID": self.dataset4.UID(),
                     "DatasetDownloadInformationID": "id-1",
                     "OutputFormat": "Netcdf",
                     "OutputGCS": "EPSG:4326",
@@ -1287,6 +1346,60 @@ class TestDatarequestPost(unittest.TestCase):
         """test downloading a timeseries without temporal extent:
         should be an error"""
 
+        data = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset6.UID(),
+                    "DatasetDownloadInformationID": "id-1",
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                    "NUTS": "ES",
+                },
+            ]
+        }
+
+        # Patch FME call to return an OK response
+        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+
+        response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(
+            response.headers.get("Content-Type"), "application/json"
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_temporal_filter_in_non_timeseries_dataset_but_show_calendar(self):
+        """
+        requesting temportal filter in a dataset that is not timeseries enabled
+        but has the show_calendar attribute set
+        """
+        data = {
+            "Datasets": [
+                {
+                    "DatasetID": self.dataset7.UID(),
+                    "DatasetDownloadInformationID": "id-1",
+                    "OutputFormat": "Netcdf",
+                    "OutputGCS": "EPSG:4326",
+                    "NUTS": "ES",
+                },
+            ]
+        }
+
+        # Patch FME call to return an OK response
+        DataRequestPost.post_request_to_fme = custom_ok_post_request_to_fme
+
+        response = self.api_session.post("@datarequest_post", json=data)
+        self.assertEqual(
+            response.headers.get("Content-Type"), "application/json"
+        )
+
+        self.assertEqual(response.status_code, 201)
+
+    def test_temporal_filter_in_non_timeseries_dataset(self):
+        """
+        requesting temportal filter in a dataset that is not timeseries enabled
+        should return an error
+        """
         data = {
             "Datasets": [
                 {
