@@ -3,6 +3,7 @@ util functions to extract time series information from a WM(T)S service
 """
 # -*- coding: utf-8 -*-
 import itertools
+from logging import getLogger
 
 import requests
 from lxml import etree
@@ -14,13 +15,23 @@ NAMESPACES = {
 }
 
 
+log = getLogger(__name__)
+
+
 def get_metadata_from_service(url):
     """extract information"""
     if url:
         if url.find("wmts") != -1:
-            return parse_wmts_service(url)
-
-        return parse_wms_service(url)
+            try:
+                return parse_wmts_service(url)
+            except Exception as e:
+                log.info(e)
+                return {}
+        try:
+            return parse_wms_service(url)
+        except Exception as e:
+            log.info(e)
+            return {}
 
     return {}
 
