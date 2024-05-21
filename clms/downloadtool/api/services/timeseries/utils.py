@@ -1,11 +1,11 @@
 """
 util functions to extract time series information from a WM(T)S service
 """
-
 # -*- coding: utf-8 -*-
 import itertools
 
 import requests
+from logging import getLogger
 from lxml import etree
 
 NAMESPACES = {
@@ -14,7 +14,6 @@ NAMESPACES = {
     "ows": "http://www.opengis.net/ows/1.1",
 }
 
-from logging import getLogger
 
 log = getLogger(__name__)
 
