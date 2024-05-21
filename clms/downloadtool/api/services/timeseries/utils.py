@@ -2,11 +2,12 @@
 util functions to extract time series information from a WM(T)S service
 """
 # -*- coding: utf-8 -*-
-import itertools
-
-import requests
 from logging import getLogger
 from lxml import etree
+
+import itertools
+import requests
+
 
 NAMESPACES = {
     "wms_default": "http://www.opengis.net/wms",
