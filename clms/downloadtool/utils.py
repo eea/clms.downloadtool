@@ -255,9 +255,6 @@ COUNTRIES = {
     "UK": "GBR",
     "AN": "ANT",
     "KS": "UNK",
-    "1": "XXX",  # West Bank
-    "2": "YYY",  # Jersey
-    "3": "ZZZ",  # Isle of Man
 }
 
 
