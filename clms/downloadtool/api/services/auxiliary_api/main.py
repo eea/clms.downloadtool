@@ -244,7 +244,7 @@ def extract_date_legacy_http(text):
 
         if len(rdates) == 14:
             # Case: YYYY1-YYYY2-MMDD
-            # TODO: find a case for this in order to test. It seems wrong.
+            # zz: find a case for this in order to test. It seems wrong.
             f_startDate = rdates  # not sure
             f_endDate = rdates  # not sure
             startDate = f_startDate[0:4]
