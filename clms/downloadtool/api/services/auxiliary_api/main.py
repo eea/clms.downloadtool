@@ -1,4 +1,5 @@
-""" auxiliary api"""
+"""auxiliary api"""
+
 # -*- coding: utf-8 -*-
 import json
 import re
@@ -49,9 +50,8 @@ def get_landcover(api_url, dataset_path, x_max, y_max, x_min, y_min):
             else:
                 latitude = "N"
 
-            latitude += (
-                str(abs(int(y_min_aux - (y_min_aux % 20) + 20)))
-            ).ljust(2, "0")
+            latitude += (str(abs(int(y_min_aux - (y_min_aux % 20) + 20)))
+                         ).ljust(2, "0")
 
             y_min_aux += 20
 
@@ -103,8 +103,7 @@ def get_wekeo(
     """get data from wekeo"""
     if date_from == "" or date_to == "":
         metadata_text = get_wekeo_metadata(
-            api_url, username, password, dataset_path
-        )
+            api_url, username, password, dataset_path)
         metadata = json.loads(metadata_text)
         for f in metadata["parameters"]["dateRangeSelects"]:
             if f["details"]["start"] is not None:
@@ -179,8 +178,7 @@ def get_legacy(username, password, path, date_from, date_to):
                 if date_from != "" and date_to != "":
                     date_file_aux = extract_date_legacy_ftp(file)
                     date_from_datetime = datetime.strptime(
-                        date_from, "%Y-%m-%d"
-                    )
+                        date_from, "%Y-%m-%d")
                     date_file_aux_datetime = datetime.strptime(
                         date_file_aux, "%Y%m%d%H%M"
                     )
@@ -194,20 +192,16 @@ def get_legacy(username, password, path, date_from, date_to):
                         files_to_download.append(path + file.split("/")[-1])
                     else:
                         date_file = extract_date_legacy_ftp(
-                            files_to_download[0]
-                        )
+                            files_to_download[0])
                         date_file_aux = extract_date_legacy_ftp(file)
 
                         if date_file != "" and date_file_aux != "":
                             # pylint: disable=line-too-long
                             if datetime.strptime(
                                 date_file, "%Y%m%d%H%M"
-                            ) < datetime.strptime(
-                                date_file_aux, "%Y%m%d%H%M"
-                            ):  # noqa
-                                files_to_download[0] = (
-                                    path + file.split("/")[-1]
-                                )
+                            ) < datetime.strptime(date_file_aux, "%Y%m%d%H%M"):  # noqa
+                                files_to_download[0] = path + \
+                                    file.split("/")[-1]
     else:
         # pylint: disable=consider-using-with
         data = urllib.request.urlopen(path)
@@ -218,21 +212,17 @@ def get_legacy(username, password, path, date_from, date_to):
                 if date_from != "" and date_to != "":
                     date_file_aux = extract_date_legacy_http(file)
                     date_from_datetime = datetime.strptime(
-                        date_from, "%Y-%m-%d"
-                    )
+                        date_from, "%Y-%m-%d")
                     date_to_datetime = datetime.strptime(date_to, "%Y-%m-%d")
                     # pylint: disable=line-too-long
-                    if (
-                        date_from_datetime <= date_file_aux <= date_to_datetime
-                    ):  # noqa
+                    if date_from_datetime <= date_file_aux <= date_to_datetime:  # noqa
                         files_to_download.append(file)
                 else:
                     if len(files_to_download) == 0:
                         files_to_download.append(file)
                     else:
                         date_file = extract_date_legacy_http(
-                            files_to_download[0]
-                        )
+                            files_to_download[0])
                         date_file_aux = extract_date_legacy_http(file)
 
                         if date_file != "" and date_file_aux != "":
@@ -244,10 +234,40 @@ def get_legacy(username, password, path, date_from, date_to):
 
 def extract_date_legacy_http(text):
     """extract date from legacy http"""
-    url_parts = text.split("/")[8:]
-    date_aux = datetime.strptime(
-        url_parts[0] + url_parts[1] + url_parts[2], "%Y%m%d"
-    )
+
+    result_date = ""
+    result_filename = text.split("/")[-1]
+    # validate that the file name is not empty
+    if len(result_filename) > 0:
+        # Gets the date that is in the manifest name
+        rdates = result_filename.split("_")[3]
+
+        if len(rdates) == 14:
+            # Case: YYYY1-YYYY2-MMDD
+            # zz: find a case for this in order to test. It seems wrong.
+            f_startDate = rdates  # not sure
+            f_endDate = rdates  # not sure
+            startDate = f_startDate[0:4]
+            endDate = f_endDate[0:4]
+            # date1 = rdates[0:4]
+            # date2 = rdates[5:9]
+
+            month_day_result = rdates[len(rdates) - 4: len(rdates)]
+            if startDate == endDate:
+                result_date = startDate + month_day_result
+            elif startDate < endDate:
+                result_date = endDate + month_day_result
+        else:
+            rsearch = str("----")
+            initPos = rdates.find(rsearch)
+            if initPos > 0:
+                # Case: YYYY1----YYYY2
+                result_date = rdates[0:4] + "0101"
+            else:
+                # Case: YYYYMMDDhhmm
+                result_date = rdates[0:8]
+
+    date_aux = datetime.strptime(result_date, "%Y%m%d")
 
     return date_aux
 

@@ -1,10 +1,13 @@
-""" auxiliary endpoint REST API"""
+"""auxiliary endpoint REST API"""
+
 # -*- coding: utf-8 -*-
 from datetime import datetime
 
-from clms.downloadtool.api.services.auxiliary_api.main import (get_landcover,
-                                                               get_legacy,
-                                                               get_wekeo)
+from clms.downloadtool.api.services.auxiliary_api.main import (
+    get_landcover,
+    get_legacy,
+    get_wekeo,
+)
 from plone import api
 from plone.restapi.services import Service
 
@@ -44,8 +47,7 @@ class GetDownloadFileUrls(Service):
             }
 
         download_information = dataset.dataset_download_information.get(
-            "items", []
-        )
+            "items", [])
         ids = [item.get("@id") for item in download_information]
         if download_information_id not in ids:
             self.request.response.setStatus(400)
@@ -108,8 +110,7 @@ class GetDownloadFileUrls(Service):
             y_min = self.request.get("y_min", "")
             full_path = dataset_download_info.get("full_path")
             results = get_landcover(
-                api_url, full_path, x_max, y_max, x_min, y_min
-            )
+                api_url, full_path, x_max, y_max, x_min, y_min)
 
         if dataset_download_info.get("full_source") == "LEGACY":
             username = api.portal.get_registry_record(
@@ -129,7 +130,7 @@ class GetDownloadFileUrls(Service):
                 return {
                     "status": "error",
                     "msg": "Error, both date_from and date_to parameters "
-                           "are required",
+                    "are required",
                 }
 
             try:
@@ -139,7 +140,7 @@ class GetDownloadFileUrls(Service):
                 return {
                     "status": "error",
                     "msg": "Error, date_to parameter must be a date in "
-                           "YYYY-MM-DD format"
+                    "YYYY-MM-DD format",
                 }
             try:
                 datetime.strptime(date_from, "%Y-%m-%d")
@@ -148,7 +149,7 @@ class GetDownloadFileUrls(Service):
                 return {
                     "status": "error",
                     "msg": "Error, date_from parameter must be a date in "
-                           "YYYY-MM-DD format",
+                    "YYYY-MM-DD format",
                 }
 
             if date_to < date_from:
@@ -156,25 +157,24 @@ class GetDownloadFileUrls(Service):
                 return {
                     "status": "error",
                     "msg": "Error, date_from parameter must be smaller "
-                           "than date_to"
+                    "than date_to",
                 }
 
-            results = get_legacy(
-                username, password, full_path, date_from, date_to
-            )
+            results = get_legacy(username, password,
+                                 full_path, date_from, date_to)
 
         if not results:
             return {
                 "status": "error",
-                "msg": "Error, there are no files in the specified range"
+                "msg": "There is no content between the selected dates, "
+                "expand the date range to get links.",
             }
 
         return results
 
 
 def get_dataset_download_information(
-    download_information, download_information_id
-):
+        download_information, download_information_id):
     """get the download information related to the given
     download_information_id"""
     for item in download_information:
