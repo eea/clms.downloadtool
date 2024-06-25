@@ -1,6 +1,7 @@
 """
 Specific endpoint to get metadata from a dataset W(T)MS service URL
 """
+
 # -*- coding: utf-8 -*-
 from clms.downloadtool.api.services.timeseries.utils import (
     get_metadata_from_service,
@@ -37,10 +38,9 @@ class GetTimeSeriesMetadata(Service):
 
         value = get_metadata_from_service(service)
         if isinstance(value, dict):
-            value.update(
-                {
-                    # pylint: disable=line-too-long
-                    "download_limit_temporal_extent": dataset.download_limit_temporal_extent  # noqa
-                }
+            value["download_limit_temporal_extent"] = (
+                dataset.download_limit_temporal_extent
             )
+            value["mapviewer_istimeseries"] = dataset.mapviewer_istimeseries
+
         return value
