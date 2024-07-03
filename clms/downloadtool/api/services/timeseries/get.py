@@ -36,7 +36,22 @@ class GetTimeSeriesMetadata(Service):
                 service += "?"
             service += "REQUEST=GETCAPABILITIES"
 
-        value = get_metadata_from_service(service)
+        if dataset.geonetwork_identifiers is not None:
+            # Improved solution:
+            # Refs #271138 - filter years by geonetwork_identifiers
+            try:
+                geonetwork_identifiers = [
+                    x["id"] for x in dataset.geonetwork_identifiers["items"]
+                ]
+            except Exception:
+                geonetwork_identifiers = None
+            value = get_metadata_from_service(
+                service, geonetwork_identifiers=geonetwork_identifiers
+            )
+        else:
+            # Merge all years into one list (old default solution)
+            value = get_metadata_from_service(service)
+
         if isinstance(value, dict):
             value["download_limit_temporal_extent"] = (
                 dataset.download_limit_temporal_extent

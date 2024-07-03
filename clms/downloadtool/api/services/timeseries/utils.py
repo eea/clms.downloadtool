@@ -1,6 +1,7 @@
 """
 util functions to extract time series information from a WM(T)S service
 """
+
 # -*- coding: utf-8 -*-
 import itertools
 from logging import getLogger
@@ -18,12 +19,17 @@ NAMESPACES = {
 log = getLogger(__name__)
 
 
-def get_metadata_from_service(url):
+def get_metadata_from_service(url, geonetwork_identifiers=None):
     """extract information"""
     if url:
         if url.find("wmts") != -1:
             try:
-                return parse_wmts_service(url)
+                if geonetwork_identifiers is not None:
+                    return parse_wmts_service(
+                        url, geonetwork_identifiers=geonetwork_identifiers
+                    )
+                else:
+                    return parse_wmts_service(url)
             except Exception as e:
                 log.info(e)
                 return {}
@@ -36,7 +42,7 @@ def get_metadata_from_service(url):
     return {}
 
 
-def parse_wmts_service(url):
+def parse_wmts_service(url, geonetwork_identifiers=None):
     """Parse a WTMS service"""
     sock = requests.get(url, timeout=10)
     if not sock.ok:
@@ -50,16 +56,33 @@ def parse_wmts_service(url):
     tree = etree.fromstring(sock.content)
     data = {}
 
+    results_are_filtered = False
+    if geonetwork_identifiers is not None:
+        results_are_filtered = True
     data = extract_dimensions_from_wmts_layers(tree)
     if data:
-        arrays = sorted(
-            itertools.chain(
-                *[x.get("array", []) for x in data.values() if x.get("array")]
+        if not results_are_filtered:
+            arrays = sorted(
+                itertools.chain(
+                    *[x.get(
+                        "array", []) for x in data.values() if x.get("array")]
+                )
             )
-        )
+        else:
+            # Refs #271138 - filter by geonetwork_identifiers
+            arrays = []
+
+            for layer_key, layer_value in data.items():
+                if layer_key in geonetwork_identifiers:
+                    array = layer_value.get("array", [])
+                    arrays.append(array)
+
+            arrays = list(itertools.chain(*arrays))
+            arrays.sort()
+
         if arrays:
             start = arrays[0]
-            end = arrays[-11]
+            end = arrays[-1]
             period = "P1D"
             return {"start": start, "end": end, "period": period}
 
@@ -84,8 +107,7 @@ def parse_wms_service(url):
     data = extract_dimensions_from_wms_layers(tree)
     if data:
         start = min(
-            map(lambda x: x.get("start", "ZZZZZZZZZZZZ"), data.values())
-        )
+            map(lambda x: x.get("start", "ZZZZZZZZZZZZ"), data.values()))
         end = max(map(lambda x: x.get("end", "ZZZZZZZZZZZZ"), data.values()))
         period = set(map(lambda x: x.get("period", "ZZZZZ"), data.values()))
         return {"start": start, "end": end, "period": period}
@@ -108,9 +130,8 @@ def extract_dimensions_from_wms_layers(tree):
             if value:
                 data[name.text] = value
             else:
-                values = layer.xpath(
-                    "wms_default:Value", namespaces=NAMESPACES
-                )
+                values = layer.xpath("wms_default:Value",
+                                     namespaces=NAMESPACES)
                 if values:
                     data[name.text] = {"array": values}
 
@@ -137,9 +158,8 @@ def extract_dimensions_from_wmts_layers(tree):
                         "wmts_default:Value", namespaces=NAMESPACES
                     )
                     if values:
-                        data[name.text] = {
-                            "array": map(lambda x: x.text, values)
-                        }
+                        data[name.text] = {"array": map(
+                            lambda x: x.text, values)}
 
     return data
 
