@@ -28,8 +28,7 @@ def get_metadata_from_service(url, geonetwork_identifiers=None):
                     return parse_wmts_service(
                         url, geonetwork_identifiers=geonetwork_identifiers
                     )
-                else:
-                    return parse_wmts_service(url)
+                return parse_wmts_service(url)
             except Exception as e:
                 log.info(e)
                 return {}
