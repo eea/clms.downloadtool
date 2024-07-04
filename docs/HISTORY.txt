@@ -1,8 +1,10 @@
 Changelog
 =========
 
-8.5-dev0 - (unreleased)
+8.5 - (2024-07-04)
 ---------------------------
+* Change: Refs #271138 - Fix Cart - Calendar dates for timeseries dataset. Use dataset.geonetwork_identifiers as filter.
+  [GhitaB]
 
 8.4 - (2024-06-21)
 ---------------------------
