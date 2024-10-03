@@ -463,6 +463,37 @@ class DataRequestPost(Service):
                             ),
                         }
 
+                # Refs #273099
+                # when NETCDF format (OutputFormat) is selected for these 2:
+                # - Water Bodies 2020-present (raster 100 m), global, monthly
+                #   – version 1
+                # - Water Bodies 2020-present (raster 300 m), global, monthly
+                #   – version 2
+                # display this error
+                # [UID1, path1, ...]
+                SPECIAL_CASES = [
+                    '7df9bdf94fe94cb5919c11c9ef5cac65',
+                    '/water-bodies/water-bodies-global-v1-0-100m',
+                    '0517fd1b7d944d8197a2eb5c13470db8',
+                    '/water-bodies/water-bodies-global-v2-0-300m'
+                ]
+                try:
+                    if dataset_json['DatasetID'] in SPECIAL_CASES or \
+                        dataset_object.absolute_url().split(
+                            '/en/products')[-1] in SPECIAL_CASES:
+                        if dataset_json['OutputFormat'] == 'Netcdf':
+                            self.request.response.setStatus(400)
+                            return {
+                                "status": "error",
+                                "msg": (
+                                    "Please choose the Geotiff format as the "
+                                    "NetCDF format is not allowed for this "
+                                    "dataset"
+                                ),
+                            }
+                except Exception:
+                    pass
+
                 # Check full dataset download restrictions
                 # pylint: disable=line-too-long
                 if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json and "TemporalFilter" not in dataset_json):  # noqa
