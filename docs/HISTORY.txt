@@ -1,8 +1,10 @@
 Changelog
 =========
 
-8.6-dev0 - (unreleased)
+8.6 - (2024-10-03)
 ---------------------------
+* Change: Refs #273099 - special cases of Water Bodies 2020-present datasets - NETCDF OutputFormat
+  [GhitaB]
 
 8.5 - (2024-07-04)
 ---------------------------
