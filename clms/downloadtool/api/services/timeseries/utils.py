@@ -19,14 +19,14 @@ NAMESPACES = {
 log = getLogger(__name__)
 
 
-def get_metadata_from_service(url, geonetwork_identifiers=None):
+def get_metadata_from_service(url, layers=None):
     """extract information"""
     if url:
         if url.find("wmts") != -1:
             try:
-                if geonetwork_identifiers is not None:
+                if layers is not None:
                     return parse_wmts_service(
-                        url, geonetwork_identifiers=geonetwork_identifiers
+                        url, layers=layers
                     )
                 return parse_wmts_service(url)
             except Exception as e:
@@ -41,7 +41,7 @@ def get_metadata_from_service(url, geonetwork_identifiers=None):
     return {}
 
 
-def parse_wmts_service(url, geonetwork_identifiers=None):
+def parse_wmts_service(url, layers=None):
     """Parse a WTMS service"""
     sock = requests.get(url, timeout=10)
     if not sock.ok:
@@ -56,7 +56,7 @@ def parse_wmts_service(url, geonetwork_identifiers=None):
     data = {}
 
     results_are_filtered = False
-    if geonetwork_identifiers is not None:
+    if layers is not None:
         results_are_filtered = True
     data = extract_dimensions_from_wmts_layers(tree)
     if data:
@@ -68,11 +68,11 @@ def parse_wmts_service(url, geonetwork_identifiers=None):
                 )
             )
         else:
-            # Refs #271138 - filter by geonetwork_identifiers
+            # Refs #276844 - use mapviewer_layers as filter
             arrays = []
 
             for layer_key, layer_value in data.items():
-                if layer_key in geonetwork_identifiers:
+                if layer_key in layers:
                     array = layer_value.get("array", [])
                     arrays.append(array)
 

@@ -36,17 +36,15 @@ class GetTimeSeriesMetadata(Service):
                 service += "?"
             service += "REQUEST=GETCAPABILITIES"
 
-        if dataset.geonetwork_identifiers is not None:
-            # Improved solution:
-            # Refs #271138 - filter years by geonetwork_identifiers
+        if dataset.mapviewer_layers is not None:
+            # Refs #276844 - use layers as filter
             try:
-                geonetwork_identifiers = [
-                    x["id"] for x in dataset.geonetwork_identifiers["items"]
-                ]
+                map_layers = [x["id"]
+                              for x in dataset.mapviewer_layers["items"]]
             except Exception:
-                geonetwork_identifiers = None
+                map_layers = None
             value = get_metadata_from_service(
-                service, geonetwork_identifiers=geonetwork_identifiers
+                service, layers=map_layers
             )
         else:
             # Merge all years into one list (old default solution)
