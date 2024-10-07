@@ -1,6 +1,9 @@
 Changelog
 =========
 
+8.8-dev0 - (unreleased)
+---------------------------
+
 8.7 - (2024-10-07)
 ---------------------------
 * Change: Refs #276844 - Use dataset.mapviewer_layers as filter parameter when calculate date range for calendar.
