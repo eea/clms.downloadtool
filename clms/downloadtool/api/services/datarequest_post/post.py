@@ -118,7 +118,23 @@ class DataRequestPost(Service):
 
         utility = getUtility(IDownloadToolUtility)
 
-        for dataset_json in datasets_json:
+        # Refs #273099
+        # when NETCDF format (OutputFormat) is selected for these 2:
+        # - Water Bodies 2020-present (raster 100 m), global, monthly
+        #   – version 1
+        # - Water Bodies 2020-present (raster 300 m), global, monthly
+        #   – version 2
+        # display this error
+        # [UID1, path1, ...]
+        SPECIAL_CASES = [
+            '7df9bdf94fe94cb5919c11c9ef5cac65',
+            '/water-bodies/water-bodies-global-v1-0-100m',
+            '0517fd1b7d944d8197a2eb5c13470db8',
+            '/water-bodies/water-bodies-global-v2-0-300m'
+        ]
+        found_special = []
+
+        for dataset_index, dataset_json in enumerate(datasets_json):
             response_json = {}
             if "DatasetID" not in dataset_json:
                 self.request.response.setStatus(400)
@@ -463,36 +479,31 @@ class DataRequestPost(Service):
                             ),
                         }
 
-                # Refs #273099
-                # when NETCDF format (OutputFormat) is selected for these 2:
-                # - Water Bodies 2020-present (raster 100 m), global, monthly
-                #   – version 1
-                # - Water Bodies 2020-present (raster 300 m), global, monthly
-                #   – version 2
-                # display this error
-                # [UID1, path1, ...]
-                SPECIAL_CASES = [
-                    '7df9bdf94fe94cb5919c11c9ef5cac65',
-                    '/water-bodies/water-bodies-global-v1-0-100m',
-                    '0517fd1b7d944d8197a2eb5c13470db8',
-                    '/water-bodies/water-bodies-global-v2-0-300m'
-                ]
+                is_special_case = False
                 try:
-                    if dataset_json['DatasetID'] in SPECIAL_CASES or \
+                    dataset_id = dataset_json['DatasetID']
+                    if dataset_id in SPECIAL_CASES or \
                         dataset_object.absolute_url().split(
                             '/en/products')[-1] in SPECIAL_CASES:
                         if dataset_json['OutputFormat'] == 'Netcdf':
-                            self.request.response.setStatus(400)
-                            return {
-                                "status": "error",
-                                "msg": (
-                                    "Please choose the Geotiff format as the "
-                                    "NetCDF format is not allowed for this "
-                                    "dataset"
-                                ),
-                            }
+                            is_special_case = True
+                            found_special.append(dataset_id)
                 except Exception:
                     pass
+                if dataset_index == len(datasets_json) - 1:
+                    if len(found_special) > 0:
+                        self.request.response.setStatus(400)
+                        special_msg = (
+                            f"Please choose the Geotiff format as the NetCDF "
+                            f"format is not allowed "
+                            f"for the dataset(s) {', '.join(found_special)}"
+                        )
+                        return {
+                            "status": "error",
+                            "msg": special_msg
+                        }
+                elif is_special_case:
+                    continue
 
                 # Check full dataset download restrictions
                 # pylint: disable=line-too-long
