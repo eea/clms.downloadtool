@@ -1,6 +1,11 @@
 Changelog
 =========
 
+8.8 - (2024-10-08)
+---------------------------
+* Change: Refs #273099 - Choose Geotiff vs NetCDF - in case of several datasets simultaneously.
+  [GhitaB]
+
 8.7 - (2024-10-07)
 ---------------------------
 * Change: Refs #276844 - Use dataset.mapviewer_layers as filter parameter when calculate date range for calendar.
