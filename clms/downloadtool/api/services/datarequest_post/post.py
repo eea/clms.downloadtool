@@ -505,30 +505,6 @@ class DataRequestPost(Service):
                 elif is_special_case:
                     continue
 
-                # pylint: disable=line-too-long
-                # Check dataset download restrictions for
-                # non-EEA datasets with no area specified
-                if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json):  # noqa
-                    # We are requesting a full dataset download
-                    # We need to check if this dataset is a non-EEA dataset
-                    # to show a specific message
-                    # pylint: disable=line-too-long
-                    if full_dataset_source and full_dataset_source != "EEA":
-                        print('full_dataset_source', full_dataset_source)
-                        # Non-EEA datasets must have an area specified
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                (
-                                    "You have to select a specific area of "
-                                    "interest. In case you want to download "
-                                    "the full dataset, please use the "
-                                    "Auxiliary API."
-                                )
-                            ),
-                        }
-
                 # Check full dataset download restrictions
                 # pylint: disable=line-too-long
                 if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json and "TemporalFilter" not in dataset_json):  # noqa
@@ -558,6 +534,30 @@ class DataRequestPost(Service):
                                 "To download the full dataset, please "
                                 "download it through the corresponding "
                                 "pre-packaged data collection"
+                            ),
+                        }
+
+                # pylint: disable=line-too-long
+                # Check dataset download restrictions for
+                # non-EEA datasets with no area specified
+                if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json):  # noqa
+                    # We are requesting a full dataset download
+                    # We need to check if this dataset is a non-EEA dataset
+                    # to show a specific message
+                    # pylint: disable=line-too-long
+                    if (full_dataset_source and full_dataset_source != "EEA" or not full_dataset_source):
+                        print('full_dataset_source', full_dataset_source)
+                        # Non-EEA datasets must have an area specified
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": (
+                                (
+                                    "You have to select a specific area of"
+                                    " interest. In case you want to download"
+                                    " the full dataset, please use the"
+                                    " Auxiliary API."
+                                )
                             ),
                         }
 
