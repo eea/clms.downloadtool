@@ -545,7 +545,7 @@ class DataRequestPost(Service):
                     # We need to check if this dataset is a non-EEA dataset
                     # to show a specific message
                     # pylint: disable=line-too-long
-                    if (full_dataset_source and full_dataset_source != "EEA" or not full_dataset_source):
+                    if (full_dataset_source and full_dataset_source != "EEA" or not full_dataset_source): # noqa
                         print('full_dataset_source', full_dataset_source)
                         # Non-EEA datasets must have an area specified
                         self.request.response.setStatus(400)
