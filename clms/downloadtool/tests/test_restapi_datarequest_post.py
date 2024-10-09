@@ -468,6 +468,7 @@ class TestDatarequestPost(unittest.TestCase):
                 {
                     "DatasetID": self.dataset4.UID(),
                     "DatasetDownloadInformationID": "id-2",
+                    "DatasetSource": "EEA"
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
                     "TemporalFilter": {
