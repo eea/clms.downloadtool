@@ -519,8 +519,9 @@ class DataRequestPost(Service):
                         return {
                             "status": "error",
                             "msg": (
-                                "You have to select a specific area of interest. "
-                                "In case you want to download the full dataset, please use the Auxiliary API."
+                                "You have to select a specific area of interest."
+                                " In case you want to download the full dataset,"
+                                " please use the Auxiliary API."
                             ),
                         }
 
