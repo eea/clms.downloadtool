@@ -506,7 +506,7 @@ class DataRequestPost(Service):
                     continue
 
                 # pylint: disable=line-too-long
-                # Check dataset download restrictions for 
+                # Check dataset download restrictions for
                 # non-EEA datasets with no area specified
                 if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json):  # noqa
                     # We are requesting a full dataset download
