@@ -1,6 +1,11 @@
 Changelog
 =========
 
+8.9 - (2024-10-10)
+---------------------------
+* Change: Mandatory area
+  [GhitaB]
+
 8.8 - (2024-10-08)
 ---------------------------
 * Change: Refs #273099 - Choose Geotiff vs NetCDF - in case of several datasets simultaneously.
