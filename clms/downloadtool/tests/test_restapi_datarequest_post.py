@@ -471,6 +471,7 @@ class TestDatarequestPost(unittest.TestCase):
                     "DatasetSource": "EEA",
                     "OutputFormat": "GDB",
                     "OutputGCS": "EPSG:4326",
+                    "NUTS": "ES",
                     "TemporalFilter": {
                         "StartDate": 1546333200000,
                         "EndDate": 1547974800000,
