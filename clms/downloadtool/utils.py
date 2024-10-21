@@ -293,6 +293,7 @@ DATASET_FORMATS = [
     "WFS",
 ]
 
+# pylint: disable=line-too-long
 DATASET_SOURCES = ["WEKEO", "EEA", "LANDCOVER", "LEGACY", "VITO_geotiff", "VITO_Geotiff_LandCover", "VITO_Geotiff_LSP"]
 
 FORMAT_CONVERSION_TABLE = {
