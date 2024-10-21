@@ -1,8 +1,10 @@
 Changelog
 =========
 
-9.0-dev0 - (unreleased)
+9.0 - (2024-10-21)
 ---------------------------
+* Change: add VITO_Geotiff_LandCover and VITO_Geotiff_LSP to datasources
+  [GhitaB]
 
 8.9 - (2024-10-10)
 ---------------------------
