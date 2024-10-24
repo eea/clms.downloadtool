@@ -453,11 +453,18 @@ class DataRequestPost(Service):
                         ),
                     }
 
-                # Check time series restrictions:
-                # if the dataset is a time-series enabled dataset
+                # validate the date range by
+                # “Maximum number of days allowed to be downloaded”
+                # (instead of "Is Time Series" setting)
+                #
+                # if  “Maximum number of days allowed to be downloaded”
+                # contains a value, we must check that the dates provided are
+                # within the range
                 # the requested range should not be bigger than
                 # the limit set in the configuration
-                if dataset_object.mapviewer_istimeseries:
+
+                d_l_t = dataset_object.download_limit_temporal_extent
+                if d_l_t is not None and d_l_t > 0:
                     end_date_datetime = datetime.strptime(
                         end_date, ISO8601_DATETIME_FORMAT
                     )
@@ -473,7 +480,7 @@ class DataRequestPost(Service):
                             "msg": (
                                 "You are requesting to download a time series "
                                 "enabled dataset and the requested date range "
-                                "is bigger than the allowed one"
+                                "is bigger than the allowed one. "
                                 "Please check the download "
                                 "documentation to get more information"
                             ),
