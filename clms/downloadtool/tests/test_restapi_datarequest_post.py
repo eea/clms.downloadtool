@@ -78,6 +78,7 @@ class TestDatarequestPost(unittest.TestCase):
             type="DataSet",
             title="DataSet 1",
             id="dataset1",
+            download_limit_temporal_extent=None,
             geonetwork_identifiers={
                 "items": [
                     {
@@ -106,6 +107,7 @@ class TestDatarequestPost(unittest.TestCase):
             type="DataSet",
             title="DataSet 2",
             id="dataset2",
+            download_limit_temporal_extent=None,
             geonetwork_identifiers={
                 "items": [
                     {
@@ -133,6 +135,7 @@ class TestDatarequestPost(unittest.TestCase):
             type="DataSet",
             title="DataSet 3",
             id="dataset3",
+            download_limit_temporal_extent=None,
             downloadable_files={
                 "items": [
                     {
@@ -173,6 +176,7 @@ class TestDatarequestPost(unittest.TestCase):
             type="DataSet",
             title="DataSet 4",
             id="dataset4",
+            download_limit_temporal_extent=None,
             mapviewer_istimeseries=True,
             geonetwork_identifiers={
                 "items": [
@@ -201,6 +205,7 @@ class TestDatarequestPost(unittest.TestCase):
             type="DataSet",
             title="DataSet 5",
             id="dataset5",
+            download_limit_temporal_extent=None,
             geonetwork_identifiers={
                 "items": [
                     {
@@ -229,6 +234,7 @@ class TestDatarequestPost(unittest.TestCase):
             type="DataSet",
             title="DataSet 6",
             id="dataset6",
+            download_limit_temporal_extent=None,
             geonetwork_identifiers={
                 "items": [
                     {
@@ -258,6 +264,7 @@ class TestDatarequestPost(unittest.TestCase):
             type="DataSet",
             title="DataSet 7",
             id="dataset7",
+            download_limit_temporal_extent=None,
             geonetwork_identifiers={
                 "items": [
                     {
