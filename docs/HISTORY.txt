@@ -1,8 +1,10 @@
 Changelog
 =========
 
-9.1-dev0 - (unreleased)
+9.1 - (2024-10-25)
 ---------------------------
+* Change: Refs #278907 - Validate the date range by Maximum number of days allowed to be downloaded.
+  [GhitaB]
 
 9.0 - (2024-10-21)
 ---------------------------
