@@ -242,9 +242,17 @@ class DataRequestPost(Service):
                         {"BoundingBox": dataset_json["BoundingBox"]}
                     )
 
+                # Now, the temporal restriction can be controlled only with
+                # the maximum range, I mean if it is set as timeseries or has
+                # the aux calendar, in both cases it will have the maximum
+                # range filled. If the dataset does not have values in that
+                # setting, you do not need time parameters
                 if "TemporalFilter" in dataset_json:
-                    # pylint: disable=line-too-long
-                    if not dataset_object.mapviewer_istimeseries and not dataset_object.download_show_auxiliary_calendar:  # noqa
+                    d_l_t = dataset_object.download_limit_temporal_extent
+                    has_maximum_range = False
+                    if d_l_t is not None and d_l_t > 0:
+                        has_maximum_range = True
+                    if has_maximum_range is False:
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
@@ -280,8 +288,7 @@ class DataRequestPost(Service):
                             ),
                         }
 
-                    # pylint: disable=line-too-long
-                    start_date, end_date = extract_dates_from_temporal_filter(  # noqa
+                    start_date, end_date = extract_dates_from_temporal_filter(
                         dataset_json["TemporalFilter"]
                     )
 
