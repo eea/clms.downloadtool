@@ -176,7 +176,7 @@ class TestDatarequestPost(unittest.TestCase):
             type="DataSet",
             title="DataSet 4",
             id="dataset4",
-            download_limit_temporal_extent=None,
+            download_limit_temporal_extent=1000,
             mapviewer_istimeseries=True,
             geonetwork_identifiers={
                 "items": [
