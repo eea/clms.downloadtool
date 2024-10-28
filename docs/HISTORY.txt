@@ -1,8 +1,10 @@
 Changelog
 =========
 
-9.2-dev0 - (unreleased)
+9.2 - (2024-10-28)
 ---------------------------
+* Change: Refs #278907 - Update condition for error temporal restriction
+  [GhitaB]
 
 9.1 - (2024-10-25)
 ---------------------------
