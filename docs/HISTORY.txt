@@ -1,6 +1,11 @@
 Changelog
 =========
 
+9.3 - (2024-11-07)
+---------------------------
+* Change: Refs #276847 - Add date arrays for timeseries, instead of only start and end dates.
+  [GhitaB]
+
 9.2 - (2024-10-28)
 ---------------------------
 * Change: Refs #278907 - Update condition for error temporal restriction
