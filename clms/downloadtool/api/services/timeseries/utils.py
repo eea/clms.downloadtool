@@ -83,7 +83,10 @@ def parse_wmts_service(url, layers=None):
             start = arrays[0]
             end = arrays[-1]
             period = "P1D"
-            return {"start": start, "end": end, "period": period}
+            return {
+                "start": start, "end": end, "period": period,
+                "data_arrays": arrays
+            }
 
         start = min({x.get("start") for x in data.values()})
         end = max({x.get("end") for x in data.values()})
