@@ -36,6 +36,9 @@ class datarequest_status_patch(Service):
 
     def reply(self):
         """JSON response"""
+        raw_body = self.request.get("BODY", "--empty-marker")
+        log.info("Body on datarequest_status_patch: %r", raw_body)
+
         body = json_body(self.request)
 
         if not body.get("TaskID", None):

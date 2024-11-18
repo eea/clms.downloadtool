@@ -1,6 +1,11 @@
 Changelog
 =========
 
+9.4 - (2024-11-16)
+---------------------------
+* Change: Add logs datarequest status patch
+  [GhitaB]
+
 9.3 - (2024-11-07)
 ---------------------------
 * Change: Refs #276847 - Add date arrays for timeseries, instead of only start and end dates.
