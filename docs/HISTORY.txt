@@ -1,6 +1,9 @@
 Changelog
 =========
 
+9.8-dev0 - (unreleased)
+---------------------------
+
 9.7 - (2024-12-02)
 ---------------------------
 * Change: Refs #281079 - Solve FME cancel download issue by adding User-Agent in request headers.
