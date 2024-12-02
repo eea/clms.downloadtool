@@ -2,6 +2,7 @@
 """
 DELETE endpoint for the download tool.
 """
+
 from logging import getLogger
 
 import requests
@@ -18,7 +19,7 @@ class datarequest_delete(Service):
     """Delete data"""
 
     def reply(self):
-        """ JSON response """
+        """JSON response"""
         body = json_body(self.request)
         user = api.user.get_current()
         user_id = user.getId()
@@ -51,7 +52,7 @@ class datarequest_delete(Service):
         return _no_content_marker
 
     def signal_finalization_to_fme(self, task_id):
-        """ Signal finalization to FME """
+        """Signal finalization to FME"""
         FME_DELETE_URL = api.portal.get_registry_record(
             "clms.downloadtool.fme_config_controlpanel.delete_url"
         )
@@ -62,6 +63,11 @@ class datarequest_delete(Service):
             "Content-Type": "application/json; charset=utf-8",
             "Accept": "application/json",
             "Authorization": "fmetoken token={0}".format(FME_TOKEN),
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/114.0.0.0 Safari/537.36"
+            ),
         }
 
         if FME_DELETE_URL.endswith("/"):
