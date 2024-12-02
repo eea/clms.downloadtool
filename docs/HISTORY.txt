@@ -1,6 +1,11 @@
 Changelog
 =========
 
+9.7 - (2024-12-02)
+---------------------------
+* Change: Refs #281079 - Solve FME cancel download issue by adding User-Agent in request headers.
+  [GhitaB]
+
 9.6 - (2024-11-18)
 ---------------------------
 * Change: New release (retry)
