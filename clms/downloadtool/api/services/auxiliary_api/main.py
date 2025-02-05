@@ -105,20 +105,15 @@ def get_wekeo(
         metadata_text = get_wekeo_metadata(
             api_url, username, password, dataset_path)
         metadata = json.loads(metadata_text)
-        for f in metadata["parameters"]["dateRangeSelects"]:
-            if f["details"]["start"] is not None:
-                date_from = f["details"]["start"][0:10]
-                details_start_date = datetime.strptime(date_from, "%Y-%m-%d")
-                date_to_date = details_start_date + timedelta(days=10)
-                date_to = date_to_date.strftime("%Y-%m-%d")
-                break
+        date_from = metadata['properties']['startdate']['default']
+        date_to = metadata['properties']['enddate']['default']
 
     if date_from == "" or date_to == "":
         date_to = datetime.now().strftime("%Y-%m-%d")
         date_from = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
 
-    date_from += "T00:00:00.000Z"
-    date_to += "T00:00:00.000Z"
+        date_from += "T00:00:00.000Z"
+        date_to += "T00:00:00.000Z"
 
     if x_max == "" or y_max == "" or x_min == "" or y_min == "":
         x_max = "32.871094"
@@ -138,7 +133,8 @@ def get_wekeo(
 
 def get_wekeo_token(api_url, username, password):
     """get wekeo token"""
-    response = requests.get(api_url + "/gettoken", auth=(username, password))
+    data = {"username": username, "password": password}
+    response = requests.post(api_url + "gettoken", json=data, verify=True)
     result = json.loads(response.text)
     return result["access_token"]
 
@@ -146,10 +142,11 @@ def get_wekeo_token(api_url, username, password):
 def get_wekeo_metadata(api_url, username, password, dataset_path):
     """get wekeo metadata"""
     token = get_wekeo_token(api_url, username, password)
-    my_headers = {"Authorization": token}
+    my_headers = {"Authorization": f"Bearer {token}"}
 
     response = requests.get(
-        api_url + "/querymetadata/" + dataset_path, headers=my_headers
+        api_url + "api/v1/dataaccess/queryable/" + dataset_path,
+        headers=my_headers
     )
     result = response.text
     return result

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+9.8 - (2025-02-05)
+---------------------------
+* Change: Refs #283305 - Fix Auxiliar API to download information from WeKEO.
+  [GhitaB]
+
 9.7 - (2024-12-02)
 ---------------------------
 * Change: Refs #281079 - Solve FME cancel download issue by adding User-Agent in request headers.
