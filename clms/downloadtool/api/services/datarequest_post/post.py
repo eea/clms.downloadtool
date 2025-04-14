@@ -498,8 +498,8 @@ class DataRequestPost(Service):
                             "msg": (
                                 "You are requesting to download a time series "
                                 "enabled dataset and the requested date range "
-                                "is bigger than the allowed one. "
-                                "Please check the download "
+                                "is bigger than the allowed range of "
+                                f"{dataset_object.download_limit_temporal_extent} days. "  # noqa
                                 "documentation to get more information"
                             ),
                         }

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+10.0 - (2025-04-14)
+---------------------------
+* Change: Develop
+  [GhitaB]
+
 9.9 - (2025-04-14)
 ---------------------------
 * Change: Refs #283256 - Make sure TemporalFilter exists if dataset has download_limit_temporal_extent > 0.
