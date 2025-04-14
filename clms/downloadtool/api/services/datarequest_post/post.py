@@ -472,12 +472,23 @@ class DataRequestPost(Service):
 
                 d_l_t = dataset_object.download_limit_temporal_extent
                 if d_l_t is not None and d_l_t > 0:
-                    end_date_datetime = datetime.strptime(
-                        end_date, ISO8601_DATETIME_FORMAT
-                    )
-                    start_date_datetime = datetime.strptime(
-                        start_date, ISO8601_DATETIME_FORMAT
-                    )
+                    try:
+                        end_date_datetime = datetime.strptime(
+                            end_date, ISO8601_DATETIME_FORMAT
+                        )
+                        start_date_datetime = datetime.strptime(
+                            start_date, ISO8601_DATETIME_FORMAT
+                        )
+                    except UnboundLocalError:
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": (
+                                "Please add "
+                                "TemporalFilter (with StartDate and EndDate)"
+                            ),
+                        }
+
                     if (end_date_datetime - start_date_datetime) > timedelta(
                         days=dataset_object.download_limit_temporal_extent
                     ):
