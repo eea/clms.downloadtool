@@ -500,6 +500,7 @@ class DataRequestPost(Service):
                                 "enabled dataset and the requested date range "
                                 "is bigger than the allowed range of "
                                 f"{dataset_object.download_limit_temporal_extent} days. "  # noqa
+                                "Please check the download "
                                 "documentation to get more information"
                             ),
                         }
