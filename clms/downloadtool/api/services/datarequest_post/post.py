@@ -4,6 +4,7 @@ For HTTP GET operations we can use standard HTTP parameter passing
 through the URL)
 
 """
+
 import base64
 import json
 import re
@@ -127,10 +128,10 @@ class DataRequestPost(Service):
         # display this error
         # [UID1, path1, ...]
         SPECIAL_CASES = [
-            '7df9bdf94fe94cb5919c11c9ef5cac65',
-            '/water-bodies/water-bodies-global-v1-0-100m',
-            '0517fd1b7d944d8197a2eb5c13470db8',
-            '/water-bodies/water-bodies-global-v2-0-300m'
+            "7df9bdf94fe94cb5919c11c9ef5cac65",
+            "/water-bodies/water-bodies-global-v1-0-100m",
+            "0517fd1b7d944d8197a2eb5c13470db8",
+            "/water-bodies/water-bodies-global-v2-0-300m",
         ]
         found_special = []
 
@@ -184,9 +185,7 @@ class DataRequestPost(Service):
                 if file_path and file_source:
                     response_json.update({"FileID": dataset_json["FileID"]})
                     response_json.update({"DatasetPath": ""})
-                    response_json.update(
-                        {"FilePath": base64_encode_path(file_path)}
-                    )
+                    response_json.update({"FilePath": base64_encode_path(file_path)})
                     response_json.update({"DatasetSource": file_source})
                 else:
                     self.request.response.setStatus(400)
@@ -194,9 +193,7 @@ class DataRequestPost(Service):
                         "status": "error",
                         "msg": "Error, the FileID is not valid",
                     }
-                prepacked_download_data_object["Datasets"].append(
-                    response_json
-                )
+                prepacked_download_data_object["Datasets"].append(response_json)
             else:
                 if "NUTS" in dataset_json:
                     if not validate_nuts(dataset_json["NUTS"]):
@@ -218,9 +215,7 @@ class DataRequestPost(Service):
                             "msg": "Error, NUTS is also defined",
                         }
 
-                    if not validate_spatial_extent(
-                        dataset_json["BoundingBox"]
-                    ):
+                    if not validate_spatial_extent(dataset_json["BoundingBox"]):
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
@@ -238,9 +233,7 @@ class DataRequestPost(Service):
                             "big. The limit is "
                             f"{self.max_area_extent()}.",
                         }
-                    response_json.update(
-                        {"BoundingBox": dataset_json["BoundingBox"]}
-                    )
+                    response_json.update({"BoundingBox": dataset_json["BoundingBox"]})
 
                 # Now, the temporal restriction can be controlled only with
                 # the maximum range, I mean if it is set as timeseries or has
@@ -257,16 +250,15 @@ class DataRequestPost(Service):
                         return {
                             "status": "error",
                             "msg": "Error, temporal restriction is not "
-                                   "allowed in not time-series enabled "
-                                   "datasets",
+                            "allowed in not time-series enabled "
+                            "datasets",
                         }
 
                     if len(dataset_json["TemporalFilter"].keys()) > 2:
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
-                            "msg": "Error, TemporalFilter has too many "
-                                   "fields",
+                            "msg": "Error, TemporalFilter has too many fields",
                         }
 
                     if "StartDate" not in dataset_json["TemporalFilter"]:
@@ -329,9 +321,7 @@ class DataRequestPost(Service):
                             "status": "error",
                             "msg": "Error, defined GCS not in the list",
                         }
-                    response_json.update(
-                        {"OutputGCS": dataset_json["OutputGCS"]}
-                    )
+                    response_json.update({"OutputGCS": dataset_json["OutputGCS"]})
 
                 else:
                     self.request.response.setStatus(400)
@@ -344,10 +334,7 @@ class DataRequestPost(Service):
                     self.request.response.setStatus(400)
                     return {
                         "status": "error",
-                        "msg": (
-                            "Error, DatasetDownloadInformationID is not"
-                            " defined."
-                        ),
+                        "msg": ("Error, DatasetDownloadInformationID is not defined."),
                     }
 
                 download_information_id = dataset_json.get(
@@ -365,20 +352,16 @@ class DataRequestPost(Service):
                         "msg": "Error, this dataset is not downloadable",
                     }
 
-                requested_output_format = dataset_json.get(
-                    "OutputFormat", None
-                )
+                requested_output_format = dataset_json.get("OutputFormat", None)
                 if requested_output_format not in FORMAT_CONVERSION_TABLE:
                     self.request.response.setStatus(400)
                     return {
                         "status": "error",
-                        "msg": (
-                            "Error, the specified output format is not valid"
-                        ),
+                        "msg": ("Error, the specified output format is not valid"),
                     }
 
-                available_transformations_for_format = (
-                    FORMAT_CONVERSION_TABLE.get(full_dataset_format)
+                available_transformations_for_format = FORMAT_CONVERSION_TABLE.get(
+                    full_dataset_format
                 )
 
                 if not available_transformations_for_format.get(
@@ -425,7 +408,7 @@ class DataRequestPost(Service):
                     # Check if user has not sent the Layer and
                     # is mandatory, because this dataset
                     # has layers
-                    dataset_json['Layer'] = "ALL BANDS"
+                    dataset_json["Layer"] = "ALL BANDS"
 
                 elif layers and "Layer" in dataset_json:
                     # Check if we have a layer and it is valid
@@ -438,16 +421,17 @@ class DataRequestPost(Service):
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
-                            "msg": (
-                                "Error, the requested band/layer is not valid"
-                            ),
+                            "msg": ("Error, the requested band/layer is not valid"),
                         }
 
                 # check time series restrictions:
                 # if the dataset is a time_series enabled dataset
                 # the temporal filter option is mandatory
                 # pylint: disable=line-too-long
-                if (dataset_object.mapviewer_istimeseries and "TemporalFilter" not in dataset_json):  # noqa
+                if (
+                    dataset_object.mapviewer_istimeseries
+                    and "TemporalFilter" not in dataset_json
+                ):  # noqa
                     self.request.response.setStatus(400)
                     return {
                         "status": "error",
@@ -484,8 +468,7 @@ class DataRequestPost(Service):
                         return {
                             "status": "error",
                             "msg": (
-                                "Please add "
-                                "TemporalFilter (with StartDate and EndDate)"
+                                "Please add TemporalFilter (with StartDate and EndDate)"
                             ),
                         }
 
@@ -500,17 +483,20 @@ class DataRequestPost(Service):
                                 "enabled dataset and the requested date range "
                                 "is bigger than the allowed range of "
                                 f"{dataset_object.download_limit_temporal_extent} days. "  # noqa
+                                "Please check the download "
                                 "documentation to get more information"
                             ),
                         }
 
                 is_special_case = False
                 try:
-                    dataset_id = dataset_json['DatasetID']
-                    if dataset_id in SPECIAL_CASES or \
-                        dataset_object.absolute_url().split(
-                            '/en/products')[-1] in SPECIAL_CASES:
-                        if dataset_json['OutputFormat'] == 'Netcdf':
+                    dataset_id = dataset_json["DatasetID"]
+                    if (
+                        dataset_id in SPECIAL_CASES
+                        or dataset_object.absolute_url().split("/en/products")[-1]
+                        in SPECIAL_CASES
+                    ):
+                        if dataset_json["OutputFormat"] == "Netcdf":
                             is_special_case = True
                             found_special.append(dataset_id)
                 except Exception:
@@ -523,21 +509,26 @@ class DataRequestPost(Service):
                             f"format is not allowed "
                             f"for the dataset(s) {', '.join(found_special)}"
                         )
-                        return {
-                            "status": "error",
-                            "msg": special_msg
-                        }
+                        return {"status": "error", "msg": special_msg}
                 elif is_special_case:
                     continue
 
                 # Check full dataset download restrictions
                 # pylint: disable=line-too-long
-                if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json and "TemporalFilter" not in dataset_json):  # noqa
+                if (
+                    "NUTS" not in dataset_json
+                    and "BoundingBox" not in dataset_json
+                    and "TemporalFilter" not in dataset_json
+                ):  # noqa
                     # We are requesting a full dataset download
                     # We need to check if this dataset is a EEA dataset
                     # to show an specific message
                     # pylint: disable=line-too-long
-                    if (full_dataset_source and full_dataset_source != "EEA" or not full_dataset_source):  # noqa
+                    if (
+                        full_dataset_source
+                        and full_dataset_source != "EEA"
+                        or not full_dataset_source
+                    ):  # noqa
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
@@ -551,7 +542,11 @@ class DataRequestPost(Service):
                                 " endpoint."
                             ),
                         }
-                    if (full_dataset_source and full_dataset_source == "EEA" or not full_dataset_source):  # noqa
+                    if (
+                        full_dataset_source
+                        and full_dataset_source == "EEA"
+                        or not full_dataset_source
+                    ):  # noqa
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
@@ -565,24 +560,26 @@ class DataRequestPost(Service):
                 # pylint: disable=line-too-long
                 # Check dataset download restrictions for
                 # non-EEA datasets with no area specified
-                if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json):  # noqa
+                if "NUTS" not in dataset_json and "BoundingBox" not in dataset_json:  # noqa
                     # We are requesting a full dataset download
                     # We need to check if this dataset is a non-EEA dataset
                     # to show a specific message
                     # pylint: disable=line-too-long
-                    if (full_dataset_source and full_dataset_source != "EEA" or not full_dataset_source):  # noqa
-                        print('full_dataset_source', full_dataset_source)
+                    if (
+                        full_dataset_source
+                        and full_dataset_source != "EEA"
+                        or not full_dataset_source
+                    ):  # noqa
+                        print("full_dataset_source", full_dataset_source)
                         # Non-EEA datasets must have an area specified
                         self.request.response.setStatus(400)
                         return {
                             "status": "error",
                             "msg": (
-                                (
-                                    "You have to select a specific area of"
-                                    " interest. In case you want to download"
-                                    " the full dataset, please use the"
-                                    " Auxiliary API."
-                                )
+                                "You have to select a specific area of"
+                                " interest. In case you want to download"
+                                " the full dataset, please use the"
+                                " Auxiliary API."
                             ),
                         }
 
@@ -597,9 +594,7 @@ class DataRequestPost(Service):
                 )
 
                 metadata = []
-                for meta in dataset_object.geonetwork_identifiers.get(
-                    "items", []
-                ):
+                for meta in dataset_object.geonetwork_identifiers.get("items", []):
                     if meta.get("type", "") == "EEA":
                         metadata_url = EEA_GEONETWORK_BASE_URL.format(
                             uid=meta.get("id")
@@ -631,9 +626,7 @@ class DataRequestPost(Service):
             user_id, "In_progress"
         ).values()
 
-        queued_requests = utility.datarequest_search(
-            user_id, "Queued"
-        ).values()
+        queued_requests = utility.datarequest_search(user_id, "Queued").values()
 
         inprogress_datasets = reduce(
             lambda x, y: x + y,
@@ -648,7 +641,9 @@ class DataRequestPost(Service):
         # Check that the request has no duplicates
         if duplicated_values_exist(
             # pylint: disable=line-too-long
-            general_download_data_object.get("Datasets", []) + inprogress_datasets + queued_datasets  # noqa
+            general_download_data_object.get("Datasets", [])
+            + inprogress_datasets
+            + queued_datasets  # noqa
         ):
             self.request.response.setStatus(400)
             return {
@@ -672,9 +667,7 @@ class DataRequestPost(Service):
             if data_object["Datasets"]:
                 data_object["Status"] = "Queued"
                 data_object["UserID"] = user_id
-                data_object[
-                    "RegistrationDateTime"
-                ] = datetime.utcnow().isoformat()
+                data_object["RegistrationDateTime"] = datetime.utcnow().isoformat()
                 utility_response_json = utility.datarequest_post(data_object)
                 utility_task_id = get_task_id(utility_response_json)
                 new_datasets = {"Datasets": data_object["Datasets"]}
@@ -707,7 +700,9 @@ class DataRequestPost(Service):
                     "Start": datetime.utcnow().isoformat(),
                     "User": str(user_id),
                     # pylint: disable=line-too-long
-                    "Dataset": [item["DatasetID"] for item in data_object.get("Datasets", [])],  # noqa: E501
+                    "Dataset": [
+                        item["DatasetID"] for item in data_object.get("Datasets", [])
+                    ],  # noqa: E501
                     "TransformationData": new_datasets,
                     "TaskID": utility_task_id,
                     "End": "",
@@ -720,9 +715,7 @@ class DataRequestPost(Service):
                 fme_result = self.post_request_to_fme(params, is_prepackaged)
                 if fme_result:
                     data_object["FMETaskId"] = fme_result
-                    utility.datarequest_status_patch(
-                        data_object, utility_task_id
-                    )
+                    utility.datarequest_status_patch(data_object, utility_task_id)
                     self.request.response.setStatus(201)
                     fme_results["ok"].append({"TaskID": utility_task_id})
                 else:
@@ -761,9 +754,7 @@ class DataRequestPost(Service):
             "Authorization": "fmetoken token={0}".format(fme_token),
         }
         try:
-            resp = requests.post(
-                fme_url, json=params, headers=headers, timeout=10
-            )
+            resp = requests.post(fme_url, json=params, headers=headers, timeout=10)
             if resp.ok:
                 fme_task_id = resp.json().get("id", None)
                 return fme_task_id
@@ -861,9 +852,7 @@ def save_stats(stats_json):
         utility.register_item(stats_json)
     except Exception as e:
         log.exception(e)
-        log.info(
-            "There was an error saving the stats: %s", json.dumps(stats_json)
-        )  # noqa
+        log.info("There was an error saving the stats: %s", json.dumps(stats_json))  # noqa
 
 
 def get_dataset_file_path_from_file_id(dataset_object, file_id):
@@ -889,12 +878,8 @@ def get_dataset_file_source_from_file_id(dataset_object, file_id):
 def get_full_dataset_format(dataset_object, download_information_id):
     """get the dataset full format based on the requested
     download_information_id"""
-    dataset_download_information_json = (
-        dataset_object.dataset_download_information
-    )
-    for download_information in dataset_download_information_json.get(
-        "items", []
-    ):
+    dataset_download_information_json = dataset_object.dataset_download_information
+    for download_information in dataset_download_information_json.get("items", []):
         if download_information.get("@id") == download_information_id:
             value = download_information.get("full_format", "")
             if isinstance(value, dict):
@@ -908,12 +893,8 @@ def get_full_dataset_format(dataset_object, download_information_id):
 def get_full_dataset_source(dataset_object, download_information_id):
     """get the dataset full source based on the requested
     download_information_id"""
-    dataset_download_information_json = (
-        dataset_object.dataset_download_information
-    )
-    for download_information in dataset_download_information_json.get(
-        "items", []
-    ):
+    dataset_download_information_json = dataset_object.dataset_download_information
+    for download_information in dataset_download_information_json.get("items", []):
         if download_information.get("@id") == download_information_id:
             value = download_information.get("full_source", "")
             if isinstance(value, dict):
@@ -927,12 +908,8 @@ def get_full_dataset_source(dataset_object, download_information_id):
 def get_full_dataset_path(dataset_object, download_information_id):
     """get the dataset full path based on the requested
     download_information_id"""
-    dataset_download_information_json = (
-        dataset_object.dataset_download_information
-    )
-    for download_information in dataset_download_information_json.get(
-        "items", []
-    ):
+    dataset_download_information_json = dataset_object.dataset_download_information
+    for download_information in dataset_download_information_json.get("items", []):
         if download_information.get("@id") == download_information_id:
             return download_information.get("full_path", "")
 
@@ -942,12 +919,8 @@ def get_full_dataset_path(dataset_object, download_information_id):
 def get_full_dataset_wekeo_choices(dataset_object, download_information_id):
     """get the dataset wekeo_choices based on the requested
     download_information_id"""
-    dataset_download_information_json = (
-        dataset_object.dataset_download_information
-    )
-    for download_information in dataset_download_information_json.get(
-        "items", []
-    ):
+    dataset_download_information_json = dataset_object.dataset_download_information
+    for download_information in dataset_download_information_json.get("items", []):
         if download_information.get("@id") == download_information_id:
             return download_information.get("wekeo_choices", "")
 
@@ -958,12 +931,8 @@ def get_full_dataset_layers(dataset_object, download_information_id):
     """get the available layers/bands based on the requested
     download_information_id
     """
-    dataset_download_information_json = (
-        dataset_object.dataset_download_information
-    )
-    for download_information in dataset_download_information_json.get(
-        "items", []
-    ):
+    dataset_download_information_json = dataset_object.dataset_download_information
+    for download_information in dataset_download_information_json.get("items", []):
         if download_information.get("@id") == download_information_id:
             return download_information.get("layers", [])
 
