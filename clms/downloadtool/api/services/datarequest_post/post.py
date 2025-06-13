@@ -169,10 +169,11 @@ class DataRequestPost(Service):
                 }
             )
 
-            # TODO CDSE (move this?)
+            # CDSE case
             is_cdse_dataset = False
             try:
-                full_source = dataset_object.dataset_download_information['items'][0]['full_source']
+                full_source = dataset_object.dataset_download_information[
+                    'items'][0]['full_source']
                 if full_source == "CDSE":
                     is_cdse_dataset = True
             except Exception:
@@ -342,20 +343,18 @@ class DataRequestPost(Service):
                         {"OutputGCS": dataset_json["OutputGCS"]}
                     )
 
-                    # TODO MOVE THIS CDSE RELATED
+                    # CDSE case
                     if is_cdse_dataset is True:
                         cdse_output_gcs = "http://www.opengis.net/def/crs/" + \
                             dataset_json['OutputGCS'].replace(":", "/0/")
                         response_json.update(
                             {"OutputGCS": cdse_output_gcs}
                         )
-                    # import pdb
-                    # pdb.set_trace()
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "WIP CDSE. Output GCS: " + cdse_output_gcs,
-                    }
+                        self.request.response.setStatus(400)
+                        return {
+                            "status": "error",
+                            "msg": "WIP CDSE. Output GCS: " + cdse_output_gcs,
+                        }
 
                 else:
                     self.request.response.setStatus(400)
