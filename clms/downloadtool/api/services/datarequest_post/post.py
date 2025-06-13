@@ -169,6 +169,15 @@ class DataRequestPost(Service):
                 }
             )
 
+            # TODO CDSE (move this?)
+            is_cdse_dataset = False
+            try:
+                full_source = dataset_object.dataset_download_information['items'][0]['full_source']
+                if full_source == "CDSE":
+                    is_cdse_dataset = True
+            except Exception:
+                pass
+
             # Handle FileID requests:
             # - get first the file_path from the dataset using the file_id
             # - if something is returned use it as FileID and FilePath
@@ -332,6 +341,21 @@ class DataRequestPost(Service):
                     response_json.update(
                         {"OutputGCS": dataset_json["OutputGCS"]}
                     )
+
+                    # TODO MOVE THIS CDSE RELATED
+                    if is_cdse_dataset is True:
+                        cdse_output_gcs = "http://www.opengis.net/def/crs/" + \
+                            dataset_json['OutputGCS'].replace(":", "/0/")
+                        response_json.update(
+                            {"OutputGCS": cdse_output_gcs}
+                        )
+                    # import pdb
+                    # pdb.set_trace()
+                    self.request.response.setStatus(400)
+                    return {
+                        "status": "error",
+                        "msg": "WIP CDSE. Output GCS: " + cdse_output_gcs,
+                    }
 
                 else:
                     self.request.response.setStatus(400)
