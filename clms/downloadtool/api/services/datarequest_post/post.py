@@ -23,6 +23,7 @@ from clms.downloadtool.api.services.utils import (
     calculate_bounding_box_area,
     get_available_gcs_values,
 )
+from clms.downloadtool.api.services.cdse.process import cdse_response
 from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
 from plone.memoize.ram import cache
@@ -168,6 +169,16 @@ class DataRequestPost(Service):
                     "DatasetTitle": dataset_object.Title(),
                 }
             )
+
+            # CDSE case
+            is_cdse_dataset = False
+            try:
+                full_source = dataset_object.dataset_download_information[
+                    'items'][0]['full_source']
+                if full_source == "CDSE":
+                    is_cdse_dataset = True
+            except Exception:
+                pass
 
             # Handle FileID requests:
             # - get first the file_path from the dataset using the file_id
@@ -332,6 +343,11 @@ class DataRequestPost(Service):
                     response_json.update(
                         {"OutputGCS": dataset_json["OutputGCS"]}
                     )
+
+                    # CDSE case - WIP
+                    if is_cdse_dataset is True:
+                        self.request.response.setStatus(400)
+                        return cdse_response(dataset_json, response_json)
 
                 else:
                     self.request.response.setStatus(400)
