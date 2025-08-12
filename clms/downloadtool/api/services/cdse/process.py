@@ -4,8 +4,8 @@ CDSE process
 """
 
 import json
-from clms.downloadtool.api.services.cdse.polygons import get_polygon
 from logging import getLogger
+from clms.downloadtool.api.services.cdse.polygons import get_polygon
 
 log = getLogger(__name__)
 
