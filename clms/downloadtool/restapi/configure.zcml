@@ -3,6 +3,7 @@
     i18n_domain="clms.downloadtool">
 
   <include package=".fme_config_controlpanel" />
+  <include package=".cdse_config_controlpanel" />
 
 
 </configure>

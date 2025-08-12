@@ -27,6 +27,18 @@
         visible="True">
       <permission>Manage Portal</permission>
     </configlet>
+    <configlet
+        i18n:attributes="title"
+        title="CDSE Config Control Panel"
+        action_id="cdse_config-controlpanel"
+        appId="cdse-config-controlpanel"
+        category="Products"
+        condition_expr=""
+        icon_expr=""
+        url_expr="string:${portal_url}/@@cdse-config-controlpanel"
+        visible="True">
+      <permission>Manage Portal</permission>
+    </configlet>
 
   <!-- -*- extra stuff goes here -*- -->
 </object>

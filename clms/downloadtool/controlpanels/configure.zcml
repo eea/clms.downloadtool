@@ -5,6 +5,7 @@
 
   <include package=".fme_config_controlpanel" />
   <include package=".auxiliary_api_control_panel" />
+  <include package=".cdse_config_controlpanel" />
 
   <!-- -*- extra stuff goes here -*- -->
 
