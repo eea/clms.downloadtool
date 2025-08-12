@@ -23,6 +23,7 @@ from clms.downloadtool.api.services.utils import (
     calculate_bounding_box_area,
     get_available_gcs_values,
 )
+from clms.downloadtool.api.services.cdse.process import cdse_response
 from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
 from plone.memoize.ram import cache
@@ -32,8 +33,6 @@ from plone.restapi.deserializer import json_body
 from plone.restapi.services import Service
 from zope.component import getUtility
 from zope.interface import alsoProvides
-# from clms.downloadtool.api.services.cdse.polygons import get_polygons
-from clms.downloadtool.api.services.cdse.polygons import get_polygon
 
 
 ISO8601_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -345,51 +344,10 @@ class DataRequestPost(Service):
                         {"OutputGCS": dataset_json["OutputGCS"]}
                     )
 
-                    # CDSE case
+                    # CDSE case - WIP
                     if is_cdse_dataset is True:
-                        # pol = get_polygons()
-                        nuts_id = response_json.get('NUTSID', None)
-                        polygon = "placeholder"
-                        if nuts_id is not None:
-                            log.info("CDSE: NUTS ID %s", nuts_id)
-                            polygon = get_polygon(response_json['NUTSID'])
-
-                        polygon_json_str = json.dumps(polygon)
-                        polygon_len = len(polygon_json_str)
-                        polygon_preview = polygon_json_str[0:200]
-
-                        log.info("Polygon %s chars (%.2f KB) | %s..." % (
-                            polygon_len,
-                            polygon_len / 1024,
-                            polygon_preview
-                        ))
-
-                        """
-                        (Pdb) response_json
-                        {
-                        'DatasetID': '705b03fa926549c8bf5ff3f51203c790',
-                        'DatasetTitle': 'CDSE TEST - Water Bodies 2020...'
-                        'NUTSID': 'ES',
-                        'NUTSName': 'España',
-                        'TemporalFilter': {
-                            'StartDate': '2025-03-31 21:00:00',
-                            'EndDate': '2025-08-30 21:00:00'
-                        },
-                        'OutputGCS': 'EPSG:4326'
-                        }
-                        """
-                        cdse_output_gcs = "http://www.opengis.net/def/crs/" + \
-                            dataset_json['OutputGCS'].replace(":", "/0/")
-                        response_json.update(
-                            {"OutputGCS": cdse_output_gcs}
-                        )
                         self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "WIP CDSE. Output GCS: " +
-                            cdse_output_gcs + "Polygon: " +
-                            polygon_preview,
-                        }
+                        return cdse_response(dataset_json, response_json)
 
                 else:
                     self.request.response.setStatus(400)
