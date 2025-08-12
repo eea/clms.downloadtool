@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<object name="portal_controlpanel" xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+    i18n:domain="clms.downloadtool">
+
+    <configlet
+        i18n:attributes="title"
+        title="CDSE Config Control Panel"
+        action_id="cdse_config-controlpanel"
+        appId="cdse-config-controlpanel"
+        category="Products"
+        condition_expr=""
+        icon_expr=""
+        url_expr="string:${portal_url}/@@cdse-config-controlpanel"
+        visible="True">
+      <permission>Manage Portal</permission>
+    </configlet>
+
+  <!-- -*- extra stuff goes here -*- -->
+</object>
