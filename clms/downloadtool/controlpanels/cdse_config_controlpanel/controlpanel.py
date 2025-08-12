@@ -21,7 +21,8 @@ class ICDSEConfigControlPanel(Interface):
         description=_(
             "This URL be used to get the token for CDSE download"
         ),
-        default="https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token",  # pylint: disable=line-too-long
+        # pylint: disable=line-too-long
+        default="https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token",  # noqa: E501
         required=True,
         readonly=False,
     )
