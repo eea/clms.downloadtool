@@ -7,6 +7,8 @@ from plone import api
 
 _POLYGONS_INDEX = None
 
+# pylint: disable=global-statement
+
 
 def _load_polygons():
     """Load and index polygons once per worker."""
