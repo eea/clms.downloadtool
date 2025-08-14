@@ -19,6 +19,7 @@ def get_portal_config():
             "clms.downloadtool.cdse_config_controlpanel.s3_bucket_accesskey"
         ),
         's3_secret_key': api.portal.get_registry_record(
+            # pylint: disable=line-too-long
             "clms.downloadtool.cdse_config_controlpanel.s3_bucket_secretaccesskey"  # noqa: E501
         ),
         'client_id': api.portal.get_registry_record(
@@ -203,6 +204,7 @@ def start_batch(batch_id):
     print(response.status_code)
 
 
+# pylint: disable=line-too-long
 # TODO CREATED is not queued; it's a batch that waits for the start and that should NOT be a "normal" status  # noqa: E501
 # a batch in CREATED should probably be sent a start call or further checked
 status_map = {
@@ -247,6 +249,7 @@ def get_status(token, batch_url, batch_id=None):
 
 # Example to get status of all batches:
 # config = get_portal_config()
+# pylint: disable=line-too-long
 # token = get_token(config['token_url'], config['client_id'], config['client_secret'])  # noqa: E501
 # all_batches_status = get_status(token, config['batch_url'])
 # print('All batches:', all_batches_status)
