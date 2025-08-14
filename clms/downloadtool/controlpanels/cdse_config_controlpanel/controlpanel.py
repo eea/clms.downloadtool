@@ -63,6 +63,18 @@ class ICDSEConfigControlPanel(Interface):
         readonly=False,
     )
 
+    s3_endpoint_url = schema.TextLine(
+        title=_(
+            "S3 endpoint URL "
+        ),
+        description=_(
+            "This URL will be used to access the S3 server "
+        ),
+        default="",
+        required=True,
+        readonly=False,
+    )
+
     s3_bucket_name = schema.TextLine(
         title=_(
             "S3 bucket name "
