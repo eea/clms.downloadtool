@@ -1,13 +1,17 @@
-# bbox reprojected to EPSG:3857
+# -*- coding: utf-8 -*-
+"""
+CDSE: CDSE integration scripts
+"""
+import io
 import geopandas as gpd
 from shapely.geometry import box
 import boto3
 import requests
-import io
 from plone import api
 
 
 def get_portal_config():
+    """Get CDSE and S3 bucket configuration from the portal catalog"""
     return {
         'token_url': api.portal.get_registry_record(
             "clms.downloadtool.cdse_config_controlpanel.token_url"
@@ -37,6 +41,7 @@ def get_portal_config():
 
 
 def get_token(token_url, client_id, client_secret):
+    """Get token for CDSE"""
     token_response = requests.post(token_url, data={
         "grant_type": "client_credentials",
         "client_id": client_id,
@@ -52,6 +57,7 @@ def get_token(token_url, client_id, client_secret):
 
 
 def create_batch(geopackage_file, geom=None):
+    """Create batch process and return batch ID"""
     config = get_portal_config()
     # GPKG EPSG:4326
     # TODO geometry must come as a parameter from the API call
@@ -188,6 +194,7 @@ def create_batch(geopackage_file, geom=None):
 
 
 def start_batch(batch_id):
+    """Start the batch process"""
     config = get_portal_config()
     url = f"{config['batch_url']}/{batch_id}/start"
     print(url)
@@ -218,8 +225,8 @@ status_map = {
 }
 
 
-# Get status for all batch processes
 def get_status(token, batch_url, batch_id=None):
+    """Get status for all batch processes"""
     if batch_id:
         url = f"{batch_url}/{batch_id}"
     else:
