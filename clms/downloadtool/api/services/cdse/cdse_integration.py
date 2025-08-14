@@ -60,7 +60,7 @@ def create_batch(geopackage_file, geom=None):
     """Create batch process and return batch ID"""
     config = get_portal_config()
     # GPKG EPSG:4326
-    # TODO geometry must come as a parameter from the API call
+    # geometry must come as a parameter from the API call
     if geom is None:
         geom = box(6.89, 51.01, 7.11, 51.10)
 
@@ -124,7 +124,7 @@ def create_batch(geopackage_file, geom=None):
     # BBOX IN EPSG:3857
     minx, miny, maxx, maxy = gdf_reprojected.total_bounds
 
-    # TODO: create URL from target_crs (ticket / Ghita)
+    # create URL from target_crs (ticket / Ghita)
     crs_url = "http://www.opengis.net/def/crs/EPSG/0/3857"
 
     payload = {
@@ -212,7 +212,7 @@ def start_batch(batch_id):
 
 
 # pylint: disable=line-too-long
-# TODO CREATED is not queued; it's a batch that waits for the start and that should NOT be a "normal" status  # noqa: E501
+# CREATED is not queued; it's a batch that waits for the start and that should NOT be a "normal" status  # noqa: E501
 # a batch in CREATED should probably be sent a start call or further checked
 status_map = {
     "CREATED": "QUEUED",
