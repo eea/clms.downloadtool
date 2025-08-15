@@ -1,8 +1,10 @@
 Changelog
 =========
 
-10.6-dev0 - (unreleased)
+10.6 - (2025-08-15)
 ---------------------------
+* Change: CDSE control panel update + code samples
+  [GhitaB]
 
 10.5 - (2025-08-14)
 ---------------------------
