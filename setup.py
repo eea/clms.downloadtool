@@ -61,6 +61,8 @@ setup(
         "clms.statstool",
         "eea.cache",
         "PyProj",
+        "geopandas",
+        "boto3"
     ],
     extras_require={
         "test": [
