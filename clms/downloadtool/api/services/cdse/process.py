@@ -6,7 +6,7 @@ CDSE process
 import json
 from logging import getLogger
 from clms.downloadtool.api.services.cdse.polygons import get_polygon
-from clms.downloadtool.api.services.cdse.cdse_integration import get_token
+from clms.downloadtool.api.services.cdse.cdse_integration import get_token, create_batch
 
 log = getLogger(__name__)
 
@@ -36,6 +36,8 @@ def cdse_response(dataset_json, response_json):
 
     token = get_token()
     log.info(token)
+    batch_id = create_batch("test_file.gpkg")
+    log.info(batch_id)
     # import pdb
     # pdb.set_trace()
     return {
