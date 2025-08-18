@@ -195,6 +195,7 @@ def create_batch(geopackage_file, geom=None):
 
 def start_batch(batch_id):
     """Start the batch process"""
+    config = get_portal_config()
     url = f"{config['batch_url']}/{batch_id}/start"
     print(url)
 
