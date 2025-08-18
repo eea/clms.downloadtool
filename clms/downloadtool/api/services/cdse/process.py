@@ -6,6 +6,7 @@ CDSE process
 import json
 from logging import getLogger
 from clms.downloadtool.api.services.cdse.polygons import get_polygon
+from clms.downloadtool.api.services.cdse.cdse_integration import get_token
 
 log = getLogger(__name__)
 
@@ -32,6 +33,11 @@ def cdse_response(dataset_json, response_json):
     response_json.update(
         {"OutputGCS": cdse_output_gcs}
     )
+
+    token = get_token()
+    log.info(token)
+    # import pdb
+    # pdb.set_trace()
     return {
         "status": "error",
         "msg": "WIP CDSE. Output GCS: " +
