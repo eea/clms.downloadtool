@@ -692,10 +692,10 @@ class DataRequestPost(Service):
             "error": [],
         }
 
-        cdse_results = {
-            "ok": [],
-            "error": []
-        }
+        # cdse_results = {
+        #     "ok": [],
+        #     "error": []
+        # }
 
         # for cdse_dataset in cdse_datasets["Datasets"]:
 
