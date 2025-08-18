@@ -6,7 +6,8 @@ CDSE process
 import json
 from logging import getLogger
 from clms.downloadtool.api.services.cdse.polygons import get_polygon
-from clms.downloadtool.api.services.cdse.cdse_integration import get_token, create_batch
+from clms.downloadtool.api.services.cdse.cdse_integration import (
+    get_token, create_batch)
 
 log = getLogger(__name__)
 
