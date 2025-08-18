@@ -7,7 +7,6 @@ through the URL)
 import base64
 import json
 import re
-import uuid
 from datetime import datetime
 from datetime import timedelta
 from functools import reduce
@@ -25,7 +24,6 @@ from clms.downloadtool.api.services.utils import (
     get_available_gcs_values,
 )
 from clms.downloadtool.api.services.cdse.process import cdse_response
-from clms.downloadtool.api.services.cdse.cdse_integration import create_batch
 from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
 from plone.memoize.ram import cache
