@@ -61,6 +61,7 @@ def create_batch(geopackage_file, geom=None):
     """Create batch process and return batch ID"""
     # GPKG EPSG:4326
     # geometry must come as a parameter from the API call
+    config = get_portal_config()
     if geom is None:
         geom = box(6.89, 51.01, 7.11, 51.10)
 
