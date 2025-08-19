@@ -7,7 +7,6 @@ through the URL)
 import base64
 import json
 import re
-import uuid
 from datetime import datetime
 from datetime import timedelta
 from functools import reduce
@@ -25,7 +24,6 @@ from clms.downloadtool.api.services.utils import (
     get_available_gcs_values,
 )
 from clms.downloadtool.api.services.cdse.process import cdse_response
-from clms.downloadtool.api.services.cdse.cdse_integration import create_batch
 from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
 from plone.memoize.ram import cache
@@ -694,10 +692,10 @@ class DataRequestPost(Service):
             "error": [],
         }
 
-        cdse_results = {
-            "ok": [],
-            "error": []
-        }
+        # cdse_results = {
+        #     "ok": [],
+        #     "error": []
+        # }
 
         # for cdse_dataset in cdse_datasets["Datasets"]:
 
@@ -707,7 +705,8 @@ class DataRequestPost(Service):
         #     cdse_data_object[
         #         "RegistrationDateTime"
         #     ] = datetime.utcnow().isoformat()
-        #     utility_response_json = utility.datarequest_post(cdse_data_object)
+        # pylint: disable=line-too-long
+        #     utility_response_json = utility.datarequest_post(cdse_data_object)  # noqa: E501
         #     utility_task_id = get_task_id(utility_response_json)
 
         #     # generate unique geopackage file name
@@ -793,7 +792,6 @@ class DataRequestPost(Service):
                     "Status": "Queued",
                 }
                 save_stats(stats_params)
-                print("sent to FME: ", stats_params["Dataset"])
                 fme_result = self.post_request_to_fme(params, is_prepackaged)
                 if fme_result:
                     data_object["FMETaskId"] = fme_result
