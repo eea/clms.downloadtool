@@ -40,12 +40,13 @@ def get_portal_config():
     }
 
 
-def get_token(token_url, client_id, client_secret):
+def get_token():
     """Get token for CDSE"""
-    token_response = requests.post(token_url, data={
+    config = get_portal_config()
+    token_response = requests.post(config['token_url'], data={
         "grant_type": "client_credentials",
-        "client_id": client_id,
-        "client_secret": client_secret
+        "client_id": config['client_id'],
+        "client_secret": config['client_secret']
     })
 
     token = token_response.json().get("access_token")
@@ -58,9 +59,9 @@ def get_token(token_url, client_id, client_secret):
 
 def create_batch(geopackage_file, geom=None):
     """Create batch process and return batch ID"""
-    config = get_portal_config()
     # GPKG EPSG:4326
     # geometry must come as a parameter from the API call
+    config = get_portal_config()
     if geom is None:
         geom = box(6.89, 51.01, 7.11, 51.10)
 
@@ -176,8 +177,7 @@ def create_batch(geopackage_file, geom=None):
         "description": "ndvi_singlelayer_bbox_epsg3857"
     }
 
-    token = get_token(config['token_url'],
-                      config['client_id'], config['client_secret'])
+    token = get_token()
 
     headers = {"Authorization": f"Bearer {token}",
                "Content-Type": "application/json"}
@@ -199,8 +199,7 @@ def start_batch(batch_id):
     url = f"{config['batch_url']}/{batch_id}/start"
     print(url)
 
-    token = get_token(config['token_url'],
-                      config['client_id'], config['client_secret'])
+    token = get_token()
     # Token
     headers = {
         "Authorization": f"Bearer {token}"
@@ -255,8 +254,7 @@ def get_status(token, batch_url, batch_id=None):
 # start_batch(batch_id)
 
 # Example to get status of all batches:
-# config = get_portal_config()
 # pylint: disable=line-too-long
-# token = get_token(config['token_url'], config['client_id'], config['client_secret'])  # noqa: E501
+# token = get_token()
 # all_batches_status = get_status(token, config['batch_url'])
 # print('All batches:', all_batches_status)
