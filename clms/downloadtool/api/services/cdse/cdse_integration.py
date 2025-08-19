@@ -235,7 +235,7 @@ def get_status(token, batch_url, batch_id=None):
 
     response = requests.get(url, headers=headers)
     data = response.json()
-    print(data)
+    # print(data)
 
     result = {}
     if 'data' in data:
