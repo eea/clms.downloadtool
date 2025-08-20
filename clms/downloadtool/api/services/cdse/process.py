@@ -37,8 +37,8 @@ def cdse_response(dataset_json, response_json):
 
     token = get_token()
     log.info(token)
-    batch_id = create_batch("test_file.gpkg")
-    log.info(batch_id)
+    # batch_id = create_batch("test_file.gpkg")
+    # log.info(batch_id)
     # import pdb
     # pdb.set_trace()
     return {
