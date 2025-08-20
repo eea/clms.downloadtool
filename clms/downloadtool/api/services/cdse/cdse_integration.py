@@ -111,11 +111,15 @@ def create_batch(geopackage_file, cdse_dataset):
     payload_bounds = None
     crs_url = None
 
-    if hasattr(cdse_dataset, 'BoundingBox') and cdse_dataset["BoundingBox"]:
-        geom = box(cdse_dataset["BoundingBox"])
+    has_bbox = cdse_dataset.get('BoundingBox', None) is not None
+    has_nutsid = cdse_dataset.get('NUTSID', None) is not None
+
+    if has_bbox:
+        t_bbox = cdse_dataset["BoundingBox"]
+        geom = box(t_bbox[0], t_bbox[1], t_bbox[2], t_bbox[3])
         gdf_identifier = "full_tile"
         geometry_source = "bbox"
-    elif hasattr(cdse_dataset, 'NUTSID') and cdse_dataset["NUTSID"]:
+    elif has_nutsid:
         geometry_source = "nuts"
         polygon_data = get_polygon(cdse_dataset["NUTSID"])
         geometry = polygon_data["geometry"]
@@ -236,7 +240,7 @@ def create_batch(geopackage_file, cdse_dataset):
     response = requests.post(
         config['batch_url'], headers=headers, json=payload)
 
-    if response.status_code != 200:
+    if response.status_code != 201:
         raise RuntimeError(
             f"Batch creation failed: {response.status_code} - {response.text}")
 

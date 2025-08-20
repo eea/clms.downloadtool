@@ -24,7 +24,9 @@ from clms.downloadtool.api.services.utils import (
     calculate_bounding_box_area,
     get_available_gcs_values,
 )
-from clms.downloadtool.api.services.cdse.cdse_integration import create_batch
+from clms.downloadtool.api.services.cdse.cdse_integration import (
+    create_batch, start_batch)
+
 from clms.downloadtool.api.services.cdse.process import cdse_response
 from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
@@ -737,29 +739,29 @@ class DataRequestPost(Service):
                     cdse_dataset["TemporalFilter"]["EndDate"])
             except Exception:
                 pass
-            create_batch("test_file.gpkg", cdse_dataset)
-            cdse_batch_id = create_batch(unique_geopackage_name)
+            # create_batch("test_file.gpkg", cdse_dataset)
+            cdse_batch_id = create_batch(unique_geopackage_name, cdse_dataset)
             cdse_data_object["CDSEBatchID"] = cdse_batch_id
             # start batch
             start_batch(cdse_batch_id)
 
-            # build the stat params and save them
-            stats_params = {
-                    "Start": datetime.utcnow().isoformat(),
-                    "User": str(user_id),
-                    # pylint: disable=line-too-long
-                    "Dataset": [item["DatasetID"] for item in data_object.get("Datasets", [])],  # noqa: E501
-                    "TransformationData": new_datasets,
-                    "TaskID": utility_task_id,
-                    "CDSEBatchID": cdse_batch_id,
-                    "GpkgFileName": unique_geopackage_name,
-                    "End": "",
-                    "TransformationDuration": "",
-                    "TransformationSize": "",
-                    "TransformationResultData": "",
-                    "Status": "Queued",
-                }
-            save_stats(stats_params)
+            # # build the stat params and save them
+            # stats_params = {
+            #         "Start": datetime.utcnow().isoformat(),
+            #         "User": str(user_id),
+            #         # pylint: disable=line-too-long
+            #         "Dataset": [item["DatasetID"] for item in cdse_dataset.get("Datasets", [])],  # noqa: E501
+            #         "TransformationData": new_datasets,
+            #         "TaskID": utility_task_id,
+            #         "CDSEBatchID": cdse_batch_id,
+            #         "GpkgFileName": unique_geopackage_name,
+            #         "End": "",
+            #         "TransformationDuration": "",
+            #         "TransformationSize": "",
+            #         "TransformationResultData": "",
+            #         "Status": "Queued",
+            #     }
+            # save_stats(stats_params)
 
         for data_object, is_prepackaged in [
             (prepacked_download_data_object, True),
