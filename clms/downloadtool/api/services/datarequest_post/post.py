@@ -4,10 +4,12 @@ For HTTP GET operations we can use standard HTTP parameter passing
 through the URL)
 
 """
+import copy
 import base64
 import json
 import re
 import uuid
+import random
 from datetime import datetime
 from datetime import timedelta
 from functools import reduce
@@ -44,7 +46,18 @@ ISO8601_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 def to_iso8601(dt_str):
     dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
-    return dt.isoformat() + "Z"   # adaug Z pentru UTC
+    return dt.isoformat() + "Z"   # adding Z for UTC
+
+
+def generate_task_group_id():
+    """A CDSE parent task and its childs have the same group ID.
+       Example: 4823-9501-3746-1835
+    """
+    groups = []
+    for _ in range(4):
+        group = ''.join(str(random.randint(0, 9)) for _ in range(4))
+        groups.append(group)
+    return '-'.join(groups)
 
 
 def _cache_key(fun, self, nutsid):
@@ -716,6 +729,7 @@ class DataRequestPost(Service):
 
         cdse_parent_task = {}  # contains all requested CDSE datasets, it is
         # a future FME task if all child tasks are finished in CDSE
+        cdse_task_group_id = generate_task_group_id()
 
         for cdse_dataset in cdse_datasets["Datasets"]:
             cdse_data_object = {}
@@ -747,10 +761,13 @@ class DataRequestPost(Service):
             # CDSE tasks are split in child tasks, one for each dataset
             cdse_data_object['Datasets'] = cdse_dataset
             cdse_data_object['cdse_task_role'] = "child"
+            cdse_data_object['cdse_task_group_id'] = cdse_task_group_id
             # pylint: disable=line-too-long
             utility_response_json = utility.datarequest_post(cdse_data_object)  # noqa: E501
             utility_task_id = get_task_id(utility_response_json)
-            cdse_parent_task = cdse_data_object  # still a placeholder
+
+            # make sure parent task is independent of the child
+            cdse_parent_task = copy.deepcopy(cdse_data_object)  # placeholder
 
             # start batch
             start_batch(cdse_batch_id)
