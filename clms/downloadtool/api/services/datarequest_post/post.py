@@ -714,6 +714,9 @@ class DataRequestPost(Service):
             "error": []
         }
 
+        cdse_parent_task = {}  # contains all requested CDSE datasets, it is
+        # a future FME task if all child tasks are finished in CDSE
+
         for cdse_dataset in cdse_datasets["Datasets"]:
             cdse_data_object = {}
             # cdse_data_object["Status"] = "CREATED"? #WIP get status
@@ -721,9 +724,6 @@ class DataRequestPost(Service):
             cdse_data_object[
                 "RegistrationDateTime"
             ] = datetime.utcnow().isoformat()
-            # pylint: disable=line-too-long
-            utility_response_json = utility.datarequest_post(cdse_data_object)  # noqa: E501
-            utility_task_id = get_task_id(utility_response_json)
 
             # generate unique geopackage file name
             unique_geopackage_id = str(uuid.uuid4())
@@ -742,9 +742,20 @@ class DataRequestPost(Service):
             # create_batch("test_file.gpkg", cdse_dataset)
             cdse_batch_id = create_batch(unique_geopackage_name, cdse_dataset)
             cdse_data_object["CDSEBatchID"] = cdse_batch_id
+
+            # Save child task in downloadtool
+            # CDSE tasks are split in child tasks, one for each dataset
+            cdse_data_object['Datasets'] = cdse_dataset
+            cdse_data_object['cdse_task_role'] = "child"
+            # pylint: disable=line-too-long
+            utility_response_json = utility.datarequest_post(cdse_data_object)  # noqa: E501
+            utility_task_id = get_task_id(utility_response_json)
+            cdse_parent_task = cdse_data_object  # still a placeholder
+
             # start batch
             start_batch(cdse_batch_id)
 
+            # Save task in statstool - probably only after finished in FME?
             # # build the stat params and save them
             # stats_params = {
             #         "Start": datetime.utcnow().isoformat(),
@@ -762,6 +773,14 @@ class DataRequestPost(Service):
             #         "Status": "Queued",
             #     }
             # save_stats(stats_params)
+
+        if len(cdse_datasets["Datasets"]) > 0:
+            # Save parent task in downloadtool, containing all CDSE datasets
+            cdse_parent_task["cdse_task_role"] = "parent"
+            cdse_parent_task["Datasets"] = cdse_datasets
+            # pylint: disable=line-too-long
+            utility_response_json = utility.datarequest_post(cdse_parent_task)  # noqa: E501
+            utility_task_id = get_task_id(utility_response_json)
 
         for data_object, is_prepackaged in [
             (prepacked_download_data_object, True),
