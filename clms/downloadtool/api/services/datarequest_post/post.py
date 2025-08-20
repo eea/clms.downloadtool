@@ -7,6 +7,7 @@ through the URL)
 import base64
 import json
 import re
+import uuid
 from datetime import datetime
 from datetime import timedelta
 from functools import reduce
@@ -37,6 +38,11 @@ from zope.interface import alsoProvides
 
 
 ISO8601_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+
+def to_iso8601(dt_str):
+    dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
+    return dt.isoformat() + "Z"   # adaug Z pentru UTC
 
 
 def _cache_key(fun, self, nutsid):
@@ -116,8 +122,8 @@ class DataRequestPost(Service):
         prepacked_download_data_object = {}
         prepacked_download_data_object["Datasets"] = []
 
-        # cdse_datasets = {}
-        # cdse_datasets["Datasets"] = []
+        cdse_datasets = {}
+        cdse_datasets["Datasets"] = []
 
         valid_dataset = False
 
@@ -701,53 +707,59 @@ class DataRequestPost(Service):
             "error": [],
         }
 
-        # cdse_results = {
-        #     "ok": [],
-        #     "error": []
-        # }
+        cdse_results = {
+            "ok": [],
+            "error": []
+        }
 
-        # for cdse_dataset in cdse_datasets["Datasets"]:
+        for cdse_dataset in cdse_datasets["Datasets"]:
+            cdse_data_object = {}
+            # cdse_data_object["Status"] = "CREATED"? #WIP get status
+            cdse_data_object["UserID"] = user_id
+            cdse_data_object[
+                "RegistrationDateTime"
+            ] = datetime.utcnow().isoformat()
+            # pylint: disable=line-too-long
+            utility_response_json = utility.datarequest_post(cdse_data_object)  # noqa: E501
+            utility_task_id = get_task_id(utility_response_json)
 
-        # cdse_data_object = {}
-        # # cdse_data_object["Status"] = "CREATED"? #WIP get status
-        # cdse_data_object["UserID"] = user_id
-        # cdse_data_object[
-        #     "RegistrationDateTime"
-        # ] = datetime.utcnow().isoformat()
-        # # pylint: disable=line-too-long
-        # utility_response_json = utility.datarequest_post(cdse_data_object)  # noqa: E501
-        # utility_task_id = get_task_id(utility_response_json)
+            # generate unique geopackage file name
+            unique_geopackage_id = str(uuid.uuid4())
+            unique_geopackage_name = f"{unique_geopackage_id}.gpkg"
+            print("unique_geopackage_name, ", unique_geopackage_name)
+            cdse_data_object["GpkgFileName"] = unique_geopackage_name
 
-        # generate unique geopackage file name
-        # unique_geopackage_id = str(uuid.uuid4())
-        # unique_geopackage_name = f"{unique_geopackage_id}.gpkg"
-        # print("unique_geopackage_name, ", unique_geopackage_name)
-        # cdse_data_object["GpkgFileName"] = unique_geopackage_name
+            # get batch_id
+            try:
+                cdse_dataset["TemporalFilter"]["StartDate"] = to_iso8601(
+                    cdse_dataset["TemporalFilter"]["StartDate"])
+                cdse_dataset["TemporalFilter"]["EndDate"] = to_iso8601(
+                    cdse_dataset["TemporalFilter"]["EndDate"])
+            except Exception:
+                pass
+            create_batch("test_file.gpkg", cdse_dataset)
+            cdse_batch_id = create_batch(unique_geopackage_name)
+            cdse_data_object["CDSEBatchID"] = cdse_batch_id
+            # start batch
+            start_batch(cdse_batch_id)
 
-        # get batch_id
-        # create_batch("test_file.gpkg", cdse_dataset)
-        # cdse_batch_id = create_batch(unique_geopackage_name)
-        # cdse_data_object["CDSEBatchID"] = cdse_batch_id
-        # start batch
-        # start_batch(cdse_batch_id)
-
-        # build the stat params and save them
-        # stats_params = {
-        #         "Start": datetime.utcnow().isoformat(),
-        #         "User": str(user_id),
-        #         # pylint: disable=line-too-long
-        #         "Dataset": [item["DatasetID"] for item in data_object.get("Datasets", [])],  # noqa: E501
-        #         "TransformationData": new_datasets,
-        #         "TaskID": utility_task_id,
-        #         "CDSEBatchID": cdse_batch_id,
-        #         "GpkgFileName": unique_geopackage_name,
-        #         "End": "",
-        #         "TransformationDuration": "",
-        #         "TransformationSize": "",
-        #         "TransformationResultData": "",
-        #         "Status": "Queued",
-        #     }
-        # save_stats(stats_params)
+            # build the stat params and save them
+            stats_params = {
+                    "Start": datetime.utcnow().isoformat(),
+                    "User": str(user_id),
+                    # pylint: disable=line-too-long
+                    "Dataset": [item["DatasetID"] for item in data_object.get("Datasets", [])],  # noqa: E501
+                    "TransformationData": new_datasets,
+                    "TaskID": utility_task_id,
+                    "CDSEBatchID": cdse_batch_id,
+                    "GpkgFileName": unique_geopackage_name,
+                    "End": "",
+                    "TransformationDuration": "",
+                    "TransformationSize": "",
+                    "TransformationResultData": "",
+                    "Status": "Queued",
+                }
+            save_stats(stats_params)
 
         for data_object, is_prepackaged in [
             (prepacked_download_data_object, True),
