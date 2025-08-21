@@ -4,10 +4,9 @@ CDSE: CDSE integration scripts
 """
 import io
 import geopandas as gpd
-from shapely.geometry import box
+from shapely.geometry import box, shape
 import boto3
 import requests
-from shapely.geometry import shape
 from plone import api
 
 from clms.downloadtool.api.services.cdse.polygons import get_polygon
@@ -61,6 +60,7 @@ def get_token():
 
 
 def generate_evalscript():
+    """Generate evalscript"""
     return """
     //VERSION=3
     const factor = 1 / 250;

@@ -59,7 +59,7 @@ class DownloadToolUtility:
 
         log.info("DownloadToolUtility: TASK SAVED.")
 
-        if ("cdse_task_role" in data_request.keys()):
+        if "cdse_task_role" in data_request.keys():
             log.info(data_request['cdse_task_role'])
         return {str_task_id: data_request}
 

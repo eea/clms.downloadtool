@@ -29,7 +29,6 @@ from clms.downloadtool.api.services.utils import (
 from clms.downloadtool.api.services.cdse.cdse_integration import (
     create_batch, start_batch)
 
-from clms.downloadtool.api.services.cdse.process import cdse_response
 from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
 from plone.memoize.ram import cache
@@ -45,6 +44,7 @@ ISO8601_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 def to_iso8601(dt_str):
+    """Convert datetime in format requested by CDSE"""
     dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
     return dt.isoformat() + "Z"   # adding Z for UTC
 
@@ -115,7 +115,7 @@ class DataRequestPost(Service):
             "@datarequest_status_patch",
         )
 
-    def reply(self):
+    def reply(self):  # pylint: disable=too-many-statements
         """JSON response"""
         alsoProvides(self.request, IDisableCSRFProtection)
         body = json_body(self.request)
@@ -376,11 +376,6 @@ class DataRequestPost(Service):
                     response_json.update(
                         {"OutputGCS": dataset_json["OutputGCS"]}
                     )
-
-                    # CDSE case - WIP
-                    # if is_cdse_dataset is True:
-                    #     self.request.response.setStatus(400)
-                    #     return cdse_response(dataset_json, response_json)
 
                 else:
                     self.request.response.setStatus(400)
@@ -722,10 +717,10 @@ class DataRequestPost(Service):
             "error": [],
         }
 
-        cdse_results = {
-            "ok": [],
-            "error": []
-        }
+        # cdse_results = {
+        #     "ok": [],
+        #     "error": []
+        # }
 
         cdse_parent_task = {}  # contains all requested CDSE datasets, it is
         # a future FME task if all child tasks are finished in CDSE
