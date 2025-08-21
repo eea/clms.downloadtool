@@ -4,10 +4,12 @@ CDSE: CDSE integration scripts
 """
 import io
 import geopandas as gpd
-from shapely.geometry import box
+from shapely.geometry import box, shape
 import boto3
 import requests
 from plone import api
+
+from clms.downloadtool.api.services.cdse.polygons import get_polygon
 
 
 def get_portal_config():
@@ -57,48 +59,9 @@ def get_token():
     return token
 
 
-def create_batch(geopackage_file, geom=None):
-    """Create batch process and return batch ID"""
-    # GPKG EPSG:4326
-    # geometry must come as a parameter from the API call
-    config = get_portal_config()
-    if geom is None:
-        geom = box(6.89, 51.01, 7.11, 51.10)
-
-    gdf = gpd.GeoDataFrame({
-        "id": [1],
-        "identifier": ["full_tile"],
-        "width": [1000],
-        "height": [1000],
-        "resolution": [0.0001],
-    }, geometry=[geom], crs="EPSG:4326")
-
-    target_crs = 'EPSG:3857'
-    datasource = 'byoc-61caacdf-8a23-471c-b3d3-e5a8a537c44d'
-    time_range_start = "2006-12-21T00:00:00Z"
-    time_range_end = "2006-12-21T23:59:59Z"
-
-    # REPROJECT
-    gdf_reprojected = gdf.to_crs(target_crs)
-
-    # EXPORT GPKG
-    buffer = io.BytesIO()
-    gdf_reprojected.to_file(buffer, driver="GPKG")
-    buffer.seek(0)
-
-    # UPLOAD TO S3
-    s3 = boto3.client(
-        "s3",
-        endpoint_url=config['s3_endpoint_url'],
-        aws_access_key_id=config['s3_access_key'],
-        aws_secret_access_key=config['s3_secret_key']
-    )
-    s3.upload_fileobj(buffer, config['s3_bucket_name'], geopackage_file)
-    gpkg_url = f"s3://{config['s3_bucket_name']}/{geopackage_file}"
-    print(f"GPKG uploaded to {gpkg_url}")
-
-    # EVALSCRIPT
-    evalscript = """
+def generate_evalscript():
+    """Generate evalscript"""
+    return """
     //VERSION=3
     const factor = 1 / 250;
     const offset = -0.08;
@@ -122,19 +85,110 @@ def create_batch(geopackage_file, geom=None):
       return [val];
     }
     """
-    # BBOX IN EPSG:3857
-    minx, miny, maxx, maxy = gdf_reprojected.total_bounds
 
-    # create URL from target_crs (ticket / Ghita)
-    crs_url = "http://www.opengis.net/def/crs/EPSG/0/3857"
+
+def _generate_crs_url(crs_code):
+    """Generate CRS URL from CRS code"""
+    return "http://www.opengis.net/def/crs/" + \
+        crs_code.replace(":", "/0/")
+
+
+def create_batch(geopackage_file, cdse_dataset):
+    """Create batch process and return batch ID"""
+    config = get_portal_config()
+
+    target_crs = cdse_dataset["OutputGCS"]
+    datasource = cdse_dataset["ByocCollection"]
+
+    # WIP: check if they exist first
+    time_range_start = cdse_dataset["TemporalFilter"]["StartDate"]
+    time_range_end = cdse_dataset["TemporalFilter"]["EndDate"]
+
+    geom = None
+    geometry = None
+    gdf_identifier = None
+    geometry_source = None
+    payload_bounds = None
+    crs_url = None
+
+    has_bbox = cdse_dataset.get('BoundingBox', None) is not None
+    has_nutsid = cdse_dataset.get('NUTSID', None) is not None
+
+    if has_bbox:
+        t_bbox = cdse_dataset["BoundingBox"]
+        geom = box(t_bbox[0], t_bbox[1], t_bbox[2], t_bbox[3])
+        gdf_identifier = "full_tile"
+        geometry_source = "bbox"
+    elif has_nutsid:
+        geometry_source = "nuts"
+        polygon_data = get_polygon(cdse_dataset["NUTSID"])
+        geometry = polygon_data["geometry"]
+        geom = shape(geometry)
+        gdf_identifier = "tile_" + cdse_dataset["NUTSID"]
+
+    gdf = gpd.GeoDataFrame({
+        "id": [1],
+        "identifier": [gdf_identifier],
+        "width": [1000],
+        "height": [1000],
+        "resolution": [0.0001],
+    }, geometry=[geom], crs="EPSG:4326")
+
+    if target_crs and target_crs.upper() != "EPSG:4326":
+        gdf_processed = gdf.to_crs(target_crs)
+        crs_url = _generate_crs_url(target_crs)
+
+        if geometry_source == "bbox":
+            minx, miny, maxx, maxy = gdf_processed.total_bounds
+            payload_bounds = {
+                "bbox": [minx, miny, maxx, maxy],
+                "properties": {"crs": crs_url}
+            }
+        else:
+            payload_bounds = {
+                "geometry": gdf_processed.geometry.iloc[0].__geo_interface__,
+                "properties": {"crs": crs_url}
+            }
+    else:
+        gdf_processed = gdf
+        crs_url = _generate_crs_url("EPSG:4326")
+
+        if geometry_source == "bbox":
+            payload_bounds = {
+                "bbox": cdse_dataset["BoundingBox"],
+                "properties": {"crs": crs_url}
+            }
+        else:
+            payload_bounds = {
+                "geometry": geometry,
+                "properties": {"crs": crs_url}
+            }
+
+    buffer = io.BytesIO()
+    gdf_processed.to_file(buffer, driver="GPKG")
+    buffer.seek(0)
+
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=config['s3_endpoint_url'],
+        aws_access_key_id=config['s3_access_key'],
+        aws_secret_access_key=config['s3_secret_key']
+    )
+    s3.upload_fileobj(buffer, config['s3_bucket_name'], geopackage_file)
+    gpkg_url = f"s3://{config['s3_bucket_name']}/{geopackage_file}"
+
+    evalscript = generate_evalscript()
+
+    description = f"ndvi_{geometry_source}"
+    if geometry_source == "nuts":
+        description += "_" + cdse_dataset["NUTSID"]
+    if target_crs and target_crs.upper() != "EPSG:4326":
+        description += f"_{target_crs.lower().replace(':', '')}"
 
     payload = {
         "processRequest": {
             "input": {
-                "bounds": {
-                    "bbox": [minx, miny, maxx, maxy],
-                    "properties": {"crs": crs_url}
-                },
+                "bounds": payload_bounds,
                 "data": [
                     {
                         "type": datasource,
@@ -174,23 +228,27 @@ def create_batch(geopackage_file, geom=None):
                 }
             }
         },
-        "description": "ndvi_singlelayer_bbox_epsg3857"
+        "description": description
     }
 
     token = get_token()
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
 
-    headers = {"Authorization": f"Bearer {token}",
-               "Content-Type": "application/json"}
     response = requests.post(
         config['batch_url'], headers=headers, json=payload)
 
-    print("Status:", response.status_code)
-    print("Response:", response.text)
+    if response.status_code != 201:
+        raise RuntimeError(
+            f"Batch creation failed: {response.status_code} - {response.text}")
 
     response_json = response.json()
+    batch_id = response_json['id']
 
-    print("Batch id:", response_json['id'])
-    return response_json['id']
+    print(f"Batch created successfully with ID: {batch_id}")
+    return batch_id
 
 
 def start_batch(batch_id):
