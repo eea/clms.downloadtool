@@ -57,6 +57,10 @@ class DownloadToolUtility:
         registry[str_task_id] = data_request
         annotations[ANNOTATION_KEY] = registry
 
+        log.info("DownloadToolUtility: TASK SAVED.")
+
+        if "cdse_task_role" in data_request.keys():
+            log.info(data_request['cdse_task_role'])
         return {str_task_id: data_request}
 
     def datarequest_delete(self, task_id, user_id):
