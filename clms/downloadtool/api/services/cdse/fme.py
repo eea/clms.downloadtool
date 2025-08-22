@@ -3,6 +3,61 @@
 When child CDSE tasks are finished parent task is sent to FME. (Temporary.)
 """
 
+import json
+import requests
+from plone import api
+from clms.downloadtool.utility import IDownloadToolUtility
+from zope.component import getUtility
+
+"""
+Example of params in request to FME
+(Pdb) pp params
+{'publishedParameters': [{'name': 'UserID', 'value': 'nicenickname'},
+                         {'name': 'TaskID', 'value': '512723423423'},
+                         {'name': 'UserMail', 'value': 'asd@aasd.com'},
+                         {'name': 'CallbackUrl',
+                          'value': 'http://lo../++api++/@da.._status_patch'},
+                         {'name': 'json',
+                          'value': '{"Datasets": [{"DatasetID": '
+                                   '"9e8be500204945a48ce15fc8d1c57482", '
+                                   '"DatasetTitle": "Lake Water Quality '
+                                   '2024-present (raster 300 m), global, '
+                                   '10-daily \\u2013 version 2", "NUTSID": '
+                                   '"FR", "NUTSName": "France", '
+                                   '"TemporalFilter": {"StartDate": '
+                                   '"2025-08-11 21:00:00", "EndDate": '
+                                   '"2025-08-12 21:00:00"}, "OutputGCS": '
+                                   '"EPSG:4326", "Layer": "ALL BANDS", '
+                                   '"DatasetFormat": "Netcdf", "OutputFormat": '
+                                   '"Netcdf", "DatasetPath": '
+                                   '"asdasd", '
+                                   '"DatasetSource": "LEGACY", "WekeoChoices": '
+                                   '"", "Metadata": '
+                                   '["https://xsdasdml?approved=true"]}]}'}]}
+
+"""
+
+
+def get_callback_url():
+    """get the callback url where FME should signal any status changes
+       THIS CODE IS DUPLICATE, but we will use it only temporary.
+    """
+    portal_url = api.portal.get().absolute_url()
+    if portal_url.endswith("/api"):
+        portal_url = portal_url.replace("/api", "")
+
+    return "{}/++api++/{}".format(
+        portal_url,
+        "@datarequest_status_patch",
+    )
+
+
+def get_task_info(task_id):
+    """ Get task info from downloadtool utility
+    """
+    utility = getUtility(IDownloadToolUtility)
+    return utility.datarequest_status_get(task_id)
+
 
 def post_request_to_fme(params, is_prepackaged=False):
     """send the request to FME and let it process it
@@ -42,15 +97,17 @@ def post_request_to_fme(params, is_prepackaged=False):
     return {}
 
 
-def prepare_params_for_fme(task_id):
-    """ Prepare params using data from parent task, and the same structure
-        as usually for FME tasks.
+def send_task_to_fme(task_id):
+    """ Prepare the params and send the task to FME
     """
-    user_id = ""  # get it from downloadtool utility
-    mail = ""  # get it from database
+    task_info = get_task_info(task_id)
+    user_id = task_info.get("UserID", "")
+    mail = api.user.get(user_id).getProperty('email')
     utility_task_id = task_id
-    callback_url = ""  # we need a function for this
-    datasets = []  # get them from downloadtool utility
+    callback_url = get_callback_url()
+    datasets = task_info.get("Datasets", [])
+    datasets_info = {"Datasets": datasets}
+    utility = getUtility(IDownloadToolUtility)
 
     params = {
         "publishedParameters": [
@@ -71,15 +128,17 @@ def prepare_params_for_fme(task_id):
                 "value": callback_url,
             },
             # dump the json into a string for FME
-            {"name": "json", "value": json.dumps(datasets)},
+            {"name": "json", "value": json.dumps(datasets_info)},
         ]
     }
 
-    return params
+    fme_result = post_request_to_fme(params)  # CDSE is_prepackaged?
 
-
-def send_task_to_fme(task_id):
-    """ With params prepared send the task to FME
-    """
-    params = prepare_params_for_fme(task_id)
-    result = post_request_to_fme(params)
+    data_object = task_info
+    if fme_result:
+        data_object["FMETaskId"] = fme_result
+        utility.datarequest_status_patch(
+            data_object, utility_task_id
+        )
+        return "SUCCESS"
+    return "ERROR"
