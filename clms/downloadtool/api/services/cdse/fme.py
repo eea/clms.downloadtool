@@ -29,11 +29,13 @@ Example of params in request to FME
 """
 
 import json
+from logging import getLogger
+
 import requests
 from plone import api
-from clms.downloadtool.utility import IDownloadToolUtility
 from zope.component import getUtility
-from logging import getLogger
+
+from clms.downloadtool.utility import IDownloadToolUtility
 
 
 log = getLogger(__name__)
