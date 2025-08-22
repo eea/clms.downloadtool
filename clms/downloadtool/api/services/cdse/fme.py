@@ -1,15 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 When child CDSE tasks are finished parent task is sent to FME. (Temporary.)
-"""
 
-import json
-import requests
-from plone import api
-from clms.downloadtool.utility import IDownloadToolUtility
-from zope.component import getUtility
-
-"""
 Example of params in request to FME
 (Pdb) pp params
 {'publishedParameters': [{'name': 'UserID', 'value': 'nicenickname'},
@@ -34,8 +26,17 @@ Example of params in request to FME
                                    '"DatasetSource": "LEGACY", "WekeoChoices": '
                                    '"", "Metadata": '
                                    '["https://xsdasdml?approved=true"]}]}'}]}
-
 """
+
+import json
+import requests
+from plone import api
+from clms.downloadtool.utility import IDownloadToolUtility
+from zope.component import getUtility
+from logging import getLogger
+
+
+log = getLogger(__name__)
 
 
 def get_callback_url():
