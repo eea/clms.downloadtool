@@ -20,10 +20,10 @@ Example of params in request to FME
                                    '"2025-08-11 21:00:00", "EndDate": '
                                    '"2025-08-12 21:00:00"}, "OutputGCS": '
                                    '"EPSG:4326", "Layer": "ALL BANDS", '
-                                   '"DatasetFormat": "Netcdf", "OutputFormat": '
+                                   '"DatasetFormat": "Netcdf", "OutputFormat":'
                                    '"Netcdf", "DatasetPath": '
                                    '"asdasd", '
-                                   '"DatasetSource": "LEGACY", "WekeoChoices": '
+                                   '"DatasetSource": "LEGACY", "WekeoChoices":'
                                    '"", "Metadata": '
                                    '["https://xsdasdml?approved=true"]}]}'}]}
 """
