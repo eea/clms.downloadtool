@@ -734,6 +734,7 @@ class DataRequestPost(Service):
         cdse_parent_task = {}  # contains all requested CDSE datasets, it is
         # a future FME task if all child tasks are finished in CDSE
         cdse_task_group_id = generate_task_group_id()
+        cdse_batch_ids = []
 
         for cdse_dataset in cdse_datasets["Datasets"]:
             cdse_data_object = {}
@@ -759,6 +760,7 @@ class DataRequestPost(Service):
                 pass
             # create_batch("test_file.gpkg", cdse_dataset)
             cdse_batch_id = create_batch(unique_geopackage_name, cdse_dataset)
+            cdse_batch_ids.append(cdse_batch_id)
             cdse_data_object["CDSEBatchID"] = cdse_batch_id
 
             # Save child task in downloadtool
@@ -799,6 +801,7 @@ class DataRequestPost(Service):
             # Save parent task in downloadtool, containing all CDSE datasets
             cdse_parent_task["cdse_task_role"] = "parent"
             cdse_parent_task["Datasets"] = cdse_datasets["Datasets"]
+            cdse_parent_task["CDSEBatchIDs"] = cdse_batch_ids
             # pylint: disable=line-too-long
             utility_response_json = utility.datarequest_post(cdse_parent_task)  # noqa: E501
             utility_task_id = get_task_id(utility_response_json)
