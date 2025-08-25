@@ -198,8 +198,16 @@ class DataRequestPost(Service):
             # CDSE case
             is_cdse_dataset = False
             try:
-                full_source = dataset_object.dataset_download_information[
-                    'items'][0]['full_source']
+                info_id = dataset_json.get(
+                    'DatasetDownloadInformationID', None)
+
+                info_item = next(
+                    (it for it in dataset_object.dataset_download_information[
+                        "items"] if it.get("@id") == info_id),
+                    None
+                )
+
+                full_source = info_item['full_source']
                 if full_source == "CDSE":
                     is_cdse_dataset = True
                     # WIP: check if ByocCollection in dataset
@@ -210,6 +218,7 @@ class DataRequestPost(Service):
                     )
             except Exception:
                 pass
+            log.info("is_cdse_dataset: %s", is_cdse_dataset)
 
             # id cdse it should have byoc field
 
