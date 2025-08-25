@@ -759,7 +759,19 @@ class DataRequestPost(Service):
             except Exception:
                 pass
             # create_batch("test_file.gpkg", cdse_dataset)
-            cdse_batch_id = create_batch(unique_geopackage_name, cdse_dataset)
+            cdse_batch_id_response = create_batch(
+                unique_geopackage_name, cdse_dataset)
+            cdse_batch_id = cdse_batch_id_response.get('batch_id')
+            if cdse_batch_id is None:
+                error = cdse_batch_id_response.get('error', '')
+
+                self.request.response.setStatus(400)
+                return {
+                    "status": "error",
+                    "msg": (
+                        f"Error creating CDSE batch: {error}"
+                    ),
+                }
             cdse_batch_ids.append(cdse_batch_id)
             cdse_data_object["CDSEBatchID"] = cdse_batch_id
 

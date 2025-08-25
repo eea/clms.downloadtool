@@ -241,14 +241,19 @@ def create_batch(geopackage_file, cdse_dataset):
         config['batch_url'], headers=headers, json=payload)
 
     if response.status_code != 201:
-        raise RuntimeError(
-            f"Batch creation failed: {response.status_code} - {response.text}")
+        print(f"Batch failed: {response.status_code} - {response.text}")
+        return {
+            'batch_id': None,
+            'error': response.text
+        }
 
     response_json = response.json()
     batch_id = response_json['id']
 
     print(f"Batch created successfully with ID: {batch_id}")
-    return batch_id
+    return {
+        'batch_id': batch_id
+    }
 
 
 def start_batch(batch_id):
