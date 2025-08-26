@@ -787,6 +787,8 @@ class DataRequestPost(Service):
 
             # make sure parent task is independent of the child
             cdse_parent_task = copy.deepcopy(cdse_data_object)  # placeholder
+            cdse_parent_task.pop('GpkgFileName', None)
+            cdse_parent_task.pop('CDSEBatchID', None)
 
             # start batch
             start_batch(cdse_batch_id)
