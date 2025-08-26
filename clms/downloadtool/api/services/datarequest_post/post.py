@@ -198,8 +198,16 @@ class DataRequestPost(Service):
             # CDSE case
             is_cdse_dataset = False
             try:
-                full_source = dataset_object.dataset_download_information[
-                    'items'][0]['full_source']
+                info_id = dataset_json.get(
+                    'DatasetDownloadInformationID', None)
+
+                info_item = next(
+                    (it for it in dataset_object.dataset_download_information[
+                        "items"] if it.get("@id") == info_id),
+                    None
+                )
+
+                full_source = info_item['full_source']
                 if full_source == "CDSE":
                     is_cdse_dataset = True
                     # WIP: check if ByocCollection in dataset
@@ -210,6 +218,7 @@ class DataRequestPost(Service):
                     )
             except Exception:
                 pass
+            log.info("is_cdse_dataset: %s", is_cdse_dataset)
 
             # id cdse it should have byoc field
 
@@ -725,6 +734,7 @@ class DataRequestPost(Service):
         cdse_parent_task = {}  # contains all requested CDSE datasets, it is
         # a future FME task if all child tasks are finished in CDSE
         cdse_task_group_id = generate_task_group_id()
+        cdse_batch_ids = []
 
         for cdse_dataset in cdse_datasets["Datasets"]:
             cdse_data_object = {}
@@ -749,7 +759,20 @@ class DataRequestPost(Service):
             except Exception:
                 pass
             # create_batch("test_file.gpkg", cdse_dataset)
-            cdse_batch_id = create_batch(unique_geopackage_name, cdse_dataset)
+            cdse_batch_id_response = create_batch(
+                unique_geopackage_name, cdse_dataset)
+            cdse_batch_id = cdse_batch_id_response.get('batch_id')
+            if cdse_batch_id is None:
+                error = cdse_batch_id_response.get('error', '')
+
+                self.request.response.setStatus(400)
+                return {
+                    "status": "error",
+                    "msg": (
+                        f"Error creating CDSE batch: {error}"
+                    ),
+                }
+            cdse_batch_ids.append(cdse_batch_id)
             cdse_data_object["CDSEBatchID"] = cdse_batch_id
 
             # Save child task in downloadtool
@@ -790,6 +813,7 @@ class DataRequestPost(Service):
             # Save parent task in downloadtool, containing all CDSE datasets
             cdse_parent_task["cdse_task_role"] = "parent"
             cdse_parent_task["Datasets"] = cdse_datasets["Datasets"]
+            cdse_parent_task["CDSEBatchIDs"] = cdse_batch_ids
             # pylint: disable=line-too-long
             utility_response_json = utility.datarequest_post(cdse_parent_task)  # noqa: E501
             utility_task_id = get_task_id(utility_response_json)
