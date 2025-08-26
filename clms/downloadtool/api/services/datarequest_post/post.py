@@ -774,6 +774,7 @@ class DataRequestPost(Service):
                 }
             cdse_batch_ids.append(cdse_batch_id)
             cdse_data_object["CDSEBatchID"] = cdse_batch_id
+            cdse_data_object["Status"] = "QUEUED"
 
             # Save child task in downloadtool
             # CDSE tasks are split in child tasks, one for each dataset
