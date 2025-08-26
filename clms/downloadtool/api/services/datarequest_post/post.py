@@ -815,6 +815,7 @@ class DataRequestPost(Service):
         if len(cdse_datasets["Datasets"]) > 0:
             # Save parent task in downloadtool, containing all CDSE datasets
             cdse_parent_task["cdse_task_role"] = "parent"
+            cdse_parent_task["Status"] = "Queued"
             cdse_parent_task["Datasets"] = cdse_datasets["Datasets"]
             cdse_parent_task["CDSEBatchIDs"] = cdse_batch_ids
             # pylint: disable=line-too-long
