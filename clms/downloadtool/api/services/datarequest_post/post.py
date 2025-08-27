@@ -774,6 +774,7 @@ class DataRequestPost(Service):
                 }
             cdse_batch_ids.append(cdse_batch_id)
             cdse_data_object["CDSEBatchID"] = cdse_batch_id
+            cdse_data_object["Status"] = "QUEUED"
 
             # Save child task in downloadtool
             # CDSE tasks are split in child tasks, one for each dataset
@@ -786,6 +787,8 @@ class DataRequestPost(Service):
 
             # make sure parent task is independent of the child
             cdse_parent_task = copy.deepcopy(cdse_data_object)  # placeholder
+            cdse_parent_task.pop('GpkgFileName', None)
+            cdse_parent_task.pop('CDSEBatchID', None)
 
             # start batch
             start_batch(cdse_batch_id)
@@ -812,6 +815,7 @@ class DataRequestPost(Service):
         if len(cdse_datasets["Datasets"]) > 0:
             # Save parent task in downloadtool, containing all CDSE datasets
             cdse_parent_task["cdse_task_role"] = "parent"
+            cdse_parent_task["Status"] = "Queued"
             cdse_parent_task["Datasets"] = cdse_datasets["Datasets"]
             cdse_parent_task["CDSEBatchIDs"] = cdse_batch_ids
             # pylint: disable=line-too-long
