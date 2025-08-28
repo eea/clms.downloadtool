@@ -218,6 +218,14 @@ def create_batch(geopackage_file, cdse_dataset):
     else:
         print(f"Error {response_layers.status_code}: {response_layers.text}")
 
+    # Build responses array for each layer
+    responses = []
+    for layer_id in layer_ids:
+        responses.append({
+            "identifier": layer_id,
+            "format": {"type": "image/tiff"}
+        })
+
     payload = {
         "processRequest": {
             "input": {
@@ -235,9 +243,7 @@ def create_batch(geopackage_file, cdse_dataset):
                 ]
             },
             "output": {
-                "responses": [
-                    {"identifier": "default", "format": {"type": "image/tiff"}}
-                ]
+                "responses": responses
             },
             "evalscript": evalscript
         },
