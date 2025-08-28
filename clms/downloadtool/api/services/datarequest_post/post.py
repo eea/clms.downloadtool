@@ -216,6 +216,10 @@ class DataRequestPost(Service):
                             "ByocCollection": dataset_object.byoc_collection_id
                         }
                     )
+                    # WIP: check if mapviewer_viewservice in dataset
+                    response_json.update({
+                        "ViewService": dataset_object.mapviewer_viewservice
+                    })
             except Exception:
                 pass
             log.info("is_cdse_dataset: %s", is_cdse_dataset)

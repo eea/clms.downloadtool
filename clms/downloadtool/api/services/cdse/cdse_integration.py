@@ -8,6 +8,7 @@ from shapely.geometry import box, shape
 import boto3
 import requests
 from plone import api
+import json
 
 from clms.downloadtool.api.services.cdse.polygons import get_polygon
 
@@ -38,7 +39,11 @@ def get_portal_config():
             "clms.downloadtool.cdse_config_controlpanel.batch_url"
         ),
         's3_endpoint_url': api.portal.get_registry_record(
-            "clms.downloadtool.cdse_config_controlpanel.s3_endpoint_url")
+            "clms.downloadtool.cdse_config_controlpanel.s3_endpoint_url"
+        ),
+        'layers_collection_url': api.portal.get_registry_record(
+            "clms.downloadtool.cdse_config_controlpanel.layers_collection_url"
+        )
     }
 
 
@@ -59,32 +64,44 @@ def get_token():
     return token
 
 
-def generate_evalscript():
-    """Generate evalscript"""
-    return """
-    //VERSION=3
-    const factor = 1 / 250;
-    const offset = -0.08;
+def generate_evalscript(layer_ids):
+    """Generate evalscript dynamically based on layer IDs"""
+    # Create input array with layer IDs plus dataMask
+    input_array = json.dumps(layer_ids + ["dataMask"])
 
-    function setup() {
-      return {
-        input: ["NDVI", "dataMask"],
-        output: {
-          bands: 1,
-          sampleType: "FLOAT32"
-        }
-      };
-    }
+    # Create output array with all layer IDs
+    output_items = []
+    for layer_id in layer_ids:
+        output_items.append(f'      {{ id: "{layer_id}", bands: 1}}')
+    output_array = ",\n".join(output_items)
 
-    function evaluatePixel(sample) {
-      if (sample.NDVI === 254 || isNaN(sample.NDVI)) {
-        return [0];
-      }
-      let val = sample.NDVI * factor + offset;
-      val = Math.max(-0.08, Math.min(val, 0.93));
-      return [val];
-    }
-    """
+    # Create return object for evaluatePixel
+    return_items = []
+    for layer_id in layer_ids:
+        return_items.append(f'    {layer_id}: [samples.{layer_id}]')
+    return_object = ",\n".join(return_items)
+
+    # Generate JavaScript evalscript for Sentinel Hub
+    evalscript = f"""//VERSION=3
+const factor = 1;
+const offset = 0;
+
+function setup() {{
+  return {{
+    input: {input_array},
+    output: [
+{output_array}
+    ],
+  }};
+}}
+
+function evaluatePixel(samples) {{
+  return {{
+{return_object}
+  }};
+}}
+"""
+    return evalscript
 
 
 def _generate_crs_url(crs_code):
@@ -99,6 +116,7 @@ def create_batch(geopackage_file, cdse_dataset):
 
     target_crs = cdse_dataset["OutputGCS"]
     datasource = cdse_dataset["ByocCollection"]
+    service_endpoint = cdse_dataset["ViewService"].split('/')[-1]
 
     # WIP: check if they exist first
     time_range_start = cdse_dataset["TemporalFilter"]["StartDate"]
@@ -177,13 +195,28 @@ def create_batch(geopackage_file, cdse_dataset):
     s3.upload_fileobj(buffer, config['s3_bucket_name'], geopackage_file)
     gpkg_url = f"s3://{config['s3_bucket_name']}/{geopackage_file}"
 
-    evalscript = generate_evalscript()
-
     description = f"ndvi_{geometry_source}"
     if geometry_source == "nuts":
         description += "_" + cdse_dataset["NUTSID"]
     if target_crs and target_crs.upper() != "EPSG:4326":
         description += f"_{target_crs.lower().replace(':', '')}"
+
+    token = get_token()
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    layers_url = config['layers_collection_url'] + \
+        service_endpoint + "/layers"
+    response_layers = requests.get(layers_url, headers=headers)
+
+    if response_layers.status_code == 200:
+        data = response_layers.json()
+        layer_ids = [d["id"] for d in data]
+        evalscript = generate_evalscript(layer_ids)
+    else:
+        print(f"Error {response_layers.status_code}: {response_layers.text}")
 
     payload = {
         "processRequest": {
@@ -191,7 +224,7 @@ def create_batch(geopackage_file, cdse_dataset):
                 "bounds": payload_bounds,
                 "data": [
                     {
-                        "type": datasource,
+                        "type": "byoc-" + datasource,
                         "dataFilter": {
                             "timeRange": {
                                 "from": time_range_start,
@@ -229,12 +262,6 @@ def create_batch(geopackage_file, cdse_dataset):
             }
         },
         "description": description
-    }
-
-    token = get_token()
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
     }
 
     response = requests.post(
