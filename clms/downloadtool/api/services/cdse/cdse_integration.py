@@ -3,12 +3,12 @@
 CDSE: CDSE integration scripts
 """
 import io
+import json
 import geopandas as gpd
 from shapely.geometry import box, shape
 import boto3
 import requests
 from plone import api
-import json
 
 from clms.downloadtool.api.services.cdse.polygons import get_polygon
 

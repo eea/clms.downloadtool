@@ -116,9 +116,11 @@ class ICDSEConfigControlPanel(Interface):
             "Sentinel Hub Layers Configuration API URL"
         ),
         description=_(
-            "This URL will be used to get layers/bands from a collection/dataset "
+            # pylint: disable=line-too-long
+            "This URL will be used to get layers/bands from a collection/dataset "  # noqa: E501
         ),
-        default=u"https://sh.dataspace.copernicus.eu/api/v2/configuration/instances/",
+        # pylint: disable=line-too-long
+        default=u"https://sh.dataspace.copernicus.eu/api/v2/configuration/instances/",  # noqa: E501
         required=True,
         readonly=False,
     )
