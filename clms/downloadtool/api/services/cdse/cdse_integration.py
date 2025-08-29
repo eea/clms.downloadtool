@@ -342,6 +342,15 @@ def get_status(token, batch_url, batch_id=None):
             result[batch_id] = {'original_status': status,
                                 'status': status_map[status],
                                 'error': error}
+    else:
+        # we requested status for a single batch_id
+        batch = data
+        batch_id = batch['id']
+        status = batch['status']
+        error = batch.get('error', '')  # in case of FAIL we will know why
+        result[batch_id] = {'original_status': status,
+                            'status': status_map[status],
+                            'error': error}
 
     return result
 
