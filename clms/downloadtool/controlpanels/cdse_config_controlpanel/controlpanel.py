@@ -111,6 +111,33 @@ class ICDSEConfigControlPanel(Interface):
         readonly=False,
     )
 
+    layers_collection_url = schema.TextLine(
+        title=_(
+            "Sentinel Hub Layers Configuration API URL"
+        ),
+        description=_(
+            # pylint: disable=line-too-long
+            "This URL will be used to get layers/bands from a collection/dataset "  # noqa: E501
+        ),
+        # pylint: disable=line-too-long
+        default=u"https://sh.dataspace.copernicus.eu/api/v2/configuration/instances/",  # noqa: E501
+        required=True,
+        readonly=False,
+    )
+
+    account_id = schema.TextLine(
+        title=_(
+            "Account ID "
+        ),
+        description=_(
+            # pylint: disable=line-too-long
+            "For the ID visit https://shapps.dataspace.copernicus.eu/dashboard "  # noqa: E501
+        ),
+        default=u"XXXXXXXXXXXXXXXXXXX",
+        required=False,
+        readonly=False,
+    )
+
 
 class CDSEConfigControlPanel(RegistryEditForm):
     """control panel rest API endpoint configuration"""
