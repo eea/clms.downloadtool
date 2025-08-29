@@ -130,7 +130,8 @@ class ICDSEConfigControlPanel(Interface):
             "Account ID "
         ),
         description=_(
-            "For the ID visit https://shapps.dataspace.copernicus.eu/dashboard "
+            # pylint: disable=line-too-long
+            "For the ID visit https://shapps.dataspace.copernicus.eu/dashboard "  # noqa: E501
         ),
         default=u"XXXXXXXXXXXXXXXXXXX",
         required=False,
