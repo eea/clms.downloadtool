@@ -210,17 +210,17 @@ class DataRequestPost(Service):
                 full_source = info_item['full_source']
                 if full_source == "CDSE":
                     is_cdse_dataset = True
-                    # WIP: check if ByocCollection in dataset
                     response_json.update(
                         {
-                            "ByocCollection": dataset_object.byoc_collection_id
+                            "ByocCollection": info_item.get('byoc_collection')
                         }
                     )
+                    response_json.update({
+                        "ViewService": dataset_object.mapviewer_viewservice
+                    })
             except Exception:
                 pass
             log.info("is_cdse_dataset: %s", is_cdse_dataset)
-
-            # id cdse it should have byoc field
 
             # Handle FileID requests:
             # - get first the file_path from the dataset using the file_id
