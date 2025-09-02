@@ -355,6 +355,41 @@ def get_status(token, batch_url, batch_id=None):
     return result
 
 
+def stop_batch(batch_id):
+    """Stop the batch process"""
+    config = get_portal_config()
+    url = f"{config['batch_url']}/{batch_id}/stop"
+    print(url)
+
+    token = get_token()
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    response = requests.post(url, headers=headers)
+    print(response.status_code)
+
+    # WIP retrn the status and block the cancelling in case of error
+    # Example:
+    # '{"error":{"status":400,"reason":"Bad Request",
+    # "message":"Illegal to change userAction from START to STOP with task
+    # status CREATED","code":"COMMON_BAD_PAYLOAD"}}'
+
+
+def stop_batch_ids(batch_ids):
+    """Stop list of batch_ids"""
+    for batch_id in batch_ids:
+        stop_batch(batch_id)
+
+
+def clean_s3_bucket_files(filenames):
+    """Clean s3 bucket files"""
+
+    for file in filenames:
+        print("WIP implement s3 clean")
+        print(file)
+
+
 # Example usage:
 # batch_id = create_batch("test_file.gpkg")
 # # time.sleep(1)
