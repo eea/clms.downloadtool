@@ -25,6 +25,8 @@ from datetime import datetime
 from logging import getLogger
 
 from clms.downloadtool.utils import ANNOTATION_KEY, STATUS_LIST
+from clms.downloadtool.api.services.cdse.cdse_integration import (
+    stop_batch_ids, clean_s3_bucket_files)
 from zope.annotation.interfaces import IAnnotations
 from zope.component.hooks import getSite
 from zope.interface import Interface, implementer
@@ -80,6 +82,22 @@ class DownloadToolUtility:
 
         data_object["Status"] = "Cancelled"
         data_object["FinalizationDateTime"] = datetime.utcnow().isoformat()
+
+        is_cdse_task = False
+        already_sent = data_object.get("FMETaskId", None) is not None
+        if data_object.get('cdse_task_role', '') == 'parent':
+            is_cdse_task = True
+
+        if is_cdse_task and not already_sent:
+            # Cancel child tasks in CDSE and delete files from s3
+            cdse_batch_ids = data_object.get('CDSEBatchIDs', [])
+            gpkg_filenames = data_object.get('GpkgFileNames', '')
+            stop_batch_ids(cdse_batch_ids)
+            clean_s3_bucket_files(gpkg_filenames)
+            log.info("Canceled CDSE tasks:")
+            log.info(cdse_batch_ids)
+            log.info("Removed s3 bucket files:")
+            log.info(gpkg_filenames)
 
         registry[str(task_id)] = data_object
         annotations[ANNOTATION_KEY] = registry
