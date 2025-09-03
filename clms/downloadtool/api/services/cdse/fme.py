@@ -109,7 +109,13 @@ def send_task_to_fme(task_id):
     utility_task_id = task_id
     callback_url = get_callback_url()
     datasets = task_info.get("Datasets", [])
-    datasets_info = {"Datasets": datasets}
+    cdse_batch_ids = task_info.get("CDSEBatchIDs", [])
+    gpkg_filenames = task_info.get("GpkgFileNames", [])
+    datasets_info = {
+        "Datasets": datasets,
+        "CDSEBatchIDs": cdse_batch_ids,
+        "GpkgFileNames": gpkg_filenames
+    }
     utility = getUtility(IDownloadToolUtility)
 
     params = {

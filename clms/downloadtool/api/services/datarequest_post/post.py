@@ -735,6 +735,7 @@ class DataRequestPost(Service):
         # a future FME task if all child tasks are finished in CDSE
         cdse_task_group_id = generate_task_group_id()
         cdse_batch_ids = []
+        gpkg_filenames = []
 
         for cdse_dataset in cdse_datasets["Datasets"]:
             cdse_data_object = {}
@@ -749,6 +750,7 @@ class DataRequestPost(Service):
             unique_geopackage_name = f"{unique_geopackage_id}.gpkg"
             print("unique_geopackage_name, ", unique_geopackage_name)
             cdse_data_object["GpkgFileName"] = unique_geopackage_name
+            gpkg_filenames.append(unique_geopackage_name)
 
             # get batch_id
             try:
@@ -818,6 +820,7 @@ class DataRequestPost(Service):
             cdse_parent_task["Status"] = "Queued"
             cdse_parent_task["Datasets"] = cdse_datasets["Datasets"]
             cdse_parent_task["CDSEBatchIDs"] = cdse_batch_ids
+            cdse_parent_task["GpkgFileNames"] = gpkg_filenames
             # pylint: disable=line-too-long
             utility_response_json = utility.datarequest_post(cdse_parent_task)  # noqa: E501
             utility_task_id = get_task_id(utility_response_json)
