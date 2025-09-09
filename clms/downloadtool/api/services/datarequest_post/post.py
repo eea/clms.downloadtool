@@ -216,9 +216,6 @@ class DataRequestPost(Service):
                         }
                     )
                     response_json.update({
-                        "ViewService": dataset_object.mapviewer_viewservice
-                    })
-                    response_json.update({
                         "SpatialResolution": dataset_object.qualitySpatialResolution_line
                     })
             except Exception:
