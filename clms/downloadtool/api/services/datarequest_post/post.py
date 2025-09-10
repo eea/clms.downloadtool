@@ -216,7 +216,8 @@ class DataRequestPost(Service):
                         }
                     )
                     response_json.update({
-                        "SpatialResolution": dataset_object.qualitySpatialResolution_line
+                        "SpatialResolution":
+                        dataset_object.qualitySpatialResolution_line
                     })
             except Exception:
                 pass
