@@ -1,5 +1,9 @@
 """Validation"""
 
+import re
+
+from clms.downloadtool.utils import COUNTRIES
+
 MESSAGES = {
     "NOT_LOGGED_IN": "You need to be logged in to use this service",
     "UNDEFINED_DATASET_ID": "Error, DatasetID is not defined",
@@ -58,3 +62,30 @@ MESSAGES = {
     ),
     "ALL_FAILED": "Error, all requests failed",
 }
+
+
+def validate_spatial_extent(bounding_box):
+    """validate Bounding Box"""
+    if not len(bounding_box) == 4:
+        return False
+
+    for x in bounding_box:
+        if not isinstance(x, int) and not isinstance(x, float):
+            return False
+
+    return True
+
+
+def validate_nuts(nuts_id):
+    """validate nuts"""
+    if not nuts_id.isalnum():
+        return False
+
+    match = re.match(r"([A-Z]+)([0-9]*)", nuts_id, re.I)
+    if match:
+        items = match.groups()
+        # Only the first 2 chars represent the country
+        # french NUTS codes have 3 alphanumeric chars and then numbers
+        valid_nuts = items[0][:2] in COUNTRIES.keys()
+        return valid_nuts
+    return None

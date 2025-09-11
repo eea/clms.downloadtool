@@ -1,6 +1,5 @@
 """Utils"""
 import random
-import re
 import json
 import base64
 from logging import getLogger
@@ -10,7 +9,6 @@ import requests
 from plone import api
 from zope.component import getUtility
 
-from clms.downloadtool.utils import COUNTRIES
 from clms.downloadtool.api.services.utils import get_extra_data
 from clms.statstool.utility import IDownloadStatsUtility
 
@@ -27,11 +25,6 @@ VITO_GEONETWORK_BASE_URL = (
     "https://globalland.vito.be/geonetwork/"
     "srv/api/records/{uid}/formatters/xml?approved=true"
 )
-
-
-def _cache_key(fun, self, nutsid):
-    """Cache key function"""
-    return nutsid
 
 
 def get_dataset_by_uid(uid):
@@ -118,33 +111,6 @@ def extract_dates_from_temporal_filter(temporal_filter):
         )
     except (TypeError, ValueError):
         return None, None
-
-
-def validate_spatial_extent(bounding_box):
-    """validate Bounding Box"""
-    if not len(bounding_box) == 4:
-        return False
-
-    for x in bounding_box:
-        if not isinstance(x, int) and not isinstance(x, float):
-            return False
-
-    return True
-
-
-def validate_nuts(nuts_id):
-    """validate nuts"""
-    if not nuts_id.isalnum():
-        return False
-
-    match = re.match(r"([A-Z]+)([0-9]*)", nuts_id, re.I)
-    if match:
-        items = match.groups()
-        # Only the first 2 chars represent the country
-        # french NUTS codes have 3 alphanumeric chars and then numbers
-        valid_nuts = items[0][:2] in COUNTRIES.keys()
-        return valid_nuts
-    return None
 
 
 def get_task_id(params):

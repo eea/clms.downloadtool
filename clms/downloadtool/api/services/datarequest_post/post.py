@@ -27,7 +27,6 @@ from clms.downloadtool.api.services.datarequest_post.utils import (
     EEA_GEONETWORK_BASE_URL,
     ISO8601_DATETIME_FORMAT,
     VITO_GEONETWORK_BASE_URL,
-    _cache_key,
     base64_encode_path,
     extract_dates_from_temporal_filter,
     generate_task_group_id,
@@ -45,11 +44,11 @@ from clms.downloadtool.api.services.datarequest_post.utils import (
     post_request_to_fme,
     save_stats,
     to_iso8601,
-    validate_nuts,
-    validate_spatial_extent,
 )
 from clms.downloadtool.api.services.datarequest_post.validation import (
-    MESSAGES
+    MESSAGES,
+    validate_nuts,
+    validate_spatial_extent,
 )
 
 from plone import api
@@ -63,6 +62,11 @@ from zope.interface import alsoProvides
 
 
 log = getLogger(__name__)
+
+
+def _cache_key(fun, self, nutsid):
+    """Cache key function"""
+    return nutsid
 
 
 class DataRequestPost(Service):
@@ -95,25 +99,31 @@ class DataRequestPost(Service):
             "clms.types.download_limits.area_extent", default=1600000000000
         )
 
+    def get_user_data_or_error(self):
+        """Return (user_id, email) if logged in, else error response"""
+        user = api.user.get_current()
+        if not user:
+            return None, None, self.rsp("NOT_LOGGED_IN", code=0)
+
+        user_id = user.getId()
+        mail = user.getProperty("email")
+        return user_id, mail, None
+
     def reply(self):  # pylint: disable=too-many-statements
         """JSON response"""
         alsoProvides(self.request, IDisableCSRFProtection)
-        body = json_body(self.request)
 
-        user = api.user.get_current()
-        if not user:
-            return self.rsp('NOT_LOGGED_IN', code=0)
+        # Validate user
+        user_id, mail, error = self.get_user_data_or_error()
+        if error:
+            return error
 
-        user_id = user.getId()
-        datasets_json = body.get("Datasets")
-
-        mail = user.getProperty("email")
+        # Get json request data
+        datasets_json = json_body(self.request).get("Datasets")
         general_download_data_object = {}
         general_download_data_object["Datasets"] = []
-
         prepacked_download_data_object = {}
         prepacked_download_data_object["Datasets"] = []
-
         cdse_datasets = {}
         cdse_datasets["Datasets"] = []
 
