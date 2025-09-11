@@ -119,7 +119,7 @@ class DataRequestPost(Service):
         return None
 
     def validate_dataset_object(self, dataset_json):
-        """Return error response if DatasetID is invalid, else dataset object"""
+        """Return error resp if DatasetID is invalid, else dataset object"""
         dataset_object = get_dataset_by_uid(dataset_json.get("DatasetID"))
         if dataset_object is None:
             return None, self.rsp("INVALID_DATASET_ID")
@@ -135,8 +135,8 @@ class DataRequestPost(Service):
             info_id = dataset_json.get('DatasetDownloadInformationID')
 
             info_item = next(
-                (it for it in dataset_obj.dataset_download_information.get("items", [])
-                 if it.get("@id") == info_id),
+                (it for it in dataset_obj.dataset_download_information.get(
+                    "items", []) if it.get("@id") == info_id),
                 None
             )
 
@@ -153,6 +153,117 @@ class DataRequestPost(Service):
 
         log.info("is_cdse_dataset: %s", is_cdse_dataset)
         return is_cdse_dataset
+
+    def process_file_id(self, dataset_json, dataset_object, response_json,
+                        prepacked_download_data_object):
+        """
+        Processes FileID requests:
+        updates response_json and prepacked_download_data_object.
+        Returns an error response if FileID is invalid, otherwise None.
+        """
+        file_id = dataset_json.get("FileID")
+        if not file_id:
+            return None
+
+        file_path = get_dataset_file_path_from_file_id(dataset_object, file_id)
+        file_source = get_dataset_file_source_from_file_id(
+            dataset_object, file_id)
+
+        if file_path and file_source:
+            response_json.update({
+                "FileID": file_id,
+                "DatasetPath": "",
+                "FilePath": base64_encode_path(file_path),
+                "DatasetSource": file_source
+            })
+            prepacked_download_data_object["Datasets"].append(response_json)
+            return None
+        else:
+            return self.rsp("INVALID_FILE_ID")
+
+    def process_nuts(self, dataset_json, response_json):
+        """
+        Validates the NUTS code in dataset_json and updates response_json.
+        Returns an error response if invalid, else None.
+        """
+        nuts_code = dataset_json.get("NUTS")
+        if not nuts_code:
+            return None
+
+        if not validate_nuts(nuts_code):
+            return self.rsp("NUTS_COUNTRY_ERROR")
+
+        response_json.update({
+            "NUTSID": nuts_code,
+            "NUTSName": self.get_nuts_name(nuts_code)
+        })
+        return None
+
+    def process_bounding_box(self, dataset_json, response_json):
+        """
+        Validates BoundingBox in dataset_json and updates response_json.
+        Returns an error response if invalid, else None.
+        """
+        bbox = dataset_json.get("BoundingBox")
+        if not bbox:
+            return None
+
+        if "NUTS" in dataset_json:
+            return self.rsp("NUTS_ALSO_DEFINED")
+
+        if not validate_spatial_extent(bbox):
+            return self.rsp("INVALID_BOUNDINGBOX")
+
+        requested_area = calculate_bounding_box_area(bbox)
+        if requested_area > self.max_area_extent():
+            return self.rsp(
+                f"Error, the requested BoundingBox is too big. "
+                f"The limit is {self.max_area_extent()}."
+            )
+
+        response_json.update({"BoundingBox": bbox})
+        return None
+
+    def process_temporal_filter(
+            self, dataset_json, dataset_object, response_json):
+        """
+        Validates the TemporalFilter in dataset_json and updates response_json.
+        Returns an error response if invalid, else None.
+
+        Now, the temporal restriction can be controlled only with
+        the maximum range, I mean if it is set as timeseries or has
+        the aux calendar, in both cases it will have the maximum
+        range filled. If the dataset does not have values in that
+        setting, you do not need time parameters
+        """
+        temporal = dataset_json.get("TemporalFilter")
+        if not temporal:
+            return None
+
+        d_l_t = getattr(dataset_object, "download_limit_temporal_extent", None)
+        if not d_l_t or d_l_t <= 0:
+            return self.rsp("TEMP_REST_NOT_ALLOWED")
+
+        if len(temporal.keys()) > 2:
+            return self.rsp("TEMP_TOO_MANY")
+
+        if "StartDate" not in temporal or "EndDate" not in temporal:
+            return self.rsp("TEMP_MISSING_RANGE")
+
+        start_date, end_date = extract_dates_from_temporal_filter(temporal)
+        if start_date is None or end_date is None:
+            return self.rsp("INCORRECT_DATE")
+
+        if start_date > end_date:
+            return self.rsp("INCORRECT_DATE_RANGE")
+
+        response_json.update({
+            "TemporalFilter": {
+                "StartDate": start_date,
+                "EndDate": end_date
+            }
+        })
+        return None
 
     def reply(self):  # pylint: disable=too-many-statements
         """JSON response"""
@@ -194,105 +305,38 @@ class DataRequestPost(Service):
                 }
             )
 
+            # CDSE check
             is_cdse_dataset = self.process_cdse_dataset(
                 dataset_json, dataset_object, response_json)
 
-            # Handle FileID requests:
-            # - get first the file_path from the dataset using the file_id
-            # - if something is returned use it as FileID and FilePath
-            # - if not return an error stating that the requested FileID is
-            #   not valid
+            # Request by FileID
             if "FileID" in dataset_json:
-                file_path = get_dataset_file_path_from_file_id(
-                    dataset_object, dataset_json["FileID"]
-                )
-                file_source = get_dataset_file_source_from_file_id(
-                    dataset_object, dataset_json["FileID"]
-                )
-                if file_path and file_source:
-                    response_json.update({"FileID": dataset_json["FileID"]})
-                    response_json.update({"DatasetPath": ""})
-                    response_json.update(
-                        {"FilePath": base64_encode_path(file_path)}
-                    )
-                    response_json.update({"DatasetSource": file_source})
-                else:
-                    return self.rsp("INVALID_FILE_ID")
+                error = self.process_file_id(
+                    dataset_json, dataset_object, response_json,
+                    prepacked_download_data_object)
+                if error:
+                    return error
 
-                prepacked_download_data_object["Datasets"].append(
-                    response_json
-                )
             else:
+                # Request by NUTS
                 if "NUTS" in dataset_json:
-                    if not validate_nuts(dataset_json["NUTS"]):
-                        return self.rsp("NUTS_COUNTRY_ERROR")
+                    error = self.process_nuts(dataset_json, response_json)
+                    if error:
+                        return error
 
-                    response_json.update({"NUTSID": dataset_json["NUTS"]})
-                    response_json.update(
-                        {"NUTSName": self.get_nuts_name(dataset_json["NUTS"])}
-                    )
-
+                # Request by BoundingBox
                 if "BoundingBox" in dataset_json:
-                    if "NUTS" in dataset_json:
-                        return self.rsp("NUTS_ALSO_DEFINED")
+                    error = self.process_bounding_box(
+                        dataset_json, response_json)
+                    if error:
+                        return error
 
-                    if not validate_spatial_extent(
-                        dataset_json["BoundingBox"]
-                    ):
-                        return self.rsp("INVALID_BOUNDINGBOX")
-
-                    requested_area = calculate_bounding_box_area(
-                        dataset_json["BoundingBox"]
-                    )
-                    if requested_area > self.max_area_extent():
-                        return self.rsp(
-                            f"Error, the requested BoundingBox is too big. "
-                            f"The limit is {self.max_area_extent()}."
-                        )
-                    response_json.update(
-                        {"BoundingBox": dataset_json["BoundingBox"]}
-                    )
-
-                # Now, the temporal restriction can be controlled only with
-                # the maximum range, I mean if it is set as timeseries or has
-                # the aux calendar, in both cases it will have the maximum
-                # range filled. If the dataset does not have values in that
-                # setting, you do not need time parameters
+                # Request by TemporalFilter
                 if "TemporalFilter" in dataset_json:
-                    d_l_t = dataset_object.download_limit_temporal_extent
-                    has_maximum_range = False
-                    if d_l_t is not None and d_l_t > 0:
-                        has_maximum_range = True
-                    if has_maximum_range is False:
-                        return self.rsp("TEMP_REST_NOT_ALLOWED")
-
-                    if len(dataset_json["TemporalFilter"].keys()) > 2:
-                        return self.rsp("TEMP_TOO_MANY")
-
-                    if "StartDate" not in dataset_json["TemporalFilter"]:
-                        return self.rsp("TEMP_MISSING_RANGE")
-
-                    if "EndDate" not in dataset_json["TemporalFilter"]:
-                        return self.rsp("TEMP_MISSING_RANGE")
-
-                    start_date, end_date = extract_dates_from_temporal_filter(
-                        dataset_json["TemporalFilter"]
-                    )
-
-                    if start_date is None or end_date is None:
-                        return self.rsp("INCORRECT_DATE")
-
-                    if start_date > end_date:
-                        return self.rsp("INCORRECT_DATE_RANGE")
-
-                    response_json.update(
-                        {
-                            "TemporalFilter": {
-                                "StartDate": start_date,
-                                "EndDate": end_date,
-                            }
-                        }
-                    )
+                    error = self.process_temporal_filter(
+                        dataset_json, dataset_object, response_json)
+                    if error:
+                        return None, error
 
                 if "OutputGCS" in dataset_json:
                     available_gcs_values = get_available_gcs_values(
@@ -305,7 +349,6 @@ class DataRequestPost(Service):
                     response_json.update(
                         {"OutputGCS": dataset_json["OutputGCS"]}
                     )
-
                 else:
                     return self.rsp("MISSING_GCS")
 
