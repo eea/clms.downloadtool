@@ -95,6 +95,21 @@ MESSAGES = {
         "are required to request the download of an specific date range. "
         "Please check the download documentation to get more information"
     ),
+    "FULL_NOT_EEA": (
+        "You are requesting to download the full dataset but this dataset is "
+        "not an EEA dataset and thus you need to query an specific endpoint to"
+        " request its download. Please check the API documentation to get"
+        " more information about this specific endpoint."
+    ),
+    "FULL_EEA": (
+        "To download the full dataset, please download it through the "
+        "corresponding pre-packaged data collection"
+    ),
+    "MUST_HAVE_AREA": (
+        "You have to select a specific area of interest. In case you want to "
+        "download the full dataset, please use the Auxiliary API."
+    ),
+
 }
 
 
@@ -107,7 +122,7 @@ class DataRequestPost(Service):
             self.request.response.setStatus(code)
         return {
             "status": status,
-            "msg": MESSAGES.get(msg, "Undefined error.")
+            "msg": MESSAGES.get(msg, msg)
         }
 
     @memoize
@@ -431,7 +446,7 @@ class DataRequestPost(Service):
                             f"{dataset_object.download_limit_temporal_extent}"
                             " days. Please check the download "
                             "documentation to get more information"
-                        ),
+                        )
 
                 is_special_case = False
                 try:
@@ -446,73 +461,33 @@ class DataRequestPost(Service):
                     pass
                 if dataset_index == len(datasets_json) - 1:
                     if len(found_special) > 0:
-                        self.request.response.setStatus(400)
-                        special_msg = (
+                        return self.rsp(
                             f"Please choose the Geotiff format as the NetCDF "
                             f"format is not allowed "
                             f"for the dataset(s) {', '.join(found_special)}"
                         )
-                        return {
-                            "status": "error",
-                            "msg": special_msg
-                        }
                 elif is_special_case:
                     continue
 
                 # Check full dataset download restrictions
-                # pylint: disable=line-too-long
-                if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json and "TemporalFilter" not in dataset_json):  # noqa
-                    # We are requesting a full dataset download
-                    # We need to check if this dataset is a EEA dataset
-                    # to show an specific message
-                    # pylint: disable=line-too-long
-                    if (full_dataset_source and full_dataset_source != "EEA" or not full_dataset_source):  # noqa
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "You are requesting to download the full"
-                                " dataset but this dataset is not an EEA"
-                                " dataset and thus you need to query an"
-                                " specific endpoint to request its download."
-                                " Please check the API documentation to get"
-                                " more information about this specific"
-                                " endpoint."
-                            ),
-                        }
-                    if (full_dataset_source and full_dataset_source == "EEA" or not full_dataset_source):  # noqa
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "To download the full dataset, please "
-                                "download it through the corresponding "
-                                "pre-packaged data collection"
-                            ),
-                        }
+                if (
+                    "NUTS" not in dataset_json and "BoundingBox" not in
+                    dataset_json and "TemporalFilter" not in dataset_json
+                ):
+                    if full_dataset_source != "EEA":
+                        return self.rsp("FULL_NOT_EEA")
 
-                # pylint: disable=line-too-long
+                    if full_dataset_source == "EEA":
+                        return self.rsp("FULL_EEA")
+
                 # Check dataset download restrictions for
                 # non-EEA datasets with no area specified
-                if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json):  # noqa
-                    # We are requesting a full dataset download
-                    # We need to check if this dataset is a non-EEA dataset
-                    # to show a specific message
-                    # pylint: disable=line-too-long
-                    if (full_dataset_source and full_dataset_source != "EEA" or not full_dataset_source):  # noqa
-                        # Non-EEA datasets must have an area specified
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                (
-                                    "You have to select a specific area of"
-                                    " interest. In case you want to download"
-                                    " the full dataset, please use the"
-                                    " Auxiliary API."
-                                )
-                            ),
-                        }
+                if (
+                    "NUTS" not in dataset_json and
+                    "BoundingBox" not in dataset_json
+                ):
+                    if full_dataset_source != "EEA":
+                        return self.rsp("MUST_HAVE_AREA")
 
                 response_json.update(
                     {
