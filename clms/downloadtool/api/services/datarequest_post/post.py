@@ -61,9 +61,36 @@ from zope.interface import alsoProvides
 
 log = getLogger(__name__)
 
+MESSAGES = {
+    "NOT_LOGGED_IN": "You need to be logged in to use this service",
+    "UNDEFINED_DATASET_ID": "Error, DatasetID is not defined",
+    "INVALID_DATASET_ID": "Error, the DatasetID is not valid",
+    "INVALID_FILE_ID": "Error, the FileID is not valid",
+    "NUTS_COUNTRY_ERROR": "NUTS country error",
+    "NUTS_ALSO_DEFINED": "Error, NUTS is also defined",
+    "INVALID_BOUNDINGBOX": "Error, BoundingBox is not valid",
+    "TEMP_REST_NOT_ALLOWED": (
+        "Error, temporal restriction is not allowed in not time-series "
+        "enabled datasets"
+    ),
+    "TEMP_TOO_MANY": "Error, TemporalFilter has too many fields",
+    "TEMP_MISSING_RANGE": (
+        "Error, TemporalFilter does not have StartDate or EndDate"
+    ),
+    "INCORRECT_DATE": "Error, date format is not correct",
+}
+
 
 class DataRequestPost(Service):
     """Set Data"""
+
+    def rsp(self, msg, code=400, status="error"):
+        if code != 0:
+            self.request.response.setStatus(code)
+        return {
+            "status": status,
+            "msg": MESSAGES.get(msg, "Undefined error.")
+        }
 
     @memoize
     def max_area_extent(self):
@@ -79,10 +106,7 @@ class DataRequestPost(Service):
 
         user = api.user.get_current()
         if not user:
-            return {
-                "status": "error",
-                "msg": "You need to be logged in to use this service",
-            }
+            return self.rsp('NOT_LOGGED_IN', code=0)
 
         user_id = user.getId()
         datasets_json = body.get("Datasets")
@@ -120,18 +144,10 @@ class DataRequestPost(Service):
         for dataset_index, dataset_json in enumerate(datasets_json):
             response_json = {}
             if "DatasetID" not in dataset_json:
-                self.request.response.setStatus(400)
-                return {
-                    "status": "error",
-                    "msg": "Error, DatasetID is not defined",
-                }
+                return self.rsp("UNDEFINED_DATASET_ID")
 
             if not dataset_json.get("DatasetID"):
-                self.request.response.setStatus(400)
-                return {
-                    "status": "error",
-                    "msg": "Error, DatasetID is not defined",
-                }
+                return self.rsp("UNDEFINED_DATASET_ID")
             valid_dataset = False
 
             dataset_object = get_dataset_by_uid(dataset_json["DatasetID"])
@@ -139,11 +155,7 @@ class DataRequestPost(Service):
                 valid_dataset = True
 
             if not valid_dataset:
-                self.request.response.setStatus(400)
-                return {
-                    "status": "error",
-                    "msg": "Error, the DatasetID is not valid",
-                }
+                return self.rsp("INVALID_DATASET_ID")
 
             response_json.update(
                 {
@@ -200,22 +212,16 @@ class DataRequestPost(Service):
                     )
                     response_json.update({"DatasetSource": file_source})
                 else:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, the FileID is not valid",
-                    }
+                    return self.rsp("INVALID_FILE_ID")
+
                 prepacked_download_data_object["Datasets"].append(
                     response_json
                 )
             else:
                 if "NUTS" in dataset_json:
                     if not validate_nuts(dataset_json["NUTS"]):
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "NUTS country error",
-                        }
+                        return self.rsp("NUTS_COUNTRY_ERROR")
+
                     response_json.update({"NUTSID": dataset_json["NUTS"]})
                     response_json.update(
                         {"NUTSName": self.get_nuts_name(dataset_json["NUTS"])}
@@ -223,32 +229,21 @@ class DataRequestPost(Service):
 
                 if "BoundingBox" in dataset_json:
                     if "NUTS" in dataset_json:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "Error, NUTS is also defined",
-                        }
+                        return self.rsp("NUTS_ALSO_DEFINED")
 
                     if not validate_spatial_extent(
                         dataset_json["BoundingBox"]
                     ):
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "Error, BoundingBox is not valid",
-                        }
+                        return self.rsp("INVALID_BOUNDINGBOX")
 
                     requested_area = calculate_bounding_box_area(
                         dataset_json["BoundingBox"]
                     )
                     if requested_area > self.max_area_extent():
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "Error, the requested BoundingBox is too "
-                            "big. The limit is "
-                            f"{self.max_area_extent()}.",
-                        }
+                        return self.rsp(
+                            f"Error, the requested BoundingBox is too big. "
+                            f"The limit is {self.max_area_extent()}."
+                        )
                     response_json.update(
                         {"BoundingBox": dataset_json["BoundingBox"]}
                     )
@@ -264,51 +259,23 @@ class DataRequestPost(Service):
                     if d_l_t is not None and d_l_t > 0:
                         has_maximum_range = True
                     if has_maximum_range is False:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "Error, temporal restriction is not "
-                                   "allowed in not time-series enabled "
-                                   "datasets",
-                        }
+                        return self.rsp("TEMP_REST_NOT_ALLOWED")
 
                     if len(dataset_json["TemporalFilter"].keys()) > 2:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "Error, TemporalFilter has too many "
-                                   "fields",
-                        }
+                        return self.rsp("TEMP_TOO_MANY")
 
                     if "StartDate" not in dataset_json["TemporalFilter"]:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "Error, TemporalFilter does "
-                                " not have StartDate or EndDate"
-                            ),
-                        }
+                        return self.rsp("TEMP_MISSING_RANGE")
+
                     if "EndDate" not in dataset_json["TemporalFilter"]:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "Error, TemporalFilter does "
-                                " not have StartDate or EndDate"
-                            ),
-                        }
+                        return self.rsp("TEMP_MISSING_RANGE")
 
                     start_date, end_date = extract_dates_from_temporal_filter(
                         dataset_json["TemporalFilter"]
                     )
 
                     if start_date is None or end_date is None:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "Error, date format is not correct",
-                        }
+                        return self.rsp("INCORRECT_DATE")
 
                     if start_date > end_date:
                         self.request.response.setStatus(400)
