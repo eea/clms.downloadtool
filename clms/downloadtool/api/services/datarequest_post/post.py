@@ -47,6 +47,7 @@ from clms.downloadtool.api.services.datarequest_post.utils import (
 )
 from clms.downloadtool.api.services.datarequest_post.validation import (
     MESSAGES,
+    is_special,
     validate_nuts,
     validate_spatial_extent,
 )
@@ -109,6 +110,21 @@ class DataRequestPost(Service):
         mail = user.getProperty("email")
         return user_id, mail, None
 
+    def validate_dataset_id(self, dataset_json):
+        """Return error response if DatasetID is missing/empty, else None"""
+        if "DatasetID" not in dataset_json:
+            return self.rsp("UNDEFINED_DATASET_ID")
+        if not dataset_json.get("DatasetID"):
+            return self.rsp("UNDEFINED_DATASET_ID")
+        return None
+
+    def validate_dataset_object(self, dataset_json):
+        """Return error response if DatasetID is invalid, else dataset object"""
+        dataset_object = get_dataset_by_uid(dataset_json.get("DatasetID"))
+        if dataset_object is None:
+            return None, self.rsp("INVALID_DATASET_ID")
+        return dataset_object, None
+
     def reply(self):  # pylint: disable=too-many-statements
         """JSON response"""
         alsoProvides(self.request, IDisableCSRFProtection)
@@ -126,42 +142,23 @@ class DataRequestPost(Service):
         prepacked_download_data_object["Datasets"] = []
         cdse_datasets = {}
         cdse_datasets["Datasets"] = []
-
-        valid_dataset = False
+        found_special = []
 
         utility = getUtility(IDownloadToolUtility)
 
-        # Refs #273099 - when NETCDF format (OutputFormat) if selected
-        # - Water Bodies 2020-present (raster 100 m), global, monthly
-        #   – version 1
-        # - Water Bodies 2020-present (raster 300 m), global, monthly
-        #   – version 2
-        # display this error
-        # [UID1, path1, ...]
-        SPECIAL_CASES = [
-            '7df9bdf94fe94cb5919c11c9ef5cac65',
-            '/water-bodies/water-bodies-global-v1-0-100m',
-            '0517fd1b7d944d8197a2eb5c13470db8',
-            '/water-bodies/water-bodies-global-v2-0-300m'
-        ]
-        found_special = []
-
+        # Iterate through requested datasets
         for dataset_index, dataset_json in enumerate(datasets_json):
             response_json = {}
-            if "DatasetID" not in dataset_json:
-                return self.rsp("UNDEFINED_DATASET_ID")
 
-            if not dataset_json.get("DatasetID"):
-                return self.rsp("UNDEFINED_DATASET_ID")
-            valid_dataset = False
+            error = self.validate_dataset_id(dataset_json)
+            if error:
+                return error
 
-            dataset_object = get_dataset_by_uid(dataset_json["DatasetID"])
-            if dataset_object is not None:
-                valid_dataset = True
+            dataset_object, error = self.validate_dataset_object(dataset_json)
+            if error:
+                return error
 
-            if not valid_dataset:
-                return self.rsp("INVALID_DATASET_ID")
-
+            assert dataset_object is not None
             response_json.update(
                 {
                     "DatasetID": dataset_json["DatasetID"],
@@ -420,17 +417,10 @@ class DataRequestPost(Service):
                             "documentation to get more information"
                         )
 
-                is_special_case = False
-                try:
-                    dataset_id = dataset_json['DatasetID']
-                    if dataset_id in SPECIAL_CASES or \
-                        dataset_object.absolute_url().split(
-                            '/en/products')[-1] in SPECIAL_CASES:
-                        if dataset_json['OutputFormat'] == 'Netcdf':
-                            is_special_case = True
-                            found_special.append(dataset_id)
-                except Exception:
-                    pass
+                is_special_case = is_special(dataset_json, dataset_object)
+                if is_special_case:
+                    found_special.append(dataset_json['DatasetID'])
+
                 if dataset_index == len(datasets_json) - 1:
                     if len(found_special) > 0:
                         return self.rsp(

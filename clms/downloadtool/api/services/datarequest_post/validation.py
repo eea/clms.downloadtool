@@ -89,3 +89,31 @@ def validate_nuts(nuts_id):
         valid_nuts = items[0][:2] in COUNTRIES.keys()
         return valid_nuts
     return None
+
+
+def is_special(dataset_json, dataset_object):
+    """
+        Refs #273099 - when NETCDF format (OutputFormat) if selected
+            - Water Bodies 2020-present (raster 100 m), global, monthly
+            – version 1
+            - Water Bodies 2020-present (raster 300 m), global, monthly
+            – version 2
+    """
+    # [UID1, path1, ...]
+    SPECIAL_CASES = [
+        '7df9bdf94fe94cb5919c11c9ef5cac65',
+        '/water-bodies/water-bodies-global-v1-0-100m',
+        '0517fd1b7d944d8197a2eb5c13470db8',
+        '/water-bodies/water-bodies-global-v2-0-300m'
+    ]
+    is_special_case = False
+    try:
+        dataset_id = dataset_json['DatasetID']
+        if dataset_id in SPECIAL_CASES or dataset_object.absolute_url().split(
+                '/en/products')[-1] in SPECIAL_CASES:
+            if dataset_json['OutputFormat'] == 'Netcdf':
+                is_special_case = True
+    except Exception:
+        pass
+
+    return is_special_case
