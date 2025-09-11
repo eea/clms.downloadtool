@@ -84,6 +84,17 @@ MESSAGES = {
     ),
     "UNDEFINED_GCS": "Error, defined GCS not in the list",
     "MISSING_GCS": "The OutputGCS parameter is mandatory.",
+    "UNDEFINED_INFO_ID": "Error, DatasetDownloadInformationID is not defined.",
+    "NOT_DOWNLOADABLE": "Error, this dataset is not downloadable",
+    "INVALID_OUTPUT": "Error, the specified output format is not valid",
+    "NOT_COMPATIBLE": "Error, specified formats are not compatible",
+    "INVALID_SOURCE": "Error, the dataset source is not valid",
+    "INVALID_LAYER": "Error, the requested band/layer is not valid",
+    "MISSING_TEMPORAL": (
+        "You are requesting to download a time series enabled dataset and you "
+        "are required to request the download of an specific date range. "
+        "Please check the download documentation to get more information"
+    ),
 }
 
 
@@ -312,14 +323,7 @@ class DataRequestPost(Service):
                     return self.rsp("MISSING_GCS")
 
                 if "DatasetDownloadInformationID" not in dataset_json:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": (
-                            "Error, DatasetDownloadInformationID is not"
-                            " defined."
-                        ),
-                    }
+                    return self.rsp("UNDEFINED_INFO_ID")
 
                 download_information_id = dataset_json.get(
                     "DatasetDownloadInformationID"
@@ -330,23 +334,13 @@ class DataRequestPost(Service):
                     dataset_object, download_information_id
                 )
                 if not full_dataset_format:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, this dataset is not downloadable",
-                    }
+                    return self.rsp("NOT_DOWNLOADABLE")
 
                 requested_output_format = dataset_json.get(
                     "OutputFormat", None
                 )
                 if requested_output_format not in FORMAT_CONVERSION_TABLE:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": (
-                            "Error, the specified output format is not valid"
-                        ),
-                    }
+                    return self.rsp("INVALID_OUTPUT")
 
                 available_transformations_for_format = (
                     FORMAT_CONVERSION_TABLE.get(full_dataset_format)
@@ -355,11 +349,7 @@ class DataRequestPost(Service):
                 if not available_transformations_for_format.get(
                     requested_output_format, None
                 ):
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, specified formats are not compatible",
-                    }
+                    return self.rsp("NOT_COMPATIBLE")
 
                 # Check if the dataset source is OK
                 full_dataset_source = get_full_dataset_source(
@@ -367,22 +357,14 @@ class DataRequestPost(Service):
                 )
 
                 if not full_dataset_source:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, the dataset source is not valid",
-                    }
+                    return self.rsp("INVALID_SOURCE")
 
                 # Check if the dataset path is OK
                 full_dataset_path = get_full_dataset_path(
                     dataset_object, download_information_id
                 )
                 if not full_dataset_path:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, this dataset is not downloadable",
-                    }
+                    return self.rsp("NOT_DOWNLOADABLE")
 
                 # Check if we have wekeo_choices
                 wekeo_choices = get_full_dataset_wekeo_choices(
@@ -406,30 +388,16 @@ class DataRequestPost(Service):
                     if dataset_json.get("Layer") in layers:
                         response_json["Layer"] = dataset_json["Layer"]
                     else:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "Error, the requested band/layer is not valid"
-                            ),
-                        }
+                        return self.rsp("INVALID_LAYER")
 
                 # check time series restrictions:
                 # if the dataset is a time_series enabled dataset
                 # the temporal filter option is mandatory
-                # pylint: disable=line-too-long
-                if (dataset_object.mapviewer_istimeseries and "TemporalFilter" not in dataset_json):  # noqa
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": (
-                            "You are requesting to download a time series "
-                            "enabled dataset and you are required to "
-                            "request the download of an specific date "
-                            "range. Please check the download "
-                            "documentation to get more information"
-                        ),
-                    }
+                if (
+                    dataset_object.mapviewer_istimeseries and
+                    "TemporalFilter" not in dataset_json
+                ):
+                    return self.rsp("MISSING_TEMPORAL")
 
                 # validate the date range by
                 # “Maximum number of days allowed to be downloaded”
@@ -451,30 +419,19 @@ class DataRequestPost(Service):
                             start_date, ISO8601_DATETIME_FORMAT
                         )
                     except UnboundLocalError:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "Please add "
-                                "TemporalFilter (with StartDate and EndDate)"
-                            ),
-                        }
+                        return self.rsp("TEMP_MISSING_RANGE")
 
                     if (end_date_datetime - start_date_datetime) > timedelta(
                         days=dataset_object.download_limit_temporal_extent
                     ):
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "You are requesting to download a time series "
-                                "enabled dataset and the requested date range "
-                                "is bigger than the allowed range of "
-                                f"{dataset_object.download_limit_temporal_extent} days. "  # noqa
-                                "Please check the download "
-                                "documentation to get more information"
-                            ),
-                        }
+                        return self.rsp(
+                            "You are requesting to download a time series "
+                            "enabled dataset and the requested date range "
+                            "is bigger than the allowed range of "
+                            f"{dataset_object.download_limit_temporal_extent}"
+                            " days. Please check the download "
+                            "documentation to get more information"
+                        ),
 
                 is_special_case = False
                 try:
