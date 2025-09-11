@@ -12,7 +12,6 @@ from datetime import timedelta
 from functools import reduce
 from logging import getLogger
 
-import requests
 from clms.downloadtool.api.services.utils import (
     duplicated_values_exist,
 )
@@ -43,6 +42,7 @@ from clms.downloadtool.api.services.datarequest_post.utils import (
     get_full_dataset_wekeo_choices,
     get_nuts_by_id,
     get_task_id,
+    post_request_to_fme,
     save_stats,
     to_iso8601,
     validate_nuts,
@@ -753,25 +753,6 @@ class DataRequestPost(Service):
             # start batch
             start_batch(cdse_batch_id)
 
-            # Save task in statstool - probably only after finished in FME?
-            # # build the stat params and save them
-            # stats_params = {
-            #         "Start": datetime.utcnow().isoformat(),
-            #         "User": str(user_id),
-            #         # pylint: disable=line-too-long
-            #         "Dataset": [item["DatasetID"] for item in cdse_dataset.get("Datasets", [])],  # noqa: E501
-            #         "TransformationData": new_datasets,
-            #         "TaskID": utility_task_id,
-            #         "CDSEBatchID": cdse_batch_id,
-            #         "GpkgFileName": unique_geopackage_name,
-            #         "End": "",
-            #         "TransformationDuration": "",
-            #         "TransformationSize": "",
-            #         "TransformationResultData": "",
-            #         "Status": "Queued",
-            #     }
-            # save_stats(stats_params)
-
         if len(cdse_datasets["Datasets"]) > 0:
             # Save parent task in downloadtool, containing all CDSE datasets
             cdse_parent_task["cdse_task_role"] = "parent"
@@ -835,7 +816,7 @@ class DataRequestPost(Service):
                     "Status": "Queued",
                 }
                 save_stats(stats_params)
-                fme_result = self.post_request_to_fme(params, is_prepackaged)
+                fme_result = post_request_to_fme(params, is_prepackaged)
                 if fme_result:
                     data_object["FMETaskId"] = fme_result
                     utility.datarequest_status_patch(
@@ -859,41 +840,6 @@ class DataRequestPost(Service):
             "TaskIds": fme_results["ok"],
             "ErrorTaskIds": fme_results["error"],
         }
-
-    def post_request_to_fme(self, params, is_prepackaged=False):
-        """send the request to FME and let it process it"""
-        if is_prepackaged:
-            fme_url = api.portal.get_registry_record(
-                "clms.downloadtool.fme_config_controlpanel.url_prepackaged"
-            )
-        else:
-            fme_url = api.portal.get_registry_record(
-                "clms.downloadtool.fme_config_controlpanel.url"
-            )
-        fme_token = api.portal.get_registry_record(
-            "clms.downloadtool.fme_config_controlpanel.fme_token"
-        )
-        headers = {
-            "Content-Type": "application/json; charset=utf-8",
-            "Accept": "application/json",
-            "Authorization": "fmetoken token={0}".format(fme_token),
-        }
-        try:
-            resp = requests.post(
-                fme_url, json=params, headers=headers, timeout=10
-            )
-            if resp.ok:
-                fme_task_id = resp.json().get("id", None)
-                return fme_task_id
-        except requests.exceptions.Timeout:
-            log.info("FME request timed out")
-        body = json.dumps(params)
-        log.info(
-            "There was an error registering the download request in FME: %s",
-            body,
-        )
-
-        return {}
 
     @cache(_cache_key)
     def get_nuts_name(self, nutsid):

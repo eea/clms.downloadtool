@@ -1,13 +1,15 @@
 """Utils"""
 import random
 import re
-import requests
 import json
 import base64
 from logging import getLogger
 from datetime import datetime
+
+import requests
 from plone import api
 from zope.component import getUtility
+
 from clms.downloadtool.utils import COUNTRIES
 from clms.downloadtool.api.services.utils import get_extra_data
 from clms.statstool.utility import IDownloadStatsUtility
@@ -266,3 +268,39 @@ def get_full_dataset_layers(dataset_object, download_information_id):
             return download_information.get("layers", [])
 
     return []
+
+
+def post_request_to_fme(params, is_prepackaged=False):
+    """send the request to FME and let it process it"""
+    if is_prepackaged:
+        fme_url = api.portal.get_registry_record(
+            "clms.downloadtool.fme_config_controlpanel.url_prepackaged"
+        )
+    else:
+        fme_url = api.portal.get_registry_record(
+            "clms.downloadtool.fme_config_controlpanel.url"
+        )
+    fme_token = api.portal.get_registry_record(
+        "clms.downloadtool.fme_config_controlpanel.fme_token"
+    )
+    headers = {
+        "Content-Type": "application/json; charset=utf-8",
+        "Accept": "application/json",
+        "Authorization": "fmetoken token={0}".format(fme_token),
+    }
+    try:
+        resp = requests.post(
+            fme_url, json=params, headers=headers, timeout=10
+        )
+        if resp.ok:
+            fme_task_id = resp.json().get("id", None)
+            return fme_task_id
+    except requests.exceptions.Timeout:
+        log.info("FME request timed out")
+    body = json.dumps(params)
+    log.info(
+        "There was an error registering the download request in FME: %s",
+        body,
+    )
+
+    return {}
