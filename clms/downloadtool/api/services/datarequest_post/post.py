@@ -5,7 +5,6 @@ through the URL)
 
 """
 import copy
-import json
 import uuid
 from datetime import datetime
 from datetime import timedelta
@@ -28,9 +27,9 @@ from clms.downloadtool.api.services.datarequest_post.utils import (
     ISO8601_DATETIME_FORMAT,
     VITO_GEONETWORK_BASE_URL,
     base64_encode_path,
+    build_stats_params,
     extract_dates_from_temporal_filter,
     generate_task_group_id,
-    get_callback_url,
     get_dataset_by_uid,
     get_dataset_file_path_from_file_id,
     get_dataset_file_source_from_file_id,
@@ -41,6 +40,7 @@ from clms.downloadtool.api.services.datarequest_post.utils import (
     get_full_dataset_wekeo_choices,
     get_nuts_by_id,
     get_task_id,
+    params_for_fme,
     post_request_to_fme,
     save_stats,
     to_iso8601,
@@ -652,45 +652,13 @@ class DataRequestPost(Service):
                 utility_task_id = get_task_id(utility_response_json)
                 new_datasets = {"Datasets": data_object["Datasets"]}
 
-                params = {
-                    "publishedParameters": [
-                        {
-                            "name": "UserID",
-                            "value": str(user_id),
-                        },
-                        {
-                            "name": "TaskID",
-                            "value": utility_task_id,
-                        },
-                        {
-                            "name": "UserMail",
-                            "value": mail,
-                        },
-                        {
-                            "name": "CallbackUrl",
-                            "value": get_callback_url(),
-                        },
-                        # dump the json into a string for FME
-                        {"name": "json", "value": json.dumps(new_datasets)},
-                    ]
-                }
-
-                # build the stat params and save them
-                stats_params = {
-                    "Start": datetime.utcnow().isoformat(),
-                    "User": str(user_id),
-                    "Dataset": [item["DatasetID"] for item in data_object.get(
-                        "Datasets", [])],
-                    "TransformationData": new_datasets,
-                    "TaskID": utility_task_id,
-                    "End": "",
-                    "TransformationDuration": "",
-                    "TransformationSize": "",
-                    "TransformationResultData": "",
-                    "Status": "Queued",
-                }
-                save_stats(stats_params)
-                fme_result = self.post_request_to_fme(params, is_prepackaged)
+                save_stats(build_stats_params(
+                    user_id, data_object, new_datasets, utility_task_id))
+                fme_result = self.post_request_to_fme(
+                    params_for_fme(
+                        user_id, utility_task_id, mail, new_datasets
+                    ), is_prepackaged
+                )
                 if fme_result:
                     data_object["FMETaskId"] = fme_result
                     utility.datarequest_status_patch(

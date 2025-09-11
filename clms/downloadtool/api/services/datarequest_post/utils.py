@@ -270,3 +270,48 @@ def post_request_to_fme(params, is_prepackaged=False):
     )
 
     return {}
+
+
+def params_for_fme(user_id, utility_task_id, mail, datasets):
+    """Prepare params for FME task"""
+    params = {
+        "publishedParameters": [
+            {
+                "name": "UserID",
+                "value": str(user_id),
+            },
+            {
+                "name": "TaskID",
+                "value": utility_task_id,
+            },
+            {
+                "name": "UserMail",
+                "value": mail,
+            },
+            {
+                "name": "CallbackUrl",
+                "value": get_callback_url(),
+            },
+            # dump the json into a string for FME
+            {"name": "json", "value": json.dumps(datasets)},
+        ]
+    }
+    return params
+
+
+def build_stats_params(user_id, data_object, datasets, utility_task_id):
+    """Prepare stats params"""
+    stats_params = {
+        "Start": datetime.utcnow().isoformat(),
+        "User": str(user_id),
+        "Dataset": [item["DatasetID"] for item in data_object.get(
+            "Datasets", [])],
+        "TransformationData": datasets,
+        "TaskID": utility_task_id,
+        "End": "",
+        "TransformationDuration": "",
+        "TransformationSize": "",
+        "TransformationResultData": "",
+        "Status": "Queued",
+    }
+    return stats_params
