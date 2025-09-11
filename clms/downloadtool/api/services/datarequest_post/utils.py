@@ -1,9 +1,12 @@
 """Utils"""
 import random
 import re
+import requests
 import json
+import base64
 from logging import getLogger
 from datetime import datetime
+from plone import api
 from zope.component import getUtility
 from clms.downloadtool.utils import COUNTRIES
 from clms.downloadtool.api.services.utils import get_extra_data
@@ -12,6 +15,70 @@ from clms.statstool.utility import IDownloadStatsUtility
 
 ISO8601_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 log = getLogger(__name__)
+
+
+EEA_GEONETWORK_BASE_URL = (
+    "https://sdi.eea.europa.eu/catalogue/copernicus/"
+    "api/records/{uid}/formatters/xml?approved=true"
+)
+VITO_GEONETWORK_BASE_URL = (
+    "https://globalland.vito.be/geonetwork/"
+    "srv/api/records/{uid}/formatters/xml?approved=true"
+)
+
+
+def _cache_key(fun, self, nutsid):
+    """Cache key function"""
+    return nutsid
+
+
+def get_dataset_by_uid(uid):
+    """get the dataset by UID"""
+    brains = api.content.find(UID=uid)
+    if brains:
+        return brains[0].getObject()
+
+    return None
+
+
+def get_callback_url():
+    """get the callback url where FME should signal any status changes"""
+    portal_url = api.portal.get().absolute_url()
+    if portal_url.endswith("/api"):
+        portal_url = portal_url.replace("/api", "")
+
+    return "{}/++api++/{}".format(
+        portal_url,
+        "@datarequest_status_patch",
+    )
+
+
+def get_nuts_by_id(nutsid):
+    """Get NUTS by ID"""
+    url = api.portal.get_registry_record(
+        "clms.downloadtool.fme_config_controlpanel.nuts_service"
+    )
+    if url:
+        url += "where=NUTS_ID='{}'".format(nutsid)
+        resp = requests.get(url)
+        if resp.ok:
+            resp_json = resp.json()
+            features = resp_json.get("features", [])
+            for feature in features:
+                attributes = feature.get("attributes", {})
+                nuts_name = attributes.get("NAME_LATN", "")
+                if nuts_name:
+                    return nuts_name
+
+    return nutsid
+
+
+def base64_encode_path(path):
+    """encode the given path as base64"""
+    if isinstance(path, str):
+        return base64.urlsafe_b64encode(path.encode("utf-8")).decode("utf-8")
+
+    return base64.urlsafe_b64encode(path).decode("utf-8")
 
 
 def to_iso8601(dt_str):

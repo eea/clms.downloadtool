@@ -5,7 +5,6 @@ through the URL)
 
 """
 import copy
-import base64
 import json
 import uuid
 from datetime import datetime
@@ -26,21 +25,28 @@ from clms.downloadtool.api.services.utils import (
 from clms.downloadtool.api.services.cdse.cdse_integration import (
     create_batch, start_batch)
 from clms.downloadtool.api.services.datarequest_post.utils import (
+    EEA_GEONETWORK_BASE_URL,
     ISO8601_DATETIME_FORMAT,
-    to_iso8601,
-    generate_task_group_id,
+    VITO_GEONETWORK_BASE_URL,
+    _cache_key,
+    base64_encode_path,
     extract_dates_from_temporal_filter,
-    validate_spatial_extent,
-    validate_nuts,
-    get_task_id,
-    save_stats,
+    generate_task_group_id,
+    get_callback_url,
+    get_dataset_by_uid,
     get_dataset_file_path_from_file_id,
     get_dataset_file_source_from_file_id,
     get_full_dataset_format,
-    get_full_dataset_source,
-    get_full_dataset_path,
-    get_full_dataset_wekeo_choices,
     get_full_dataset_layers,
+    get_full_dataset_path,
+    get_full_dataset_source,
+    get_full_dataset_wekeo_choices,
+    get_nuts_by_id,
+    get_task_id,
+    save_stats,
+    to_iso8601,
+    validate_nuts,
+    validate_spatial_extent,
 )
 
 from plone import api
@@ -53,30 +59,7 @@ from zope.component import getUtility
 from zope.interface import alsoProvides
 
 
-def _cache_key(fun, self, nutsid):
-    """Cache key function"""
-    return nutsid
-
-
 log = getLogger(__name__)
-
-
-EEA_GEONETWORK_BASE_URL = (
-    "https://sdi.eea.europa.eu/catalogue/copernicus/"
-    "api/records/{uid}/formatters/xml?approved=true"
-)
-VITO_GEONETWORK_BASE_URL = (
-    "https://globalland.vito.be/geonetwork/"
-    "srv/api/records/{uid}/formatters/xml?approved=true"
-)
-
-
-def base64_encode_path(path):
-    """encode the given path as base64"""
-    if isinstance(path, str):
-        return base64.urlsafe_b64encode(path.encode("utf-8")).decode("utf-8")
-
-    return base64.urlsafe_b64encode(path).decode("utf-8")
 
 
 class DataRequestPost(Service):
@@ -87,25 +70,6 @@ class DataRequestPost(Service):
         """return the max area allowed to be downloaded"""
         return api.portal.get_registry_record(
             "clms.types.download_limits.area_extent", default=1600000000000
-        )
-
-    def get_dataset_by_uid(self, uid):
-        """get the dataset by UID"""
-        brains = api.content.find(UID=uid)
-        if brains:
-            return brains[0].getObject()
-
-        return None
-
-    def get_callback_url(self):
-        """get the callback url where FME should signal any status changes"""
-        portal_url = api.portal.get().absolute_url()
-        if portal_url.endswith("/api"):
-            portal_url = portal_url.replace("/api", "")
-
-        return "{}/++api++/{}".format(
-            portal_url,
-            "@datarequest_status_patch",
         )
 
     def reply(self):  # pylint: disable=too-many-statements
@@ -170,7 +134,7 @@ class DataRequestPost(Service):
                 }
             valid_dataset = False
 
-            dataset_object = self.get_dataset_by_uid(dataset_json["DatasetID"])
+            dataset_object = get_dataset_by_uid(dataset_json["DatasetID"])
             if dataset_object is not None:
                 valid_dataset = True
 
@@ -849,7 +813,7 @@ class DataRequestPost(Service):
                         },
                         {
                             "name": "CallbackUrl",
-                            "value": self.get_callback_url(),
+                            "value": get_callback_url(),
                         },
                         # dump the json into a string for FME
                         {"name": "json", "value": json.dumps(new_datasets)},
@@ -936,19 +900,4 @@ class DataRequestPost(Service):
         """Based on the NUTS ID, return the name of
         the NUTS region.
         """
-        url = api.portal.get_registry_record(
-            "clms.downloadtool.fme_config_controlpanel.nuts_service"
-        )
-        if url:
-            url += "where=NUTS_ID='{}'".format(nutsid)
-            resp = requests.get(url)
-            if resp.ok:
-                resp_json = resp.json()
-                features = resp_json.get("features", [])
-                for feature in features:
-                    attributes = feature.get("attributes", {})
-                    nuts_name = attributes.get("NAME_LATN", "")
-                    if nuts_name:
-                        return nuts_name
-
-        return nutsid
+        return get_nuts_by_id(nutsid)
