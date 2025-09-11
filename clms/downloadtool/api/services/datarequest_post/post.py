@@ -178,8 +178,8 @@ class DataRequestPost(Service):
             })
             prepacked_download_data_object["Datasets"].append(response_json)
             return None
-        else:
-            return self.rsp("INVALID_FILE_ID")
+
+        return self.rsp("INVALID_FILE_ID")
 
     def process_nuts(self, dataset_json, response_json):
         """
@@ -228,7 +228,7 @@ class DataRequestPost(Service):
             self, dataset_json, dataset_object, response_json):
         """
         Validates the TemporalFilter in dataset_json and updates response_json.
-        Returns an error response if invalid, else None.
+        Returns start date, end date, possible error.
 
         Now, the temporal restriction can be controlled only with
         the maximum range, I mean if it is set as timeseries or has
@@ -238,24 +238,24 @@ class DataRequestPost(Service):
         """
         temporal = dataset_json.get("TemporalFilter")
         if not temporal:
-            return None
+            return None, None, None
 
         d_l_t = getattr(dataset_object, "download_limit_temporal_extent", None)
         if not d_l_t or d_l_t <= 0:
-            return self.rsp("TEMP_REST_NOT_ALLOWED")
+            return None, None, self.rsp("TEMP_REST_NOT_ALLOWED")
 
         if len(temporal.keys()) > 2:
-            return self.rsp("TEMP_TOO_MANY")
+            return None, None, self.rsp("TEMP_TOO_MANY")
 
         if "StartDate" not in temporal or "EndDate" not in temporal:
-            return self.rsp("TEMP_MISSING_RANGE")
+            return None, None, self.rsp("TEMP_MISSING_RANGE")
 
         start_date, end_date = extract_dates_from_temporal_filter(temporal)
         if start_date is None or end_date is None:
-            return self.rsp("INCORRECT_DATE")
+            return None, None, self.rsp("INCORRECT_DATE")
 
         if start_date > end_date:
-            return self.rsp("INCORRECT_DATE_RANGE")
+            return None, None, self.rsp("INCORRECT_DATE_RANGE")
 
         response_json.update({
             "TemporalFilter": {
@@ -263,7 +263,7 @@ class DataRequestPost(Service):
                 "EndDate": end_date
             }
         })
-        return None
+        return start_date, end_date, None
 
     def reply(self):  # pylint: disable=too-many-statements
         """JSON response"""
@@ -333,10 +333,10 @@ class DataRequestPost(Service):
 
                 # Request by TemporalFilter
                 if "TemporalFilter" in dataset_json:
-                    error = self.process_temporal_filter(
+                    start_date, end_date, error = self.process_temporal_filter(
                         dataset_json, dataset_object, response_json)
                     if error:
-                        return None, error
+                        return error
 
                 if "OutputGCS" in dataset_json:
                     available_gcs_values = get_available_gcs_values(
