@@ -48,6 +48,9 @@ from clms.downloadtool.api.services.datarequest_post.utils import (
     validate_nuts,
     validate_spatial_extent,
 )
+from clms.downloadtool.api.services.datarequest_post.validation import (
+    MESSAGES
+)
 
 from plone import api
 from plone.memoize.ram import cache
@@ -61,57 +64,6 @@ from zope.interface import alsoProvides
 
 log = getLogger(__name__)
 
-MESSAGES = {
-    "NOT_LOGGED_IN": "You need to be logged in to use this service",
-    "UNDEFINED_DATASET_ID": "Error, DatasetID is not defined",
-    "INVALID_DATASET_ID": "Error, the DatasetID is not valid",
-    "INVALID_FILE_ID": "Error, the FileID is not valid",
-    "NUTS_COUNTRY_ERROR": "NUTS country error",
-    "NUTS_ALSO_DEFINED": "Error, NUTS is also defined",
-    "INVALID_BOUNDINGBOX": "Error, BoundingBox is not valid",
-    "TEMP_REST_NOT_ALLOWED": (
-        "Error, temporal restriction is not allowed in not time-series "
-        "enabled datasets"
-    ),
-    "TEMP_TOO_MANY": "Error, TemporalFilter has too many fields",
-    "TEMP_MISSING_RANGE": (
-        "Error, TemporalFilter does not have StartDate or EndDate"
-    ),
-    "INCORRECT_DATE": "Error, date format is not correct",
-    "INCORRECT_DATE_RANGE":
-    (
-        "Error, difference between StartDate and EndDate is not coherent"
-    ),
-    "UNDEFINED_GCS": "Error, defined GCS not in the list",
-    "MISSING_GCS": "The OutputGCS parameter is mandatory.",
-    "UNDEFINED_INFO_ID": "Error, DatasetDownloadInformationID is not defined.",
-    "NOT_DOWNLOADABLE": "Error, this dataset is not downloadable",
-    "INVALID_OUTPUT": "Error, the specified output format is not valid",
-    "NOT_COMPATIBLE": "Error, specified formats are not compatible",
-    "INVALID_SOURCE": "Error, the dataset source is not valid",
-    "INVALID_LAYER": "Error, the requested band/layer is not valid",
-    "MISSING_TEMPORAL": (
-        "You are requesting to download a time series enabled dataset and you "
-        "are required to request the download of an specific date range. "
-        "Please check the download documentation to get more information"
-    ),
-    "FULL_NOT_EEA": (
-        "You are requesting to download the full dataset but this dataset is "
-        "not an EEA dataset and thus you need to query an specific endpoint to"
-        " request its download. Please check the API documentation to get"
-        " more information about this specific endpoint."
-    ),
-    "FULL_EEA": (
-        "To download the full dataset, please download it through the "
-        "corresponding pre-packaged data collection"
-    ),
-    "MUST_HAVE_AREA": (
-        "You have to select a specific area of interest. In case you want to "
-        "download the full dataset, please use the Auxiliary API."
-    ),
-
-}
-
 
 class DataRequestPost(Service):
     """Set Data"""
@@ -124,6 +76,17 @@ class DataRequestPost(Service):
             "status": status,
             "msg": MESSAGES.get(msg, msg)
         }
+
+    @cache(_cache_key)
+    def get_nuts_name(self, nutsid):
+        """Based on the NUTS ID, return the name of
+        the NUTS region.
+        """
+        return get_nuts_by_id(nutsid)
+
+    def post_request_to_fme(self, params, is_prepackaged=False):
+        """send the request to FME and let it process it"""
+        return post_request_to_fme(params, is_prepackaged)
 
     @memoize
     def max_area_extent(self):
@@ -158,8 +121,7 @@ class DataRequestPost(Service):
 
         utility = getUtility(IDownloadToolUtility)
 
-        # Refs #273099
-        # when NETCDF format (OutputFormat) is selected for these 2:
+        # Refs #273099 - when NETCDF format (OutputFormat) if selected
         # - Water Bodies 2020-present (raster 100 m), global, monthly
         #   – version 1
         # - Water Bodies 2020-present (raster 300 m), global, monthly
@@ -529,14 +491,7 @@ class DataRequestPost(Service):
 
         # Check for a maximum of 5 items general download items
         if len(general_download_data_object.get("Datasets", [])) > 5:
-            self.request.response.setStatus(400)
-            return {
-                "status": "error",
-                "msg": (
-                    "The download queue can only process 5 items at a time."
-                    " Please try again with fewer items."
-                ),
-            }
+            return self.rsp("DOWNLOAD_LIMIT")
 
         inprogress_requests = utility.datarequest_search(
             user_id, "In_progress"
@@ -556,30 +511,18 @@ class DataRequestPost(Service):
             [item.get("Datasets", []) for item in queued_requests],
             [],
         )
+
         # Check that the request has no duplicates
         if duplicated_values_exist(
-            # pylint: disable=line-too-long
-            general_download_data_object.get("Datasets", []) + inprogress_datasets + queued_datasets  # noqa
+            general_download_data_object.get(
+                "Datasets", []) + inprogress_datasets + queued_datasets
         ):
-            self.request.response.setStatus(400)
-            return {
-                "status": "error",
-                "msg": (
-                    "You have requested to download the same thing at least"
-                    " twice. Please check your download cart and remove any"
-                    " duplicates."
-                ),
-            }
+            return self.rsp("DUPLICATED")
 
         fme_results = {
             "ok": [],
             "error": [],
         }
-
-        # cdse_results = {
-        #     "ok": [],
-        #     "error": []
-        # }
 
         cdse_parent_task = {}  # contains all requested CDSE datasets, it is
         # a future FME task if all child tasks are finished in CDSE
@@ -617,13 +560,8 @@ class DataRequestPost(Service):
             if cdse_batch_id is None:
                 error = cdse_batch_id_response.get('error', '')
 
-                self.request.response.setStatus(400)
-                return {
-                    "status": "error",
-                    "msg": (
-                        f"Error creating CDSE batch: {error}"
-                    ),
-                }
+                return self.rsp(f"Error creating CDSE batch: {error}")
+
             cdse_batch_ids.append(cdse_batch_id)
             cdse_data_object["CDSEBatchID"] = cdse_batch_id
             cdse_data_object["Status"] = "QUEUED"
@@ -633,8 +571,7 @@ class DataRequestPost(Service):
             cdse_data_object['Datasets'] = cdse_dataset
             cdse_data_object['cdse_task_role'] = "child"
             cdse_data_object['cdse_task_group_id'] = cdse_task_group_id
-            # pylint: disable=line-too-long
-            utility_response_json = utility.datarequest_post(cdse_data_object)  # noqa: E501
+            utility_response_json = utility.datarequest_post(cdse_data_object)
             utility_task_id = get_task_id(utility_response_json)
 
             # make sure parent task is independent of the child
@@ -652,8 +589,7 @@ class DataRequestPost(Service):
             cdse_parent_task["Datasets"] = cdse_datasets["Datasets"]
             cdse_parent_task["CDSEBatchIDs"] = cdse_batch_ids
             cdse_parent_task["GpkgFileNames"] = gpkg_filenames
-            # pylint: disable=line-too-long
-            utility_response_json = utility.datarequest_post(cdse_parent_task)  # noqa: E501
+            utility_response_json = utility.datarequest_post(cdse_parent_task)
             utility_task_id = get_task_id(utility_response_json)
 
         for data_object, is_prepackaged in [
@@ -697,8 +633,8 @@ class DataRequestPost(Service):
                 stats_params = {
                     "Start": datetime.utcnow().isoformat(),
                     "User": str(user_id),
-                    # pylint: disable=line-too-long
-                    "Dataset": [item["DatasetID"] for item in data_object.get("Datasets", [])],  # noqa: E501
+                    "Dataset": [item["DatasetID"] for item in data_object.get(
+                        "Datasets", [])],
                     "TransformationData": new_datasets,
                     "TaskID": utility_task_id,
                     "End": "",
@@ -720,26 +656,10 @@ class DataRequestPost(Service):
                     fme_results["error"].append({"TaskID": utility_task_id})
 
         if fme_results["error"] and not fme_results["ok"]:
-            # All requests failed
-            self.request.response.setStatus(500)
-            return {
-                "status": "error",
-                "msg": "Error, all requests failed",
-            }
+            return self.rsp("ALL_FAILED", code=500)
 
         self.request.response.setStatus(201)
         return {
             "TaskIds": fme_results["ok"],
             "ErrorTaskIds": fme_results["error"],
         }
-
-    @cache(_cache_key)
-    def get_nuts_name(self, nutsid):
-        """Based on the NUTS ID, return the name of
-        the NUTS region.
-        """
-        return get_nuts_by_id(nutsid)
-
-    def post_request_to_fme(self, params, is_prepackaged=False):
-        """send the request to FME and let it process it"""
-        return post_request_to_fme(params, is_prepackaged)
