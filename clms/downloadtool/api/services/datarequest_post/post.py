@@ -78,6 +78,12 @@ MESSAGES = {
         "Error, TemporalFilter does not have StartDate or EndDate"
     ),
     "INCORRECT_DATE": "Error, date format is not correct",
+    "INCORRECT_DATE_RANGE":
+    (
+        "Error, difference between StartDate and EndDate is not coherent"
+    ),
+    "UNDEFINED_GCS": "Error, defined GCS not in the list",
+    "MISSING_GCS": "The OutputGCS parameter is mandatory.",
 }
 
 
@@ -85,6 +91,7 @@ class DataRequestPost(Service):
     """Set Data"""
 
     def rsp(self, msg, code=400, status="error"):
+        """Prepare an (usually error) response"""
         if code != 0:
             self.request.response.setStatus(code)
         return {
@@ -278,14 +285,7 @@ class DataRequestPost(Service):
                         return self.rsp("INCORRECT_DATE")
 
                     if start_date > end_date:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "Error, difference between StartDate "
-                                " and EndDate is not coherent"
-                            ),
-                        }
+                        return self.rsp("INCORRECT_DATE_RANGE")
 
                     response_json.update(
                         {
@@ -302,21 +302,14 @@ class DataRequestPost(Service):
                     )
 
                     if dataset_json["OutputGCS"] not in available_gcs_values:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "Error, defined GCS not in the list",
-                        }
+                        return self.rsp("UNDEFINED_GCS")
+
                     response_json.update(
                         {"OutputGCS": dataset_json["OutputGCS"]}
                     )
 
                 else:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "The OutputGCS parameter is mandatory.",
-                    }
+                    return self.rsp("MISSING_GCS")
 
                 if "DatasetDownloadInformationID" not in dataset_json:
                     self.request.response.setStatus(400)
