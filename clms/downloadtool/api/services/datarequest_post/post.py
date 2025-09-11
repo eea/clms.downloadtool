@@ -125,6 +125,35 @@ class DataRequestPost(Service):
             return None, self.rsp("INVALID_DATASET_ID")
         return dataset_object, None
 
+    def process_cdse_dataset(self, dataset_json, dataset_obj, response_json):
+        """
+        Checks if dataset is CDSE and updates response_json accordingly.
+        Returns True if dataset is CDSE, False otherwise.
+        """
+        is_cdse_dataset = False
+        try:
+            info_id = dataset_json.get('DatasetDownloadInformationID')
+
+            info_item = next(
+                (it for it in dataset_obj.dataset_download_information.get("items", [])
+                 if it.get("@id") == info_id),
+                None
+            )
+
+            if info_item and info_item.get('full_source') == "CDSE":
+                is_cdse_dataset = True
+                response_json.update({
+                    "ByocCollection": info_item.get('byoc_collection'),
+                    "SpatialResolution": getattr(
+                        dataset_obj, 'qualitySpatialResolution_line', None)
+                })
+
+        except Exception:
+            log.exception("Error processing CDSE dataset")
+
+        log.info("is_cdse_dataset: %s", is_cdse_dataset)
+        return is_cdse_dataset
+
     def reply(self):  # pylint: disable=too-many-statements
         """JSON response"""
         alsoProvides(self.request, IDisableCSRFProtection)
@@ -150,14 +179,13 @@ class DataRequestPost(Service):
         for dataset_index, dataset_json in enumerate(datasets_json):
             response_json = {}
 
+            # Validate dataset
             error = self.validate_dataset_id(dataset_json)
             if error:
                 return error
-
             dataset_object, error = self.validate_dataset_object(dataset_json)
             if error:
                 return error
-
             assert dataset_object is not None
             response_json.update(
                 {
@@ -166,33 +194,8 @@ class DataRequestPost(Service):
                 }
             )
 
-            # CDSE case
-            is_cdse_dataset = False
-            try:
-                info_id = dataset_json.get(
-                    'DatasetDownloadInformationID', None)
-
-                info_item = next(
-                    (it for it in dataset_object.dataset_download_information[
-                        "items"] if it.get("@id") == info_id),
-                    None
-                )
-
-                full_source = info_item['full_source']
-                if full_source == "CDSE":
-                    is_cdse_dataset = True
-                    response_json.update(
-                        {
-                            "ByocCollection": info_item.get('byoc_collection')
-                        }
-                    )
-                    response_json.update({
-                        "SpatialResolution":
-                        dataset_object.qualitySpatialResolution_line
-                    })
-            except Exception:
-                pass
-            log.info("is_cdse_dataset: %s", is_cdse_dataset)
+            is_cdse_dataset = self.process_cdse_dataset(
+                dataset_json, dataset_object, response_json)
 
             # Handle FileID requests:
             # - get first the file_path from the dataset using the file_id
