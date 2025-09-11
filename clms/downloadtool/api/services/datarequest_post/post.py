@@ -816,7 +816,7 @@ class DataRequestPost(Service):
                     "Status": "Queued",
                 }
                 save_stats(stats_params)
-                fme_result = post_request_to_fme(params, is_prepackaged)
+                fme_result = self.post_request_to_fme(params, is_prepackaged)
                 if fme_result:
                     data_object["FMETaskId"] = fme_result
                     utility.datarequest_status_patch(
@@ -847,3 +847,7 @@ class DataRequestPost(Service):
         the NUTS region.
         """
         return get_nuts_by_id(nutsid)
+
+    def post_request_to_fme(self, params, is_prepackaged=False):
+        """send the request to FME and let it process it"""
+        return post_request_to_fme(params, is_prepackaged)
