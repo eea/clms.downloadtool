@@ -9,7 +9,6 @@ import base64
 import json
 import re
 import uuid
-import random
 from datetime import datetime
 from datetime import timedelta
 from functools import reduce
@@ -28,6 +27,8 @@ from clms.downloadtool.api.services.utils import (
 )
 from clms.downloadtool.api.services.cdse.cdse_integration import (
     create_batch, start_batch)
+from clms.downloadtool.api.services.datarequest_post.utils import (
+    to_iso8601, generate_task_group_id)
 
 from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
@@ -41,23 +42,6 @@ from zope.interface import alsoProvides
 
 
 ISO8601_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-
-
-def to_iso8601(dt_str):
-    """Convert datetime in format requested by CDSE"""
-    dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
-    return dt.isoformat() + "Z"   # adding Z for UTC
-
-
-def generate_task_group_id():
-    """A CDSE parent task and its childs have the same group ID.
-       Example: 4823-9501-3746-1835
-    """
-    groups = []
-    for _ in range(4):
-        group = ''.join(str(random.randint(0, 9)) for _ in range(4))
-        groups.append(group)
-    return '-'.join(groups)
 
 
 def _cache_key(fun, self, nutsid):
