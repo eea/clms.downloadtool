@@ -3,6 +3,9 @@
 import re
 
 from clms.downloadtool.utils import COUNTRIES
+from clms.downloadtool.utils import FORMAT_CONVERSION_TABLE
+from clms.downloadtool.api.services.datarequest_post.utils import (
+    get_full_dataset_format)
 
 MESSAGES = {
     "NOT_LOGGED_IN": "You need to be logged in to use this service",
@@ -134,3 +137,27 @@ def validate_full_download_restrictions(d_json, full_dataset_source, rsp):
             return rsp("MUST_HAVE_AREA")
 
     return None
+
+
+def validate_dataset_format_and_output(dataset_object, dataset_json,
+                                       download_information_id, rsp):
+    """
+    Validate dataset format and requested output format.
+    Returns (full_dataset_format, requested_output_format) or error response.
+    """
+    full_dataset_format = get_full_dataset_format(
+        dataset_object, download_information_id)
+    if not full_dataset_format:
+        return None, None, rsp("NOT_DOWNLOADABLE")
+
+    requested_output_format = dataset_json.get("OutputFormat")
+    if requested_output_format not in FORMAT_CONVERSION_TABLE:
+        return None, None, rsp("INVALID_OUTPUT")
+
+    available_transformations = FORMAT_CONVERSION_TABLE.get(
+        full_dataset_format)
+    if not available_transformations or not available_transformations.get(
+            requested_output_format):
+        return None, None, rsp("NOT_COMPATIBLE")
+
+    return full_dataset_format, requested_output_format, None

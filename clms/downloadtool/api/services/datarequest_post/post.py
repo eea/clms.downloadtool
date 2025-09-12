@@ -15,7 +15,6 @@ from clms.downloadtool.api.services.utils import (
     duplicated_values_exist,
 )
 from clms.downloadtool.utility import IDownloadToolUtility
-from clms.downloadtool.utils import FORMAT_CONVERSION_TABLE
 from clms.downloadtool.api.services.utils import (
     calculate_bounding_box_area,
     get_available_gcs_values,
@@ -32,7 +31,6 @@ from clms.downloadtool.api.services.datarequest_post.utils import (
     get_dataset_by_uid,
     get_dataset_file_path_from_file_id,
     get_dataset_file_source_from_file_id,
-    get_full_dataset_format,
     get_full_dataset_layers,
     get_full_dataset_path,
     get_full_dataset_source,
@@ -50,6 +48,7 @@ from clms.downloadtool.api.services.datarequest_post.validation import (
     validate_nuts,
     validate_spatial_extent,
     validate_full_download_restrictions,
+    validate_dataset_format_and_output,
 )
 
 from plone import api
@@ -396,28 +395,15 @@ class DataRequestPost(Service):
                 download_information_id = dataset_json.get(
                     "DatasetDownloadInformationID"
                 )
-                # Check if the dataset format value is correct
-                full_dataset_format = get_full_dataset_format(
-                    dataset_object, download_information_id
-                )
-                if not full_dataset_format:
-                    return self.rsp("NOT_DOWNLOADABLE")
 
-                requested_output_format = dataset_json.get(
-                    "OutputFormat", None
+                full_dataset_format, requested_output_format, error = (
+                    validate_dataset_format_and_output(
+                        dataset_object, dataset_json,
+                        download_information_id, self.rsp
+                    )
                 )
-                if requested_output_format not in FORMAT_CONVERSION_TABLE:
-                    return self.rsp("INVALID_OUTPUT")
-
-                available_transformations_for_format = (
-                    FORMAT_CONVERSION_TABLE.get(full_dataset_format)
-                )
-
-                assert available_transformations_for_format is not None
-                if not available_transformations_for_format.get(
-                    requested_output_format, None
-                ):
-                    return self.rsp("NOT_COMPATIBLE")
+                if error:
+                    return error
 
                 # Check if the dataset source is OK
                 full_dataset_source = get_full_dataset_source(
