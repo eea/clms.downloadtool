@@ -293,12 +293,9 @@ class DataRequestPost(Service):
 
         # Get json request data
         datasets_json = json_body(self.request).get("Datasets")
-        general_download_data_object = {}
-        general_download_data_object["Datasets"] = []
-        prepacked_download_data_object = {}
-        prepacked_download_data_object["Datasets"] = []
-        cdse_datasets = {}
-        cdse_datasets["Datasets"] = []
+        general_download_data_object = {"Datasets": []}
+        prepacked_download_data_object = {"Datasets": []}
+        cdse_datasets = {"Datasets": []}
         found_special = []
 
         utility = getUtility(IDownloadToolUtility)
