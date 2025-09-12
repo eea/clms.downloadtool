@@ -411,25 +411,22 @@ class DataRequestPost(Service):
                 wekeo_choices = get_full_dataset_wekeo_choices(
                     dataset_object, download_information_id
                 )
+
                 # Check if layer is mandatory
                 layers = get_full_dataset_layers(
                     dataset_object, download_information_id
                 )
-                if layers and "Layer" not in dataset_json:
-                    # Check if user has not sent the Layer and
-                    # is mandatory, because this dataset
-                    # has layers
-                    dataset_json['Layer'] = "ALL BANDS"
-
-                elif layers and "Layer" in dataset_json:
-                    # Check if we have a layer and it is valid
-                    layers = get_full_dataset_layers(
-                        dataset_object, download_information_id
-                    )
-                    if dataset_json.get("Layer") in layers:
-                        response_json["Layer"] = dataset_json["Layer"]
+                if layers:
+                    if "Layer" not in dataset_json:
+                        # mandatory layers exist but not provided -> default
+                        dataset_json["Layer"] = "ALL BANDS"
                     else:
-                        return self.rsp("INVALID_LAYER")
+                        # Validate layer
+                        layer = dataset_json.get("Layer")
+                        if layer in layers:
+                            response_json["Layer"] = layer
+                        else:
+                            return self.rsp("INVALID_LAYER")
 
                 # Check time series restrictions
                 if (
