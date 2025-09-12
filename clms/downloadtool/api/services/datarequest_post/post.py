@@ -6,7 +6,7 @@ through the URL)
 """
 import copy
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from datetime import timedelta
 from functools import reduce
 from logging import getLogger
@@ -281,6 +281,36 @@ class DataRequestPost(Service):
 
         response_json.update({"OutputGCS": output_gcs})
         return None
+
+    def process_download_request(
+        self, data_object, is_prepackaged, user_id, mail, utility, fme_results
+    ):
+        """Handles posting dataset requests to FME and updating task status."""
+        data_object["Status"] = "Queued"
+        data_object["UserID"] = user_id
+        data_object["RegistrationDateTime"] = datetime.now(
+            timezone.utc).isoformat()
+
+        utility_response_json = utility.datarequest_post(data_object)
+        utility_task_id = get_task_id(utility_response_json)
+        new_datasets = {"Datasets": data_object["Datasets"]}
+
+        save_stats(build_stats_params(
+            user_id, data_object, new_datasets, utility_task_id
+        ))
+
+        fme_result = self.post_request_to_fme(
+            params_for_fme(user_id, utility_task_id, mail, new_datasets),
+            is_prepackaged,
+        )
+
+        if fme_result:
+            data_object["FMETaskId"] = fme_result
+            utility.datarequest_status_patch(data_object, utility_task_id)
+            self.request.response.setStatus(201)
+            fme_results["ok"].append({"TaskID": utility_task_id})
+        else:
+            fme_results["error"].append({"TaskID": utility_task_id})
 
     def reply(self):  # pylint: disable=too-many-statements
         """JSON response"""
@@ -572,19 +602,15 @@ class DataRequestPost(Service):
 
         fme_results = {"ok": [], "error": []}
 
-        cdse_parent_task = {}  # contains all requested CDSE datasets, it is
-        # a future FME task if all child tasks are finished in CDSE
+        cdse_parent_task = {}  # future FME task with requested CDSE datasets
         cdse_task_group_id = generate_task_group_id()
-        cdse_batch_ids = []
-        gpkg_filenames = []
+        cdse_batch_ids, gpkg_filenames = [], []
 
         for cdse_dataset in cdse_datasets["Datasets"]:
             cdse_data_object = {}
-            # cdse_data_object["Status"] = "CREATED"? #WIP get status
             cdse_data_object["UserID"] = user_id
-            cdse_data_object[
-                "RegistrationDateTime"
-            ] = datetime.utcnow().isoformat()
+            cdse_data_object["RegistrationDateTime"] = datetime.now(
+                timezone.utc).isoformat()
 
             # generate unique geopackage file name
             unique_geopackage_id = str(uuid.uuid4())
@@ -645,31 +671,10 @@ class DataRequestPost(Service):
             (general_download_data_object, False),
         ]:
             if data_object["Datasets"]:
-                data_object["Status"] = "Queued"
-                data_object["UserID"] = user_id
-                data_object[
-                    "RegistrationDateTime"
-                ] = datetime.utcnow().isoformat()
-                utility_response_json = utility.datarequest_post(data_object)
-                utility_task_id = get_task_id(utility_response_json)
-                new_datasets = {"Datasets": data_object["Datasets"]}
-
-                save_stats(build_stats_params(
-                    user_id, data_object, new_datasets, utility_task_id))
-                fme_result = self.post_request_to_fme(
-                    params_for_fme(
-                        user_id, utility_task_id, mail, new_datasets
-                    ), is_prepackaged
+                self.process_download_request(
+                    data_object, is_prepackaged, user_id, mail, utility,
+                    fme_results
                 )
-                if fme_result:
-                    data_object["FMETaskId"] = fme_result
-                    utility.datarequest_status_patch(
-                        data_object, utility_task_id
-                    )
-                    self.request.response.setStatus(201)
-                    fme_results["ok"].append({"TaskID": utility_task_id})
-                else:
-                    fme_results["error"].append({"TaskID": utility_task_id})
 
         if fme_results["error"] and not fme_results["ok"]:
             return self.rsp("ALL_FAILED", code=500)
