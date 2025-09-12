@@ -23,11 +23,10 @@ from clms.downloadtool.api.services.utils import (
 from clms.downloadtool.api.services.cdse.cdse_integration import (
     create_batch, start_batch)
 from clms.downloadtool.api.services.datarequest_post.utils import (
-    EEA_GEONETWORK_BASE_URL,
     ISO8601_DATETIME_FORMAT,
-    VITO_GEONETWORK_BASE_URL,
     base64_encode_path,
     build_stats_params,
+    build_metadata_urls,
     extract_dates_from_temporal_filter,
     generate_task_group_id,
     get_dataset_by_uid,
@@ -523,8 +522,7 @@ class DataRequestPost(Service):
                     if full_dataset_source == "EEA":
                         return self.rsp("FULL_EEA")
 
-                # Check dataset download restrictions for
-                # non-EEA datasets with no area specified
+                # Check restrictions for non-EEA datasets with no area
                 if (
                     "NUTS" not in dataset_json and
                     "BoundingBox" not in dataset_json
@@ -541,34 +539,13 @@ class DataRequestPost(Service):
                         "WekeoChoices": wekeo_choices,
                     }
                 )
-
-                metadata = []
-                for meta in dataset_object.geonetwork_identifiers.get(
-                    "items", []
-                ):
-                    if meta.get("type", "") == "EEA":
-                        metadata_url = EEA_GEONETWORK_BASE_URL.format(
-                            uid=meta.get("id")
-                        )
-                    elif meta.get("type", "") == "VITO":
-                        metadata_url = VITO_GEONETWORK_BASE_URL.format(
-                            uid=meta.get("id")
-                        )
-                    else:
-                        metadata_url = meta.get("id")
-                    metadata.append(metadata_url)
-
-                response_json["Metadata"] = metadata
+                response_json["Metadata"] = build_metadata_urls(dataset_object)
 
                 if is_cdse_dataset:
                     cdse_datasets["Datasets"].append(response_json)
-
                 else:
                     general_download_data_object["Datasets"].append(
                         response_json)
-
-                # general_download_data_object["Datasets"].append(
-                #     response_json)
 
         # Check for a maximum of 5 items general download items
         if len(general_download_data_object.get("Datasets", [])) > 5:

@@ -315,3 +315,19 @@ def build_stats_params(user_id, data_object, datasets, utility_task_id):
         "Status": "Queued",
     }
     return stats_params
+
+
+def build_metadata_urls(dataset_object):
+    """Return list of metadata URLs for a dataset_object."""
+    metadata = []
+    for meta in getattr(
+            dataset_object, "geonetwork_identifiers", {}).get("items", []):
+        t = meta.get("type", "")
+        if t == "EEA":
+            url = EEA_GEONETWORK_BASE_URL.format(uid=meta.get("id"))
+        elif t == "VITO":
+            url = VITO_GEONETWORK_BASE_URL.format(uid=meta.get("id"))
+        else:
+            url = meta.get("id")
+        metadata.append(url)
+    return metadata
