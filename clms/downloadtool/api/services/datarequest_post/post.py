@@ -570,10 +570,7 @@ class DataRequestPost(Service):
         ):
             return self.rsp("DUPLICATED")
 
-        fme_results = {
-            "ok": [],
-            "error": [],
-        }
+        fme_results = {"ok": [], "error": []}
 
         cdse_parent_task = {}  # contains all requested CDSE datasets, it is
         # a future FME task if all child tasks are finished in CDSE
