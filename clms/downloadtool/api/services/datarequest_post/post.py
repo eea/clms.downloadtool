@@ -402,7 +402,7 @@ class DataRequestPost(Service):
                         download_information_id, self.rsp
                     )
                 )
-                log.info("requested_output_format: ", requested_output_format)
+                log.info("requested output: %s", requested_output_format)
                 if error:
                     return error
 
