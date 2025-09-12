@@ -265,6 +265,23 @@ class DataRequestPost(Service):
         })
         return start_date, end_date, None
 
+    def process_out_gcs(self, dataset_json, response_json):
+        """
+        Validate OutputGCS if present in dataset_json and update response_json.
+        Return an error response if invalid, else None.
+        """
+        output_gcs = dataset_json.get("OutputGCS")
+        if not output_gcs:
+            return None
+
+        available_gcs_values = get_available_gcs_values(
+            dataset_json["DatasetID"])
+        if output_gcs not in available_gcs_values:
+            return self.rsp("UNDEFINED_GCS")
+
+        response_json.update({"OutputGCS": output_gcs})
+        return None
+
     def reply(self):  # pylint: disable=too-many-statements
         """JSON response"""
         alsoProvides(self.request, IDisableCSRFProtection)
@@ -318,37 +335,31 @@ class DataRequestPost(Service):
                     return error
 
             else:
-                # Request by NUTS
+                # Check NUTS
                 if "NUTS" in dataset_json:
                     error = self.process_nuts(dataset_json, response_json)
                     if error:
                         return error
 
-                # Request by BoundingBox
+                # Check BoundingBox
                 if "BoundingBox" in dataset_json:
                     error = self.process_bounding_box(
                         dataset_json, response_json)
                     if error:
                         return error
 
-                # Request by TemporalFilter
+                # Check TemporalFilter
                 if "TemporalFilter" in dataset_json:
                     start_date, end_date, error = self.process_temporal_filter(
                         dataset_json, dataset_object, response_json)
                     if error:
                         return error
 
+                # Check output GCS
                 if "OutputGCS" in dataset_json:
-                    available_gcs_values = get_available_gcs_values(
-                        dataset_json["DatasetID"]
-                    )
-
-                    if dataset_json["OutputGCS"] not in available_gcs_values:
-                        return self.rsp("UNDEFINED_GCS")
-
-                    response_json.update(
-                        {"OutputGCS": dataset_json["OutputGCS"]}
-                    )
+                    error = self.process_out_gcs(dataset_json, response_json)
+                    if error:
+                        return error
                 else:
                     return self.rsp("MISSING_GCS")
 
@@ -359,7 +370,6 @@ class DataRequestPost(Service):
                     "DatasetDownloadInformationID"
                 )
                 # Check if the dataset format value is correct
-
                 full_dataset_format = get_full_dataset_format(
                     dataset_object, download_information_id
                 )
@@ -376,6 +386,7 @@ class DataRequestPost(Service):
                     FORMAT_CONVERSION_TABLE.get(full_dataset_format)
                 )
 
+                assert available_transformations_for_format is not None
                 if not available_transformations_for_format.get(
                     requested_output_format, None
                 ):
@@ -420,9 +431,7 @@ class DataRequestPost(Service):
                     else:
                         return self.rsp("INVALID_LAYER")
 
-                # check time series restrictions:
-                # if the dataset is a time_series enabled dataset
-                # the temporal filter option is mandatory
+                # Check time series restrictions
                 if (
                     dataset_object.mapviewer_istimeseries and
                     "TemporalFilter" not in dataset_json
@@ -442,6 +451,8 @@ class DataRequestPost(Service):
                 d_l_t = dataset_object.download_limit_temporal_extent
                 if d_l_t is not None and d_l_t > 0:
                     try:
+                        assert start_date is not None
+                        assert end_date is not None
                         end_date_datetime = datetime.strptime(
                             end_date, ISO8601_DATETIME_FORMAT
                         )
