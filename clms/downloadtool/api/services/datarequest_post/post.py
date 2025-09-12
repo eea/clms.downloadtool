@@ -627,7 +627,6 @@ class DataRequestPost(Service):
                     cdse_dataset["TemporalFilter"]["EndDate"])
             except Exception:
                 pass
-            # create_batch("test_file.gpkg", cdse_dataset)
             cdse_batch_id_response = create_batch(
                 unique_geopackage_name, cdse_dataset)
             cdse_batch_id = cdse_batch_id_response.get('batch_id')
@@ -647,6 +646,7 @@ class DataRequestPost(Service):
             cdse_data_object['cdse_task_group_id'] = cdse_task_group_id
             utility_response_json = utility.datarequest_post(cdse_data_object)
             utility_task_id = get_task_id(utility_response_json)
+            log.info("utility_task_id: %s", utility_task_id)
 
             # make sure parent task is independent of the child
             cdse_parent_task = copy.deepcopy(cdse_data_object)  # placeholder
@@ -665,6 +665,7 @@ class DataRequestPost(Service):
             cdse_parent_task["GpkgFileNames"] = gpkg_filenames
             utility_response_json = utility.datarequest_post(cdse_parent_task)
             utility_task_id = get_task_id(utility_response_json)
+            log.info("utility_task_id: %s", utility_task_id)
 
         for data_object, is_prepackaged in [
             (prepacked_download_data_object, True),
