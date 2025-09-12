@@ -117,3 +117,24 @@ def is_special(dataset_json, dataset_object):
         pass
 
     return is_special_case
+
+
+def validate_full_download_restrictions(d_json, full_dataset_source, rsp):
+    """Validate rules for full dataset download restrictions."""
+    if (
+        "NUTS" not in d_json
+        and "BoundingBox" not in d_json
+        and "TemporalFilter" not in d_json
+    ):
+        if full_dataset_source != "EEA":
+            return rsp("FULL_NOT_EEA")
+        return rsp("FULL_EEA")
+
+    if (
+        "NUTS" not in d_json
+        and "BoundingBox" not in d_json
+    ):
+        if full_dataset_source != "EEA":
+            return rsp("MUST_HAVE_AREA")
+
+    return None

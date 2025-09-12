@@ -49,6 +49,7 @@ from clms.downloadtool.api.services.datarequest_post.validation import (
     is_special,
     validate_nuts,
     validate_spatial_extent,
+    validate_full_download_restrictions,
 )
 
 from plone import api
@@ -511,24 +512,11 @@ class DataRequestPost(Service):
                 elif is_special_case:
                     continue
 
-                # Check full dataset download restrictions
-                if (
-                    "NUTS" not in dataset_json and "BoundingBox" not in
-                    dataset_json and "TemporalFilter" not in dataset_json
-                ):
-                    if full_dataset_source != "EEA":
-                        return self.rsp("FULL_NOT_EEA")
-
-                    if full_dataset_source == "EEA":
-                        return self.rsp("FULL_EEA")
-
-                # Check restrictions for non-EEA datasets with no area
-                if (
-                    "NUTS" not in dataset_json and
-                    "BoundingBox" not in dataset_json
-                ):
-                    if full_dataset_source != "EEA":
-                        return self.rsp("MUST_HAVE_AREA")
+                error = validate_full_download_restrictions(
+                    dataset_json, full_dataset_source, self.rsp
+                )
+                if error:
+                    return error
 
                 response_json.update(
                     {
