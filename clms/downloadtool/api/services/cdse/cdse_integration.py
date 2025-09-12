@@ -116,7 +116,10 @@ def create_batch(geopackage_file, cdse_dataset):
 
     target_crs = cdse_dataset["OutputGCS"]
     datasource = cdse_dataset["ByocCollection"]
-    service_endpoint = cdse_dataset["ViewService"].split('/')[-1]
+
+    brains = api.content.find(UID=cdse_dataset["DatasetID"])
+    service_endpoint = brains[0].getObject(
+    ).mapviewer_service_id
 
     # WIP: check if they exist first
     time_range_start = cdse_dataset["TemporalFilter"]["StartDate"]
@@ -144,12 +147,13 @@ def create_batch(geopackage_file, cdse_dataset):
         geom = shape(geometry)
         gdf_identifier = "tile_" + cdse_dataset["NUTSID"]
 
+    resolution = cdse_dataset.get("SpatialResolution")
+    actual_resolution = resolution.split(" ")[0]
+
     gdf = gpd.GeoDataFrame({
         "id": [1],
         "identifier": [gdf_identifier],
-        "width": [1000],
-        "height": [1000],
-        "resolution": [0.0001],
+        "resolution": [actual_resolution],
     }, geometry=[geom], crs="EPSG:4326")
 
     if target_crs and target_crs.upper() != "EPSG:4326":

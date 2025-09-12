@@ -5,31 +5,52 @@ through the URL)
 
 """
 import copy
-import base64
-import json
-import re
 import uuid
-import random
-from datetime import datetime
+from datetime import datetime, timezone
 from datetime import timedelta
 from functools import reduce
 from logging import getLogger
 
-import requests
 from clms.downloadtool.api.services.utils import (
-    get_extra_data,
     duplicated_values_exist,
 )
 from clms.downloadtool.utility import IDownloadToolUtility
-from clms.downloadtool.utils import COUNTRIES, FORMAT_CONVERSION_TABLE
 from clms.downloadtool.api.services.utils import (
     calculate_bounding_box_area,
     get_available_gcs_values,
 )
 from clms.downloadtool.api.services.cdse.cdse_integration import (
     create_batch, start_batch)
+from clms.downloadtool.api.services.datarequest_post.utils import (
+    ISO8601_DATETIME_FORMAT,
+    base64_encode_path,
+    build_stats_params,
+    build_metadata_urls,
+    extract_dates_from_temporal_filter,
+    generate_task_group_id,
+    get_dataset_by_uid,
+    get_dataset_file_path_from_file_id,
+    get_dataset_file_source_from_file_id,
+    get_full_dataset_layers,
+    get_full_dataset_path,
+    get_full_dataset_source,
+    get_full_dataset_wekeo_choices,
+    get_nuts_by_id,
+    get_task_id,
+    params_for_fme,
+    post_request_to_fme,
+    save_stats,
+    to_iso8601,
+)
+from clms.downloadtool.api.services.datarequest_post.validation import (
+    MESSAGES,
+    is_special,
+    validate_nuts,
+    validate_spatial_extent,
+    validate_full_download_restrictions,
+    validate_dataset_format_and_output,
+)
 
-from clms.statstool.utility import IDownloadStatsUtility
 from plone import api
 from plone.memoize.ram import cache
 from plone.memoize.view import memoize
@@ -40,24 +61,7 @@ from zope.component import getUtility
 from zope.interface import alsoProvides
 
 
-ISO8601_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-
-
-def to_iso8601(dt_str):
-    """Convert datetime in format requested by CDSE"""
-    dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
-    return dt.isoformat() + "Z"   # adding Z for UTC
-
-
-def generate_task_group_id():
-    """A CDSE parent task and its childs have the same group ID.
-       Example: 4823-9501-3746-1835
-    """
-    groups = []
-    for _ in range(4):
-        group = ''.join(str(random.randint(0, 9)) for _ in range(4))
-        groups.append(group)
-    return '-'.join(groups)
+log = getLogger(__name__)
 
 
 def _cache_key(fun, self, nutsid):
@@ -65,29 +69,28 @@ def _cache_key(fun, self, nutsid):
     return nutsid
 
 
-log = getLogger(__name__)
-
-
-EEA_GEONETWORK_BASE_URL = (
-    "https://sdi.eea.europa.eu/catalogue/copernicus/"
-    "api/records/{uid}/formatters/xml?approved=true"
-)
-VITO_GEONETWORK_BASE_URL = (
-    "https://globalland.vito.be/geonetwork/"
-    "srv/api/records/{uid}/formatters/xml?approved=true"
-)
-
-
-def base64_encode_path(path):
-    """encode the given path as base64"""
-    if isinstance(path, str):
-        return base64.urlsafe_b64encode(path.encode("utf-8")).decode("utf-8")
-
-    return base64.urlsafe_b64encode(path).decode("utf-8")
-
-
 class DataRequestPost(Service):
     """Set Data"""
+
+    def rsp(self, msg, code=400, status="error"):
+        """Prepare an (usually error) response"""
+        if code != 0:
+            self.request.response.setStatus(code)
+        return {
+            "status": status,
+            "msg": MESSAGES.get(msg, msg)
+        }
+
+    @cache(_cache_key)
+    def get_nuts_name(self, nutsid):
+        """Based on the NUTS ID, return the name of
+        the NUTS region.
+        """
+        return get_nuts_by_id(nutsid)
+
+    def post_request_to_fme(self, params, is_prepackaged=False):
+        """send the request to FME and let it process it"""
+        return post_request_to_fme(params, is_prepackaged)
 
     @memoize
     def max_area_extent(self):
@@ -96,98 +99,248 @@ class DataRequestPost(Service):
             "clms.types.download_limits.area_extent", default=1600000000000
         )
 
-    def get_dataset_by_uid(self, uid):
-        """get the dataset by UID"""
-        brains = api.content.find(UID=uid)
-        if brains:
-            return brains[0].getObject()
+    def get_user_data_or_error(self):
+        """Return (user_id, email) if logged in, else error response"""
+        user = api.user.get_current()
+        if not user:
+            return None, None, self.rsp("NOT_LOGGED_IN", code=0)
 
+        user_id = user.getId()
+        mail = user.getProperty("email")
+        return user_id, mail, None
+
+    def validate_dataset_id(self, dataset_json):
+        """Return error response if DatasetID is missing/empty, else None"""
+        if "DatasetID" not in dataset_json:
+            return self.rsp("UNDEFINED_DATASET_ID")
+        if not dataset_json.get("DatasetID"):
+            return self.rsp("UNDEFINED_DATASET_ID")
         return None
 
-    def get_callback_url(self):
-        """get the callback url where FME should signal any status changes"""
-        portal_url = api.portal.get().absolute_url()
-        if portal_url.endswith("/api"):
-            portal_url = portal_url.replace("/api", "")
+    def validate_dataset_object(self, dataset_json):
+        """Return error resp if DatasetID is invalid, else dataset object"""
+        dataset_object = get_dataset_by_uid(dataset_json.get("DatasetID"))
+        if dataset_object is None:
+            return None, self.rsp("INVALID_DATASET_ID")
+        return dataset_object, None
 
-        return "{}/++api++/{}".format(
-            portal_url,
-            "@datarequest_status_patch",
+    def process_cdse_dataset(self, dataset_json, dataset_obj, response_json):
+        """
+        Checks if dataset is CDSE and updates response_json accordingly.
+        Returns True if dataset is CDSE, False otherwise.
+        """
+        is_cdse_dataset = False
+        try:
+            info_id = dataset_json.get('DatasetDownloadInformationID')
+
+            info_item = next(
+                (it for it in dataset_obj.dataset_download_information.get(
+                    "items", []) if it.get("@id") == info_id),
+                None
+            )
+
+            if info_item and info_item.get('full_source') == "CDSE":
+                is_cdse_dataset = True
+                response_json.update({
+                    "ByocCollection": info_item.get('byoc_collection'),
+                    "SpatialResolution": getattr(
+                        dataset_obj, 'qualitySpatialResolution_line', None)
+                })
+
+        except Exception:
+            log.exception("Error processing CDSE dataset")
+
+        log.info("is_cdse_dataset: %s", is_cdse_dataset)
+        return is_cdse_dataset
+
+    def process_file_id(self, dataset_json, dataset_object, response_json,
+                        prepacked_download_data_object):
+        """
+        Processes FileID requests:
+        updates response_json and prepacked_download_data_object.
+        Returns an error response if FileID is invalid, otherwise None.
+        """
+        file_id = dataset_json.get("FileID")
+        if not file_id:
+            return None
+
+        file_path = get_dataset_file_path_from_file_id(dataset_object, file_id)
+        file_source = get_dataset_file_source_from_file_id(
+            dataset_object, file_id)
+
+        if file_path and file_source:
+            response_json.update({
+                "FileID": file_id,
+                "DatasetPath": "",
+                "FilePath": base64_encode_path(file_path),
+                "DatasetSource": file_source
+            })
+            prepacked_download_data_object["Datasets"].append(response_json)
+            return None
+
+        return self.rsp("INVALID_FILE_ID")
+
+    def process_nuts(self, dataset_json, response_json):
+        """
+        Validates the NUTS code in dataset_json and updates response_json.
+        Returns an error response if invalid, else None.
+        """
+        nuts_code = dataset_json.get("NUTS")
+        if not nuts_code:
+            return None
+
+        if not validate_nuts(nuts_code):
+            return self.rsp("NUTS_COUNTRY_ERROR")
+
+        response_json.update({
+            "NUTSID": nuts_code,
+            "NUTSName": self.get_nuts_name(nuts_code)
+        })
+        return None
+
+    def process_bounding_box(self, dataset_json, response_json):
+        """
+        Validates BoundingBox in dataset_json and updates response_json.
+        Returns an error response if invalid, else None.
+        """
+        bbox = dataset_json.get("BoundingBox")
+        if not bbox:
+            return None
+
+        if "NUTS" in dataset_json:
+            return self.rsp("NUTS_ALSO_DEFINED")
+
+        if not validate_spatial_extent(bbox):
+            return self.rsp("INVALID_BOUNDINGBOX")
+
+        requested_area = calculate_bounding_box_area(bbox)
+        if requested_area > self.max_area_extent():
+            return self.rsp(
+                f"Error, the requested BoundingBox is too big. "
+                f"The limit is {self.max_area_extent()}."
+            )
+
+        response_json.update({"BoundingBox": bbox})
+        return None
+
+    def process_temporal_filter(
+            self, dataset_json, dataset_object, response_json):
+        """
+        Validates the TemporalFilter in dataset_json and updates response_json.
+        Returns start date, end date, possible error.
+
+        Now, the temporal restriction can be controlled only with
+        the maximum range, I mean if it is set as timeseries or has
+        the aux calendar, in both cases it will have the maximum
+        range filled. If the dataset does not have values in that
+        setting, you do not need time parameters
+        """
+        temporal = dataset_json.get("TemporalFilter")
+        if not temporal:
+            return None, None, None
+
+        d_l_t = getattr(dataset_object, "download_limit_temporal_extent", None)
+        if not d_l_t or d_l_t <= 0:
+            return None, None, self.rsp("TEMP_REST_NOT_ALLOWED")
+
+        if len(temporal.keys()) > 2:
+            return None, None, self.rsp("TEMP_TOO_MANY")
+
+        if "StartDate" not in temporal or "EndDate" not in temporal:
+            return None, None, self.rsp("TEMP_MISSING_RANGE")
+
+        start_date, end_date = extract_dates_from_temporal_filter(temporal)
+        if start_date is None or end_date is None:
+            return None, None, self.rsp("INCORRECT_DATE")
+
+        if start_date > end_date:
+            return None, None, self.rsp("INCORRECT_DATE_RANGE")
+
+        response_json.update({
+            "TemporalFilter": {
+                "StartDate": start_date,
+                "EndDate": end_date
+            }
+        })
+        return start_date, end_date, None
+
+    def process_out_gcs(self, dataset_json, response_json):
+        """
+        Validate OutputGCS if present in dataset_json and update response_json.
+        Return an error response if invalid, else None.
+        """
+        output_gcs = dataset_json.get("OutputGCS")
+        if not output_gcs:
+            return None
+
+        available_gcs_values = get_available_gcs_values(
+            dataset_json["DatasetID"])
+        if output_gcs not in available_gcs_values:
+            return self.rsp("UNDEFINED_GCS")
+
+        response_json.update({"OutputGCS": output_gcs})
+        return None
+
+    def process_download_request(
+        self, data_object, is_prepackaged, user_id, mail, utility, fme_results
+    ):
+        """Handles posting dataset requests to FME and updating task status."""
+        data_object["Status"] = "Queued"
+        data_object["UserID"] = user_id
+        data_object["RegistrationDateTime"] = datetime.now(
+            timezone.utc).isoformat()
+
+        utility_response_json = utility.datarequest_post(data_object)
+        utility_task_id = get_task_id(utility_response_json)
+        new_datasets = {"Datasets": data_object["Datasets"]}
+
+        save_stats(build_stats_params(
+            user_id, data_object, new_datasets, utility_task_id
+        ))
+
+        fme_result = self.post_request_to_fme(
+            params_for_fme(user_id, utility_task_id, mail, new_datasets),
+            is_prepackaged,
         )
+
+        if fme_result:
+            data_object["FMETaskId"] = fme_result
+            utility.datarequest_status_patch(data_object, utility_task_id)
+            self.request.response.setStatus(201)
+            fme_results["ok"].append({"TaskID": utility_task_id})
+        else:
+            fme_results["error"].append({"TaskID": utility_task_id})
 
     def reply(self):  # pylint: disable=too-many-statements
         """JSON response"""
         alsoProvides(self.request, IDisableCSRFProtection)
-        body = json_body(self.request)
 
-        user = api.user.get_current()
-        if not user:
-            return {
-                "status": "error",
-                "msg": "You need to be logged in to use this service",
-            }
+        # Validate user
+        user_id, mail, error = self.get_user_data_or_error()
+        if error:
+            return error
 
-        user_id = user.getId()
-        datasets_json = body.get("Datasets")
-
-        mail = user.getProperty("email")
-        general_download_data_object = {}
-        general_download_data_object["Datasets"] = []
-
-        prepacked_download_data_object = {}
-        prepacked_download_data_object["Datasets"] = []
-
-        cdse_datasets = {}
-        cdse_datasets["Datasets"] = []
-
-        valid_dataset = False
+        # Get json request data
+        datasets_json = json_body(self.request).get("Datasets")
+        general_download_data_object = {"Datasets": []}
+        prepacked_download_data_object = {"Datasets": []}
+        cdse_datasets = {"Datasets": []}
+        found_special = []
 
         utility = getUtility(IDownloadToolUtility)
 
-        # Refs #273099
-        # when NETCDF format (OutputFormat) is selected for these 2:
-        # - Water Bodies 2020-present (raster 100 m), global, monthly
-        #   – version 1
-        # - Water Bodies 2020-present (raster 300 m), global, monthly
-        #   – version 2
-        # display this error
-        # [UID1, path1, ...]
-        SPECIAL_CASES = [
-            '7df9bdf94fe94cb5919c11c9ef5cac65',
-            '/water-bodies/water-bodies-global-v1-0-100m',
-            '0517fd1b7d944d8197a2eb5c13470db8',
-            '/water-bodies/water-bodies-global-v2-0-300m'
-        ]
-        found_special = []
-
+        # Iterate through requested datasets
         for dataset_index, dataset_json in enumerate(datasets_json):
             response_json = {}
-            if "DatasetID" not in dataset_json:
-                self.request.response.setStatus(400)
-                return {
-                    "status": "error",
-                    "msg": "Error, DatasetID is not defined",
-                }
 
-            if not dataset_json.get("DatasetID"):
-                self.request.response.setStatus(400)
-                return {
-                    "status": "error",
-                    "msg": "Error, DatasetID is not defined",
-                }
-            valid_dataset = False
-
-            dataset_object = self.get_dataset_by_uid(dataset_json["DatasetID"])
-            if dataset_object is not None:
-                valid_dataset = True
-
-            if not valid_dataset:
-                self.request.response.setStatus(400)
-                return {
-                    "status": "error",
-                    "msg": "Error, the DatasetID is not valid",
-                }
-
+            # Validate dataset
+            error = self.validate_dataset_id(dataset_json)
+            if error:
+                return error
+            dataset_object, error = self.validate_dataset_object(dataset_json)
+            if error:
+                return error
+            assert dataset_object is not None
             response_json.update(
                 {
                     "DatasetID": dataset_json["DatasetID"],
@@ -195,253 +348,63 @@ class DataRequestPost(Service):
                 }
             )
 
-            # CDSE case
-            is_cdse_dataset = False
-            try:
-                info_id = dataset_json.get(
-                    'DatasetDownloadInformationID', None)
+            # CDSE check
+            is_cdse_dataset = self.process_cdse_dataset(
+                dataset_json, dataset_object, response_json)
 
-                info_item = next(
-                    (it for it in dataset_object.dataset_download_information[
-                        "items"] if it.get("@id") == info_id),
-                    None
-                )
-
-                full_source = info_item['full_source']
-                if full_source == "CDSE":
-                    is_cdse_dataset = True
-                    response_json.update(
-                        {
-                            "ByocCollection": info_item.get('byoc_collection')
-                        }
-                    )
-                    response_json.update({
-                        "ViewService": dataset_object.mapviewer_viewservice
-                    })
-            except Exception:
-                pass
-            log.info("is_cdse_dataset: %s", is_cdse_dataset)
-
-            # Handle FileID requests:
-            # - get first the file_path from the dataset using the file_id
-            # - if something is returned use it as FileID and FilePath
-            # - if not return an error stating that the requested FileID is
-            #   not valid
+            # Request by FileID
             if "FileID" in dataset_json:
-                file_path = get_dataset_file_path_from_file_id(
-                    dataset_object, dataset_json["FileID"]
-                )
-                file_source = get_dataset_file_source_from_file_id(
-                    dataset_object, dataset_json["FileID"]
-                )
-                if file_path and file_source:
-                    response_json.update({"FileID": dataset_json["FileID"]})
-                    response_json.update({"DatasetPath": ""})
-                    response_json.update(
-                        {"FilePath": base64_encode_path(file_path)}
-                    )
-                    response_json.update({"DatasetSource": file_source})
-                else:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, the FileID is not valid",
-                    }
-                prepacked_download_data_object["Datasets"].append(
-                    response_json
-                )
+                error = self.process_file_id(
+                    dataset_json, dataset_object, response_json,
+                    prepacked_download_data_object)
+                if error:
+                    return error
+
             else:
+                # Check NUTS
                 if "NUTS" in dataset_json:
-                    if not validate_nuts(dataset_json["NUTS"]):
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "NUTS country error",
-                        }
-                    response_json.update({"NUTSID": dataset_json["NUTS"]})
-                    response_json.update(
-                        {"NUTSName": self.get_nuts_name(dataset_json["NUTS"])}
-                    )
+                    error = self.process_nuts(dataset_json, response_json)
+                    if error:
+                        return error
 
+                # Check BoundingBox
                 if "BoundingBox" in dataset_json:
-                    if "NUTS" in dataset_json:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "Error, NUTS is also defined",
-                        }
+                    error = self.process_bounding_box(
+                        dataset_json, response_json)
+                    if error:
+                        return error
 
-                    if not validate_spatial_extent(
-                        dataset_json["BoundingBox"]
-                    ):
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "Error, BoundingBox is not valid",
-                        }
-
-                    requested_area = calculate_bounding_box_area(
-                        dataset_json["BoundingBox"]
-                    )
-                    if requested_area > self.max_area_extent():
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "Error, the requested BoundingBox is too "
-                            "big. The limit is "
-                            f"{self.max_area_extent()}.",
-                        }
-                    response_json.update(
-                        {"BoundingBox": dataset_json["BoundingBox"]}
-                    )
-
-                # Now, the temporal restriction can be controlled only with
-                # the maximum range, I mean if it is set as timeseries or has
-                # the aux calendar, in both cases it will have the maximum
-                # range filled. If the dataset does not have values in that
-                # setting, you do not need time parameters
+                # Check TemporalFilter
                 if "TemporalFilter" in dataset_json:
-                    d_l_t = dataset_object.download_limit_temporal_extent
-                    has_maximum_range = False
-                    if d_l_t is not None and d_l_t > 0:
-                        has_maximum_range = True
-                    if has_maximum_range is False:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "Error, temporal restriction is not "
-                                   "allowed in not time-series enabled "
-                                   "datasets",
-                        }
+                    start_date, end_date, error = self.process_temporal_filter(
+                        dataset_json, dataset_object, response_json)
+                    if error:
+                        return error
 
-                    if len(dataset_json["TemporalFilter"].keys()) > 2:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "Error, TemporalFilter has too many "
-                                   "fields",
-                        }
-
-                    if "StartDate" not in dataset_json["TemporalFilter"]:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "Error, TemporalFilter does "
-                                " not have StartDate or EndDate"
-                            ),
-                        }
-                    if "EndDate" not in dataset_json["TemporalFilter"]:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "Error, TemporalFilter does "
-                                " not have StartDate or EndDate"
-                            ),
-                        }
-
-                    start_date, end_date = extract_dates_from_temporal_filter(
-                        dataset_json["TemporalFilter"]
-                    )
-
-                    if start_date is None or end_date is None:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "Error, date format is not correct",
-                        }
-
-                    if start_date > end_date:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "Error, difference between StartDate "
-                                " and EndDate is not coherent"
-                            ),
-                        }
-
-                    response_json.update(
-                        {
-                            "TemporalFilter": {
-                                "StartDate": start_date,
-                                "EndDate": end_date,
-                            }
-                        }
-                    )
-
+                # Check output GCS
                 if "OutputGCS" in dataset_json:
-                    available_gcs_values = get_available_gcs_values(
-                        dataset_json["DatasetID"]
-                    )
-
-                    if dataset_json["OutputGCS"] not in available_gcs_values:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": "Error, defined GCS not in the list",
-                        }
-                    response_json.update(
-                        {"OutputGCS": dataset_json["OutputGCS"]}
-                    )
-
+                    error = self.process_out_gcs(dataset_json, response_json)
+                    if error:
+                        return error
                 else:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "The OutputGCS parameter is mandatory.",
-                    }
+                    return self.rsp("MISSING_GCS")
 
                 if "DatasetDownloadInformationID" not in dataset_json:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": (
-                            "Error, DatasetDownloadInformationID is not"
-                            " defined."
-                        ),
-                    }
+                    return self.rsp("UNDEFINED_INFO_ID")
 
                 download_information_id = dataset_json.get(
                     "DatasetDownloadInformationID"
                 )
-                # Check if the dataset format value is correct
 
-                full_dataset_format = get_full_dataset_format(
-                    dataset_object, download_information_id
+                full_dataset_format, requested_output_format, error = (
+                    validate_dataset_format_and_output(
+                        dataset_object, dataset_json,
+                        download_information_id, self.rsp
+                    )
                 )
-                if not full_dataset_format:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, this dataset is not downloadable",
-                    }
-
-                requested_output_format = dataset_json.get(
-                    "OutputFormat", None
-                )
-                if requested_output_format not in FORMAT_CONVERSION_TABLE:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": (
-                            "Error, the specified output format is not valid"
-                        ),
-                    }
-
-                available_transformations_for_format = (
-                    FORMAT_CONVERSION_TABLE.get(full_dataset_format)
-                )
-
-                if not available_transformations_for_format.get(
-                    requested_output_format, None
-                ):
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, specified formats are not compatible",
-                    }
+                log.info("requested output: %s", requested_output_format)
+                if error:
+                    return error
 
                 # Check if the dataset source is OK
                 full_dataset_source = get_full_dataset_source(
@@ -449,69 +412,42 @@ class DataRequestPost(Service):
                 )
 
                 if not full_dataset_source:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, the dataset source is not valid",
-                    }
+                    return self.rsp("INVALID_SOURCE")
 
                 # Check if the dataset path is OK
                 full_dataset_path = get_full_dataset_path(
                     dataset_object, download_information_id
                 )
                 if not full_dataset_path:
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": "Error, this dataset is not downloadable",
-                    }
+                    return self.rsp("NOT_DOWNLOADABLE")
 
                 # Check if we have wekeo_choices
                 wekeo_choices = get_full_dataset_wekeo_choices(
                     dataset_object, download_information_id
                 )
+
                 # Check if layer is mandatory
                 layers = get_full_dataset_layers(
                     dataset_object, download_information_id
                 )
-                if layers and "Layer" not in dataset_json:
-                    # Check if user has not sent the Layer and
-                    # is mandatory, because this dataset
-                    # has layers
-                    dataset_json['Layer'] = "ALL BANDS"
-
-                elif layers and "Layer" in dataset_json:
-                    # Check if we have a layer and it is valid
-                    layers = get_full_dataset_layers(
-                        dataset_object, download_information_id
-                    )
-                    if dataset_json.get("Layer") in layers:
-                        response_json["Layer"] = dataset_json["Layer"]
+                if layers:
+                    if "Layer" not in dataset_json:
+                        # mandatory layers exist but not provided -> default
+                        dataset_json["Layer"] = "ALL BANDS"
                     else:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "Error, the requested band/layer is not valid"
-                            ),
-                        }
+                        # Validate layer
+                        layer = dataset_json.get("Layer")
+                        if layer in layers:
+                            response_json["Layer"] = layer
+                        else:
+                            return self.rsp("INVALID_LAYER")
 
-                # check time series restrictions:
-                # if the dataset is a time_series enabled dataset
-                # the temporal filter option is mandatory
-                # pylint: disable=line-too-long
-                if (dataset_object.mapviewer_istimeseries and "TemporalFilter" not in dataset_json):  # noqa
-                    self.request.response.setStatus(400)
-                    return {
-                        "status": "error",
-                        "msg": (
-                            "You are requesting to download a time series "
-                            "enabled dataset and you are required to "
-                            "request the download of an specific date "
-                            "range. Please check the download "
-                            "documentation to get more information"
-                        ),
-                    }
+                # Check time series restrictions
+                if (
+                    dataset_object.mapviewer_istimeseries and
+                    "TemporalFilter" not in dataset_json
+                ):
+                    return self.rsp("MISSING_TEMPORAL")
 
                 # validate the date range by
                 # “Maximum number of days allowed to be downloaded”
@@ -526,6 +462,8 @@ class DataRequestPost(Service):
                 d_l_t = dataset_object.download_limit_temporal_extent
                 if d_l_t is not None and d_l_t > 0:
                     try:
+                        assert start_date is not None
+                        assert end_date is not None
                         end_date_datetime = datetime.strptime(
                             end_date, ISO8601_DATETIME_FORMAT
                         )
@@ -533,111 +471,39 @@ class DataRequestPost(Service):
                             start_date, ISO8601_DATETIME_FORMAT
                         )
                     except UnboundLocalError:
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "Please add "
-                                "TemporalFilter (with StartDate and EndDate)"
-                            ),
-                        }
+                        return self.rsp("TEMP_MISSING_RANGE")
 
                     if (end_date_datetime - start_date_datetime) > timedelta(
                         days=dataset_object.download_limit_temporal_extent
                     ):
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "You are requesting to download a time series "
-                                "enabled dataset and the requested date range "
-                                "is bigger than the allowed range of "
-                                f"{dataset_object.download_limit_temporal_extent} days. "  # noqa
-                                "Please check the download "
-                                "documentation to get more information"
-                            ),
-                        }
+                        return self.rsp(
+                            "You are requesting to download a time series "
+                            "enabled dataset and the requested date range "
+                            "is bigger than the allowed range of "
+                            f"{dataset_object.download_limit_temporal_extent}"
+                            " days. Please check the download "
+                            "documentation to get more information"
+                        )
 
-                is_special_case = False
-                try:
-                    dataset_id = dataset_json['DatasetID']
-                    if dataset_id in SPECIAL_CASES or \
-                        dataset_object.absolute_url().split(
-                            '/en/products')[-1] in SPECIAL_CASES:
-                        if dataset_json['OutputFormat'] == 'Netcdf':
-                            is_special_case = True
-                            found_special.append(dataset_id)
-                except Exception:
-                    pass
+                is_special_case = is_special(dataset_json, dataset_object)
+                if is_special_case:
+                    found_special.append(dataset_json['DatasetID'])
+
                 if dataset_index == len(datasets_json) - 1:
                     if len(found_special) > 0:
-                        self.request.response.setStatus(400)
-                        special_msg = (
+                        return self.rsp(
                             f"Please choose the Geotiff format as the NetCDF "
                             f"format is not allowed "
                             f"for the dataset(s) {', '.join(found_special)}"
                         )
-                        return {
-                            "status": "error",
-                            "msg": special_msg
-                        }
                 elif is_special_case:
                     continue
 
-                # Check full dataset download restrictions
-                # pylint: disable=line-too-long
-                if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json and "TemporalFilter" not in dataset_json):  # noqa
-                    # We are requesting a full dataset download
-                    # We need to check if this dataset is a EEA dataset
-                    # to show an specific message
-                    # pylint: disable=line-too-long
-                    if (full_dataset_source and full_dataset_source != "EEA" or not full_dataset_source):  # noqa
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "You are requesting to download the full"
-                                " dataset but this dataset is not an EEA"
-                                " dataset and thus you need to query an"
-                                " specific endpoint to request its download."
-                                " Please check the API documentation to get"
-                                " more information about this specific"
-                                " endpoint."
-                            ),
-                        }
-                    if (full_dataset_source and full_dataset_source == "EEA" or not full_dataset_source):  # noqa
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                "To download the full dataset, please "
-                                "download it through the corresponding "
-                                "pre-packaged data collection"
-                            ),
-                        }
-
-                # pylint: disable=line-too-long
-                # Check dataset download restrictions for
-                # non-EEA datasets with no area specified
-                if ("NUTS" not in dataset_json and "BoundingBox" not in dataset_json):  # noqa
-                    # We are requesting a full dataset download
-                    # We need to check if this dataset is a non-EEA dataset
-                    # to show a specific message
-                    # pylint: disable=line-too-long
-                    if (full_dataset_source and full_dataset_source != "EEA" or not full_dataset_source):  # noqa
-                        # Non-EEA datasets must have an area specified
-                        self.request.response.setStatus(400)
-                        return {
-                            "status": "error",
-                            "msg": (
-                                (
-                                    "You have to select a specific area of"
-                                    " interest. In case you want to download"
-                                    " the full dataset, please use the"
-                                    " Auxiliary API."
-                                )
-                            ),
-                        }
+                error = validate_full_download_restrictions(
+                    dataset_json, full_dataset_source, self.rsp
+                )
+                if error:
+                    return error
 
                 response_json.update(
                     {
@@ -648,45 +514,17 @@ class DataRequestPost(Service):
                         "WekeoChoices": wekeo_choices,
                     }
                 )
-
-                metadata = []
-                for meta in dataset_object.geonetwork_identifiers.get(
-                    "items", []
-                ):
-                    if meta.get("type", "") == "EEA":
-                        metadata_url = EEA_GEONETWORK_BASE_URL.format(
-                            uid=meta.get("id")
-                        )
-                    elif meta.get("type", "") == "VITO":
-                        metadata_url = VITO_GEONETWORK_BASE_URL.format(
-                            uid=meta.get("id")
-                        )
-                    else:
-                        metadata_url = meta.get("id")
-                    metadata.append(metadata_url)
-
-                response_json["Metadata"] = metadata
+                response_json["Metadata"] = build_metadata_urls(dataset_object)
 
                 if is_cdse_dataset:
                     cdse_datasets["Datasets"].append(response_json)
-
                 else:
                     general_download_data_object["Datasets"].append(
                         response_json)
 
-                # general_download_data_object["Datasets"].append(
-                #     response_json)
-
         # Check for a maximum of 5 items general download items
         if len(general_download_data_object.get("Datasets", [])) > 5:
-            self.request.response.setStatus(400)
-            return {
-                "status": "error",
-                "msg": (
-                    "The download queue can only process 5 items at a time."
-                    " Please try again with fewer items."
-                ),
-            }
+            return self.rsp("DOWNLOAD_LIMIT")
 
         inprogress_requests = utility.datarequest_search(
             user_id, "In_progress"
@@ -706,44 +544,25 @@ class DataRequestPost(Service):
             [item.get("Datasets", []) for item in queued_requests],
             [],
         )
+
         # Check that the request has no duplicates
         if duplicated_values_exist(
-            # pylint: disable=line-too-long
-            general_download_data_object.get("Datasets", []) + inprogress_datasets + queued_datasets  # noqa
+            general_download_data_object.get(
+                "Datasets", []) + inprogress_datasets + queued_datasets
         ):
-            self.request.response.setStatus(400)
-            return {
-                "status": "error",
-                "msg": (
-                    "You have requested to download the same thing at least"
-                    " twice. Please check your download cart and remove any"
-                    " duplicates."
-                ),
-            }
+            return self.rsp("DUPLICATED")
 
-        fme_results = {
-            "ok": [],
-            "error": [],
-        }
+        fme_results = {"ok": [], "error": []}
 
-        # cdse_results = {
-        #     "ok": [],
-        #     "error": []
-        # }
-
-        cdse_parent_task = {}  # contains all requested CDSE datasets, it is
-        # a future FME task if all child tasks are finished in CDSE
+        cdse_parent_task = {}  # future FME task with requested CDSE datasets
         cdse_task_group_id = generate_task_group_id()
-        cdse_batch_ids = []
-        gpkg_filenames = []
+        cdse_batch_ids, gpkg_filenames = [], []
 
         for cdse_dataset in cdse_datasets["Datasets"]:
             cdse_data_object = {}
-            # cdse_data_object["Status"] = "CREATED"? #WIP get status
             cdse_data_object["UserID"] = user_id
-            cdse_data_object[
-                "RegistrationDateTime"
-            ] = datetime.utcnow().isoformat()
+            cdse_data_object["RegistrationDateTime"] = datetime.now(
+                timezone.utc).isoformat()
 
             # generate unique geopackage file name
             unique_geopackage_id = str(uuid.uuid4())
@@ -760,20 +579,14 @@ class DataRequestPost(Service):
                     cdse_dataset["TemporalFilter"]["EndDate"])
             except Exception:
                 pass
-            # create_batch("test_file.gpkg", cdse_dataset)
             cdse_batch_id_response = create_batch(
                 unique_geopackage_name, cdse_dataset)
             cdse_batch_id = cdse_batch_id_response.get('batch_id')
             if cdse_batch_id is None:
                 error = cdse_batch_id_response.get('error', '')
 
-                self.request.response.setStatus(400)
-                return {
-                    "status": "error",
-                    "msg": (
-                        f"Error creating CDSE batch: {error}"
-                    ),
-                }
+                return self.rsp(f"Error creating CDSE batch: {error}")
+
             cdse_batch_ids.append(cdse_batch_id)
             cdse_data_object["CDSEBatchID"] = cdse_batch_id
             cdse_data_object["Status"] = "QUEUED"
@@ -783,9 +596,9 @@ class DataRequestPost(Service):
             cdse_data_object['Datasets'] = cdse_dataset
             cdse_data_object['cdse_task_role'] = "child"
             cdse_data_object['cdse_task_group_id'] = cdse_task_group_id
-            # pylint: disable=line-too-long
-            utility_response_json = utility.datarequest_post(cdse_data_object)  # noqa: E501
+            utility_response_json = utility.datarequest_post(cdse_data_object)
             utility_task_id = get_task_id(utility_response_json)
+            log.info("utility_task_id: %s", utility_task_id)
 
             # make sure parent task is independent of the child
             cdse_parent_task = copy.deepcopy(cdse_data_object)  # placeholder
@@ -795,25 +608,6 @@ class DataRequestPost(Service):
             # start batch
             start_batch(cdse_batch_id)
 
-            # Save task in statstool - probably only after finished in FME?
-            # # build the stat params and save them
-            # stats_params = {
-            #         "Start": datetime.utcnow().isoformat(),
-            #         "User": str(user_id),
-            #         # pylint: disable=line-too-long
-            #         "Dataset": [item["DatasetID"] for item in cdse_dataset.get("Datasets", [])],  # noqa: E501
-            #         "TransformationData": new_datasets,
-            #         "TaskID": utility_task_id,
-            #         "CDSEBatchID": cdse_batch_id,
-            #         "GpkgFileName": unique_geopackage_name,
-            #         "End": "",
-            #         "TransformationDuration": "",
-            #         "TransformationSize": "",
-            #         "TransformationResultData": "",
-            #         "Status": "Queued",
-            #     }
-            # save_stats(stats_params)
-
         if len(cdse_datasets["Datasets"]) > 0:
             # Save parent task in downloadtool, containing all CDSE datasets
             cdse_parent_task["cdse_task_role"] = "parent"
@@ -821,310 +615,25 @@ class DataRequestPost(Service):
             cdse_parent_task["Datasets"] = cdse_datasets["Datasets"]
             cdse_parent_task["CDSEBatchIDs"] = cdse_batch_ids
             cdse_parent_task["GpkgFileNames"] = gpkg_filenames
-            # pylint: disable=line-too-long
-            utility_response_json = utility.datarequest_post(cdse_parent_task)  # noqa: E501
+            utility_response_json = utility.datarequest_post(cdse_parent_task)
             utility_task_id = get_task_id(utility_response_json)
+            log.info("utility_task_id: %s", utility_task_id)
 
         for data_object, is_prepackaged in [
             (prepacked_download_data_object, True),
             (general_download_data_object, False),
         ]:
             if data_object["Datasets"]:
-                data_object["Status"] = "Queued"
-                data_object["UserID"] = user_id
-                data_object[
-                    "RegistrationDateTime"
-                ] = datetime.utcnow().isoformat()
-                utility_response_json = utility.datarequest_post(data_object)
-                utility_task_id = get_task_id(utility_response_json)
-                new_datasets = {"Datasets": data_object["Datasets"]}
-
-                params = {
-                    "publishedParameters": [
-                        {
-                            "name": "UserID",
-                            "value": str(user_id),
-                        },
-                        {
-                            "name": "TaskID",
-                            "value": utility_task_id,
-                        },
-                        {
-                            "name": "UserMail",
-                            "value": mail,
-                        },
-                        {
-                            "name": "CallbackUrl",
-                            "value": self.get_callback_url(),
-                        },
-                        # dump the json into a string for FME
-                        {"name": "json", "value": json.dumps(new_datasets)},
-                    ]
-                }
-
-                # build the stat params and save them
-                stats_params = {
-                    "Start": datetime.utcnow().isoformat(),
-                    "User": str(user_id),
-                    # pylint: disable=line-too-long
-                    "Dataset": [item["DatasetID"] for item in data_object.get("Datasets", [])],  # noqa: E501
-                    "TransformationData": new_datasets,
-                    "TaskID": utility_task_id,
-                    "End": "",
-                    "TransformationDuration": "",
-                    "TransformationSize": "",
-                    "TransformationResultData": "",
-                    "Status": "Queued",
-                }
-                save_stats(stats_params)
-                fme_result = self.post_request_to_fme(params, is_prepackaged)
-                if fme_result:
-                    data_object["FMETaskId"] = fme_result
-                    utility.datarequest_status_patch(
-                        data_object, utility_task_id
-                    )
-                    self.request.response.setStatus(201)
-                    fme_results["ok"].append({"TaskID": utility_task_id})
-                else:
-                    fme_results["error"].append({"TaskID": utility_task_id})
+                self.process_download_request(
+                    data_object, is_prepackaged, user_id, mail, utility,
+                    fme_results
+                )
 
         if fme_results["error"] and not fme_results["ok"]:
-            # All requests failed
-            self.request.response.setStatus(500)
-            return {
-                "status": "error",
-                "msg": "Error, all requests failed",
-            }
+            return self.rsp("ALL_FAILED", code=500)
 
         self.request.response.setStatus(201)
         return {
             "TaskIds": fme_results["ok"],
             "ErrorTaskIds": fme_results["error"],
         }
-
-    def post_request_to_fme(self, params, is_prepackaged=False):
-        """send the request to FME and let it process it"""
-        if is_prepackaged:
-            fme_url = api.portal.get_registry_record(
-                "clms.downloadtool.fme_config_controlpanel.url_prepackaged"
-            )
-        else:
-            fme_url = api.portal.get_registry_record(
-                "clms.downloadtool.fme_config_controlpanel.url"
-            )
-        fme_token = api.portal.get_registry_record(
-            "clms.downloadtool.fme_config_controlpanel.fme_token"
-        )
-        headers = {
-            "Content-Type": "application/json; charset=utf-8",
-            "Accept": "application/json",
-            "Authorization": "fmetoken token={0}".format(fme_token),
-        }
-        try:
-            resp = requests.post(
-                fme_url, json=params, headers=headers, timeout=10
-            )
-            if resp.ok:
-                fme_task_id = resp.json().get("id", None)
-                return fme_task_id
-        except requests.exceptions.Timeout:
-            log.info("FME request timed out")
-        body = json.dumps(params)
-        log.info(
-            "There was an error registering the download request in FME: %s",
-            body,
-        )
-
-        return {}
-
-    @cache(_cache_key)
-    def get_nuts_name(self, nutsid):
-        """Based on the NUTS ID, return the name of
-        the NUTS region.
-        """
-        url = api.portal.get_registry_record(
-            "clms.downloadtool.fme_config_controlpanel.nuts_service"
-        )
-        if url:
-            url += "where=NUTS_ID='{}'".format(nutsid)
-            resp = requests.get(url)
-            if resp.ok:
-                resp_json = resp.json()
-                features = resp_json.get("features", [])
-                for feature in features:
-                    attributes = feature.get("attributes", {})
-                    nuts_name = attributes.get("NAME_LATN", "")
-                    if nuts_name:
-                        return nuts_name
-
-        return nutsid
-
-
-def extract_dates_from_temporal_filter(temporal_filter):
-    """StartDate and EndDate are mandatory and come in miliseconds since
-    epoch, so we need to convert them to datetime objects first and to
-    ISO8601-like format then.
-    """
-    try:
-        start_date = temporal_filter.get("StartDate")
-        end_date = temporal_filter.get("EndDate")
-
-        start_date_obj = datetime.fromtimestamp(start_date / 1000)
-        end_date_obj = datetime.fromtimestamp(end_date / 1000)
-
-        return (
-            start_date_obj.strftime(ISO8601_DATETIME_FORMAT),
-            end_date_obj.strftime(ISO8601_DATETIME_FORMAT),
-        )
-    except (TypeError, ValueError):
-        return None, None
-
-
-def validate_spatial_extent(bounding_box):
-    """validate Bounding Box"""
-    if not len(bounding_box) == 4:
-        return False
-
-    for x in bounding_box:
-        if not isinstance(x, int) and not isinstance(x, float):
-            return False
-
-    return True
-
-
-def validate_nuts(nuts_id):
-    """validate nuts"""
-    if not nuts_id.isalnum():
-        return False
-
-    match = re.match(r"([A-Z]+)([0-9]*)", nuts_id, re.I)
-    if match:
-        items = match.groups()
-        # Only the first 2 chars represent the country
-        # french NUTS codes have 3 alphanumeric chars and then numbers
-        valid_nuts = items[0][:2] in COUNTRIES.keys()
-        return valid_nuts
-    return None
-
-
-def get_task_id(params):
-    """GetTaskID Method"""
-    for item in params:
-        return item
-
-
-def save_stats(stats_json):
-    """save the stats in the download stats utility"""
-    try:
-        utility = getUtility(IDownloadStatsUtility)
-        stats_json.update(get_extra_data(stats_json))
-        utility.register_item(stats_json)
-    except Exception as e:
-        log.exception(e)
-        log.info(
-            "There was an error saving the stats: %s", json.dumps(stats_json)
-        )  # noqa
-
-
-def get_dataset_file_path_from_file_id(dataset_object, file_id):
-    """get the dataset file path from the file id"""
-    downloadable_files_json = dataset_object.downloadable_files
-    for file_object in downloadable_files_json.get("items", []):
-        if file_object.get("@id") == file_id:
-            return file_object.get("path", "")
-
-    return None
-
-
-def get_dataset_file_source_from_file_id(dataset_object, file_id):
-    """get the dataset file format from the file id"""
-    downloadable_files_json = dataset_object.downloadable_files
-    for file_object in downloadable_files_json.get("items", []):
-        if file_object.get("@id") == file_id:
-            return file_object.get("source", "")
-
-    return None
-
-
-def get_full_dataset_format(dataset_object, download_information_id):
-    """get the dataset full format based on the requested
-    download_information_id"""
-    dataset_download_information_json = (
-        dataset_object.dataset_download_information
-    )
-    for download_information in dataset_download_information_json.get(
-        "items", []
-    ):
-        if download_information.get("@id") == download_information_id:
-            value = download_information.get("full_format", "")
-            if isinstance(value, dict):
-                return value.get("token", "")
-
-            return value
-
-    return None
-
-
-def get_full_dataset_source(dataset_object, download_information_id):
-    """get the dataset full source based on the requested
-    download_information_id"""
-    dataset_download_information_json = (
-        dataset_object.dataset_download_information
-    )
-    for download_information in dataset_download_information_json.get(
-        "items", []
-    ):
-        if download_information.get("@id") == download_information_id:
-            value = download_information.get("full_source", "")
-            if isinstance(value, dict):
-                return value.get("token", "")
-
-            return value
-
-    return None
-
-
-def get_full_dataset_path(dataset_object, download_information_id):
-    """get the dataset full path based on the requested
-    download_information_id"""
-    dataset_download_information_json = (
-        dataset_object.dataset_download_information
-    )
-    for download_information in dataset_download_information_json.get(
-        "items", []
-    ):
-        if download_information.get("@id") == download_information_id:
-            return download_information.get("full_path", "")
-
-    return None
-
-
-def get_full_dataset_wekeo_choices(dataset_object, download_information_id):
-    """get the dataset wekeo_choices based on the requested
-    download_information_id"""
-    dataset_download_information_json = (
-        dataset_object.dataset_download_information
-    )
-    for download_information in dataset_download_information_json.get(
-        "items", []
-    ):
-        if download_information.get("@id") == download_information_id:
-            return download_information.get("wekeo_choices", "")
-
-    return None
-
-
-def get_full_dataset_layers(dataset_object, download_information_id):
-    """get the available layers/bands based on the requested
-    download_information_id
-    """
-    dataset_download_information_json = (
-        dataset_object.dataset_download_information
-    )
-    for download_information in dataset_download_information_json.get(
-        "items", []
-    ):
-        if download_information.get("@id") == download_information_id:
-            return download_information.get("layers", [])
-
-    return []

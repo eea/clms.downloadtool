@@ -1,0 +1,163 @@
+"""Validation"""
+
+import re
+
+from clms.downloadtool.utils import COUNTRIES
+from clms.downloadtool.utils import FORMAT_CONVERSION_TABLE
+from clms.downloadtool.api.services.datarequest_post.utils import (
+    get_full_dataset_format)
+
+MESSAGES = {
+    "NOT_LOGGED_IN": "You need to be logged in to use this service",
+    "UNDEFINED_DATASET_ID": "Error, DatasetID is not defined",
+    "INVALID_DATASET_ID": "Error, the DatasetID is not valid",
+    "INVALID_FILE_ID": "Error, the FileID is not valid",
+    "NUTS_COUNTRY_ERROR": "NUTS country error",
+    "NUTS_ALSO_DEFINED": "Error, NUTS is also defined",
+    "INVALID_BOUNDINGBOX": "Error, BoundingBox is not valid",
+    "TEMP_REST_NOT_ALLOWED": (
+        "Error, temporal restriction is not allowed in not time-series "
+        "enabled datasets"
+    ),
+    "TEMP_TOO_MANY": "Error, TemporalFilter has too many fields",
+    "TEMP_MISSING_RANGE": (
+        "Error, TemporalFilter does not have StartDate or EndDate"
+    ),
+    "INCORRECT_DATE": "Error, date format is not correct",
+    "INCORRECT_DATE_RANGE":
+    (
+        "Error, difference between StartDate and EndDate is not coherent"
+    ),
+    "UNDEFINED_GCS": "Error, defined GCS not in the list",
+    "MISSING_GCS": "The OutputGCS parameter is mandatory.",
+    "UNDEFINED_INFO_ID": "Error, DatasetDownloadInformationID is not defined.",
+    "NOT_DOWNLOADABLE": "Error, this dataset is not downloadable",
+    "INVALID_OUTPUT": "Error, the specified output format is not valid",
+    "NOT_COMPATIBLE": "Error, specified formats are not compatible",
+    "INVALID_SOURCE": "Error, the dataset source is not valid",
+    "INVALID_LAYER": "Error, the requested band/layer is not valid",
+    "MISSING_TEMPORAL": (
+        "You are requesting to download a time series enabled dataset and you "
+        "are required to request the download of an specific date range. "
+        "Please check the download documentation to get more information"
+    ),
+    "FULL_NOT_EEA": (
+        "You are requesting to download the full dataset but this dataset is "
+        "not an EEA dataset and thus you need to query an specific endpoint to"
+        " request its download. Please check the API documentation to get"
+        " more information about this specific endpoint."
+    ),
+    "FULL_EEA": (
+        "To download the full dataset, please download it through the "
+        "corresponding pre-packaged data collection"
+    ),
+    "MUST_HAVE_AREA": (
+        "You have to select a specific area of interest. In case you want to "
+        "download the full dataset, please use the Auxiliary API."
+    ),
+    "DOWNLOAD_LIMIT": (
+        "The download queue can only process 5 items at a time."
+        " Please try again with fewer items."
+    ),
+    "DUPLICATED": (
+        "You have requested to download the same thing at least twice. "
+        "Please check your download cart and remove any duplicates."
+    ),
+    "ALL_FAILED": "Error, all requests failed",
+}
+
+
+def validate_spatial_extent(bounding_box):
+    """validate Bounding Box"""
+    if not len(bounding_box) == 4:
+        return False
+
+    for x in bounding_box:
+        if not isinstance(x, int) and not isinstance(x, float):
+            return False
+
+    return True
+
+
+def validate_nuts(nuts_id):
+    """validate nuts"""
+    if not nuts_id.isalnum():
+        return False
+
+    match = re.match(r"([A-Z]+)([0-9]*)", nuts_id, re.I)
+    if match:
+        items = match.groups()
+        # Only the first 2 chars represent the country
+        # french NUTS codes have 3 alphanumeric chars and then numbers
+        valid_nuts = items[0][:2] in COUNTRIES.keys()
+        return valid_nuts
+    return None
+
+
+def is_special(dataset_json, dataset_object):
+    """
+        Refs #273099 - when NETCDF format (OutputFormat) if selected
+            - Water Bodies 2020-present (raster 100 m), global, monthly
+            – version 1
+            - Water Bodies 2020-present (raster 300 m), global, monthly
+            – version 2
+    """
+    # [UID1, path1, ...]
+    SPECIAL_CASES = [
+        '7df9bdf94fe94cb5919c11c9ef5cac65',
+        '/water-bodies/water-bodies-global-v1-0-100m',
+        '0517fd1b7d944d8197a2eb5c13470db8',
+        '/water-bodies/water-bodies-global-v2-0-300m'
+    ]
+    is_special_case = False
+    try:
+        dataset_id = dataset_json['DatasetID']
+        if dataset_id in SPECIAL_CASES or dataset_object.absolute_url().split(
+                '/en/products')[-1] in SPECIAL_CASES:
+            if dataset_json['OutputFormat'] == 'Netcdf':
+                is_special_case = True
+    except Exception:
+        pass
+
+    return is_special_case
+
+
+def validate_full_download_restrictions(d_json, full_dataset_source, rsp):
+    """Validate rules for full dataset download restrictions."""
+    if (
+        "NUTS" not in d_json and "BoundingBox" not in d_json and
+        "TemporalFilter" not in d_json
+    ):
+        if full_dataset_source != "EEA":
+            return rsp("FULL_NOT_EEA")
+        return rsp("FULL_EEA")
+
+    if "NUTS" not in d_json and "BoundingBox" not in d_json:
+        if full_dataset_source != "EEA":
+            return rsp("MUST_HAVE_AREA")
+
+    return None
+
+
+def validate_dataset_format_and_output(dataset_object, dataset_json,
+                                       download_information_id, rsp):
+    """
+    Validate dataset format and requested output format.
+    Returns (full_dataset_format, requested_output_format) or error response.
+    """
+    full_dataset_format = get_full_dataset_format(
+        dataset_object, download_information_id)
+    if not full_dataset_format:
+        return None, None, rsp("NOT_DOWNLOADABLE")
+
+    requested_output_format = dataset_json.get("OutputFormat")
+    if requested_output_format not in FORMAT_CONVERSION_TABLE:
+        return None, None, rsp("INVALID_OUTPUT")
+
+    available_transformations = FORMAT_CONVERSION_TABLE.get(
+        full_dataset_format)
+    if not available_transformations or not available_transformations.get(
+            requested_output_format):
+        return None, None, rsp("NOT_COMPATIBLE")
+
+    return full_dataset_format, requested_output_format, None
