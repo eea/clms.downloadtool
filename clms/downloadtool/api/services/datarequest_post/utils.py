@@ -6,11 +6,11 @@ from logging import getLogger
 from datetime import datetime
 
 import requests
-from clms.downloadtool.api.services.cdse.cdse_integration import (
-    get_portal_config)
 from plone import api
 from zope.component import getUtility
 
+from clms.downloadtool.api.services.cdse.cdse_integration import (
+    get_portal_config)
 from clms.downloadtool.api.services.utils import get_extra_data
 from clms.statstool.utility import IDownloadStatsUtility
 
