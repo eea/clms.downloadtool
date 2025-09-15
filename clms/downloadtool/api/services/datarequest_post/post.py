@@ -371,6 +371,34 @@ class DataRequestPost(Service):
         else:
             fme_results["error"].append({"TaskID": utility_task_id})
 
+    def validate_date_range(self, dataset_object, start_date, end_date):
+        """
+        Validate that the requested [start_date, end_date] interval
+        does not exceed the dataset's download_limit_temporal_extent.
+        Returns None if valid, otherwise an error response.
+        """
+        d_l_t = dataset_object.download_limit_temporal_extent
+        if d_l_t is not None and d_l_t > 0:
+            if start_date is None or end_date is None:
+                return self.rsp("TEMP_MISSING_RANGE")
+
+            end_date_datetime = datetime.strptime(
+                end_date, ISO8601_DATETIME_FORMAT
+            )
+            start_date_datetime = datetime.strptime(
+                start_date, ISO8601_DATETIME_FORMAT
+            )
+
+            if (end_date_datetime - start_date_datetime) > timedelta(
+                    days=d_l_t):
+                return self.rsp(
+                    "You are requesting to download a time series enabled "
+                    "dataset and the requested date range is bigger than the "
+                    f"allowed range of {d_l_t} days. Please check the download"
+                    " documentation to get more information"
+                )
+        return None
+
     def reply(self):  # pylint: disable=too-many-statements
         """JSON response"""
         alsoProvides(self.request, IDisableCSRFProtection)
@@ -511,38 +539,10 @@ class DataRequestPost(Service):
                 ):
                     return self.rsp("MISSING_TEMPORAL")
 
-                # validate the date range by
-                # “Maximum number of days allowed to be downloaded”
-                # (instead of "Is Time Series" setting)
-                #
-                # if  “Maximum number of days allowed to be downloaded”
-                # contains a value, we must check that the dates provided are
-                # within the range
-                # the requested range should not be bigger than
-                # the limit set in the configuration
-
-                d_l_t = dataset_object.download_limit_temporal_extent
-                if d_l_t is not None and d_l_t > 0:
-                    if start_date is None or end_date is None:
-                        return self.rsp("TEMP_MISSING_RANGE")
-                    end_date_datetime = datetime.strptime(
-                        end_date, ISO8601_DATETIME_FORMAT
-                    )
-                    start_date_datetime = datetime.strptime(
-                        start_date, ISO8601_DATETIME_FORMAT
-                    )
-
-                    if (end_date_datetime - start_date_datetime) > timedelta(
-                        days=d_l_t
-                    ):
-                        return self.rsp(
-                            "You are requesting to download a time series "
-                            "enabled dataset and the requested date range "
-                            "is bigger than the allowed range of "
-                            f"{dataset_object.download_limit_temporal_extent}"
-                            " days. Please check the download "
-                            "documentation to get more information"
-                        )
+                error = self.validate_date_range(
+                    dataset_object, start_date, end_date)
+                if error:
+                    return error
 
                 is_special_case = is_special(dataset_json, dataset_object)
                 if is_special_case:
