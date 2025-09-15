@@ -32,6 +32,7 @@ from clms.downloadtool.api.services.datarequest_post.utils import (
     get_full_dataset_source,
     get_full_dataset_wekeo_choices,
     get_nuts_by_id,
+    get_s3_paths,
     get_task_id,
     params_for_fme,
     post_request_to_fme,
@@ -206,6 +207,7 @@ class DataRequestPost(Service):
                 "Datasets": cdse_datasets["Datasets"],
                 "CDSEBatchIDs": cdse_batch_ids,
                 "GpkgFileNames": gpkg_filenames,
+                "DatasetPath": get_s3_paths(cdse_batch_ids),
             })
             utility_response_json = utility.datarequest_post(cdse_parent_task)
             utility_task_id = get_task_id(utility_response_json)

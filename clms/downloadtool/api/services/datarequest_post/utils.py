@@ -6,6 +6,8 @@ from logging import getLogger
 from datetime import datetime
 
 import requests
+from clms.downloadtool.api.services.cdse.cdse_integration import (
+    get_portal_config)
 from plone import api
 from zope.component import getUtility
 
@@ -331,3 +333,14 @@ def build_metadata_urls(dataset_object):
             url = meta.get("id")
         metadata.append(url)
     return metadata
+
+
+def get_s3_paths(batch_ids):
+    """Prepare info for DatasetPath"""
+    config = get_portal_config()
+    s3_paths = []
+    for batch_id in batch_ids:
+        s3_path = f"s3://{config['s3_bucket_name']}/{batch_id}"
+        s3_paths.append(s3_path)
+
+    return s3_paths
