@@ -2,23 +2,19 @@
 """
 For HTTP GET operations we can use standard HTTP parameter passing
 through the URL)
-
 """
 import copy
 import uuid
-from datetime import datetime, timezone
-from datetime import timedelta
+from datetime import datetime, timezone, timedelta
 from functools import reduce
 from logging import getLogger
 
 from clms.downloadtool.api.services.utils import (
     duplicated_values_exist,
-)
-from clms.downloadtool.utility import IDownloadToolUtility
-from clms.downloadtool.api.services.utils import (
     calculate_bounding_box_area,
     get_available_gcs_values,
 )
+from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.api.services.cdse.cdse_integration import (
     create_batch, start_batch)
 from clms.downloadtool.api.services.datarequest_post.utils import (
@@ -36,6 +32,7 @@ from clms.downloadtool.api.services.datarequest_post.utils import (
     get_full_dataset_source,
     get_full_dataset_wekeo_choices,
     get_nuts_by_id,
+    get_s3_paths,
     get_task_id,
     params_for_fme,
     post_request_to_fme,
@@ -152,6 +149,71 @@ class DataRequestPost(Service):
 
         log.info("is_cdse_dataset: %s", is_cdse_dataset)
         return is_cdse_dataset
+
+    def process_cdse_batches(self, cdse_datasets, user_id, utility):
+        """Handle CDSE: create child + parent tasks and start batches."""
+        cdse_parent_task = {}
+        cdse_task_group_id = generate_task_group_id()
+        cdse_batch_ids, gpkg_filenames = [], []
+
+        for cdse_dataset in cdse_datasets["Datasets"]:
+            cdse_data_object = {
+                "UserID": user_id,
+                "RegistrationDateTime": datetime.now(timezone.utc).isoformat()
+            }
+
+            unique_geopackage_id = str(uuid.uuid4())
+            unique_geopackage_name = f"{unique_geopackage_id}.gpkg"
+            log.debug("unique_geopackage_name: %s", unique_geopackage_name)
+            cdse_data_object["GpkgFileName"] = unique_geopackage_name
+            gpkg_filenames.append(unique_geopackage_name)
+
+            try:
+                cdse_dataset["TemporalFilter"]["StartDate"] = to_iso8601(
+                    cdse_dataset["TemporalFilter"]["StartDate"])
+                cdse_dataset["TemporalFilter"]["EndDate"] = to_iso8601(
+                    cdse_dataset["TemporalFilter"]["EndDate"])
+            except Exception:
+                pass
+
+            cdse_batch_id_response = create_batch(
+                unique_geopackage_name, cdse_dataset)
+            cdse_batch_id = cdse_batch_id_response.get('batch_id')
+            if cdse_batch_id is None:
+                error = cdse_batch_id_response.get('error', '')
+                return None, self.rsp(f"Error creating CDSE batch: {error}")
+
+            cdse_batch_ids.append(cdse_batch_id)
+            cdse_data_object["CDSEBatchID"] = cdse_batch_id
+            cdse_data_object["Status"] = "QUEUED"
+            cdse_data_object['Datasets'] = cdse_dataset
+            cdse_data_object['cdse_task_role'] = "child"
+            cdse_data_object['cdse_task_group_id'] = cdse_task_group_id
+
+            utility_response_json = utility.datarequest_post(cdse_data_object)
+            utility_task_id = get_task_id(utility_response_json)
+            log.info("utility_task_id: %s", utility_task_id)
+
+            cdse_parent_task = copy.deepcopy(cdse_data_object)
+            cdse_parent_task.pop('GpkgFileName', None)
+            cdse_parent_task.pop('CDSEBatchID', None)
+
+            start_batch(cdse_batch_id)
+
+        if cdse_datasets["Datasets"]:
+            cdse_parent_task.update({
+                "cdse_task_role": "parent",
+                "Status": "Queued",
+                "Datasets": cdse_datasets["Datasets"],
+                "CDSEBatchIDs": cdse_batch_ids,
+                "GpkgFileNames": gpkg_filenames,
+                "DatasetPath": get_s3_paths(cdse_batch_ids),
+            })
+            utility_response_json = utility.datarequest_post(cdse_parent_task)
+            utility_task_id = get_task_id(utility_response_json)
+            log.info("utility_task_id: %s", utility_task_id)
+
+        return cdse_parent_task, None
 
     def process_file_id(self, dataset_json, dataset_object, response_json,
                         prepacked_download_data_object):
@@ -311,6 +373,98 @@ class DataRequestPost(Service):
         else:
             fme_results["error"].append({"TaskID": utility_task_id})
 
+    def validate_date_range(self, dataset_object, start_date, end_date):
+        """
+        Validate that the requested [start_date, end_date] interval
+        does not exceed the dataset's download_limit_temporal_extent.
+        Returns None if valid, otherwise an error response.
+        """
+        d_l_t = dataset_object.download_limit_temporal_extent
+        if d_l_t is not None and d_l_t > 0:
+            if start_date is None or end_date is None:
+                return self.rsp("TEMP_MISSING_RANGE")
+
+            end_date_datetime = datetime.strptime(
+                end_date, ISO8601_DATETIME_FORMAT
+            )
+            start_date_datetime = datetime.strptime(
+                start_date, ISO8601_DATETIME_FORMAT
+            )
+
+            if (end_date_datetime - start_date_datetime) > timedelta(
+                    days=d_l_t):
+                return self.rsp(
+                    "You are requesting to download a time series enabled "
+                    "dataset and the requested date range is bigger than the "
+                    f"allowed range of {d_l_t} days. Please check the download"
+                    " documentation to get more information"
+                )
+        return None
+
+    def finalize_request(self, general_download_data_object,
+                         prepacked_download_data_object, cdse_datasets,
+                         user_id, mail, utility
+                         ):
+        """
+        Handle final validations and trigger FME/CDSE requests.
+        Returns either a response dict or an error response.
+        """
+        # Check for a maximum of 5 items
+        if len(general_download_data_object.get("Datasets", [])) > 5:
+            return self.rsp("DOWNLOAD_LIMIT")
+
+        inprogress_requests = utility.datarequest_search(
+            user_id, "In_progress"
+        ).values()
+        queued_requests = utility.datarequest_search(
+            user_id, "Queued"
+        ).values()
+
+        inprogress_datasets = reduce(
+            lambda x, y: x + y,
+            [item.get("Datasets", []) for item in inprogress_requests],
+            [],
+        )
+        queued_datasets = reduce(
+            lambda x, y: x + y,
+            [item.get("Datasets", []) for item in queued_requests],
+            [],
+        )
+
+        if duplicated_values_exist(
+            general_download_data_object.get(
+                "Datasets", []) + inprogress_datasets + queued_datasets
+        ):
+            return self.rsp("DUPLICATED")
+
+        fme_results = {"ok": [], "error": []}
+
+        cdse_parent_task, error = self.process_cdse_batches(
+            cdse_datasets, user_id, utility
+        )
+        if error:
+            return error
+        log.info("CDSE parent task: %s", cdse_parent_task)
+
+        for data_object, is_prepackaged in [
+            (prepacked_download_data_object, True),
+            (general_download_data_object, False),
+        ]:
+            if data_object["Datasets"]:
+                self.process_download_request(
+                    data_object, is_prepackaged, user_id, mail,
+                    utility, fme_results
+                )
+
+        if fme_results["error"] and not fme_results["ok"]:
+            return self.rsp("ALL_FAILED", code=500)
+
+        self.request.response.setStatus(201)
+        return {
+            "TaskIds": fme_results["ok"],
+            "ErrorTaskIds": fme_results["error"],
+        }
+
     def reply(self):  # pylint: disable=too-many-statements
         """JSON response"""
         alsoProvides(self.request, IDisableCSRFProtection)
@@ -332,6 +486,8 @@ class DataRequestPost(Service):
         # Iterate through requested datasets
         for dataset_index, dataset_json in enumerate(datasets_json):
             response_json = {}
+            # Pre-init temporal bounds to avoid UnboundLocalError
+            start_date = end_date = None
 
             # Validate dataset
             error = self.validate_dataset_id(dataset_json)
@@ -449,41 +605,10 @@ class DataRequestPost(Service):
                 ):
                     return self.rsp("MISSING_TEMPORAL")
 
-                # validate the date range by
-                # “Maximum number of days allowed to be downloaded”
-                # (instead of "Is Time Series" setting)
-                #
-                # if  “Maximum number of days allowed to be downloaded”
-                # contains a value, we must check that the dates provided are
-                # within the range
-                # the requested range should not be bigger than
-                # the limit set in the configuration
-
-                d_l_t = dataset_object.download_limit_temporal_extent
-                if d_l_t is not None and d_l_t > 0:
-                    try:
-                        assert start_date is not None
-                        assert end_date is not None
-                        end_date_datetime = datetime.strptime(
-                            end_date, ISO8601_DATETIME_FORMAT
-                        )
-                        start_date_datetime = datetime.strptime(
-                            start_date, ISO8601_DATETIME_FORMAT
-                        )
-                    except UnboundLocalError:
-                        return self.rsp("TEMP_MISSING_RANGE")
-
-                    if (end_date_datetime - start_date_datetime) > timedelta(
-                        days=dataset_object.download_limit_temporal_extent
-                    ):
-                        return self.rsp(
-                            "You are requesting to download a time series "
-                            "enabled dataset and the requested date range "
-                            "is bigger than the allowed range of "
-                            f"{dataset_object.download_limit_temporal_extent}"
-                            " days. Please check the download "
-                            "documentation to get more information"
-                        )
+                error = self.validate_date_range(
+                    dataset_object, start_date, end_date)
+                if error:
+                    return error
 
                 is_special_case = is_special(dataset_json, dataset_object)
                 if is_special_case:
@@ -522,118 +647,11 @@ class DataRequestPost(Service):
                     general_download_data_object["Datasets"].append(
                         response_json)
 
-        # Check for a maximum of 5 items general download items
-        if len(general_download_data_object.get("Datasets", [])) > 5:
-            return self.rsp("DOWNLOAD_LIMIT")
-
-        inprogress_requests = utility.datarequest_search(
-            user_id, "In_progress"
-        ).values()
-
-        queued_requests = utility.datarequest_search(
-            user_id, "Queued"
-        ).values()
-
-        inprogress_datasets = reduce(
-            lambda x, y: x + y,
-            [item.get("Datasets", []) for item in inprogress_requests],
-            [],
+        return self.finalize_request(
+            general_download_data_object,
+            prepacked_download_data_object,
+            cdse_datasets,
+            user_id,
+            mail,
+            utility
         )
-        queued_datasets = reduce(
-            lambda x, y: x + y,
-            [item.get("Datasets", []) for item in queued_requests],
-            [],
-        )
-
-        # Check that the request has no duplicates
-        if duplicated_values_exist(
-            general_download_data_object.get(
-                "Datasets", []) + inprogress_datasets + queued_datasets
-        ):
-            return self.rsp("DUPLICATED")
-
-        fme_results = {"ok": [], "error": []}
-
-        cdse_parent_task = {}  # future FME task with requested CDSE datasets
-        cdse_task_group_id = generate_task_group_id()
-        cdse_batch_ids, gpkg_filenames = [], []
-
-        for cdse_dataset in cdse_datasets["Datasets"]:
-            cdse_data_object = {}
-            cdse_data_object["UserID"] = user_id
-            cdse_data_object["RegistrationDateTime"] = datetime.now(
-                timezone.utc).isoformat()
-
-            # generate unique geopackage file name
-            unique_geopackage_id = str(uuid.uuid4())
-            unique_geopackage_name = f"{unique_geopackage_id}.gpkg"
-            print("unique_geopackage_name, ", unique_geopackage_name)
-            cdse_data_object["GpkgFileName"] = unique_geopackage_name
-            gpkg_filenames.append(unique_geopackage_name)
-
-            # get batch_id
-            try:
-                cdse_dataset["TemporalFilter"]["StartDate"] = to_iso8601(
-                    cdse_dataset["TemporalFilter"]["StartDate"])
-                cdse_dataset["TemporalFilter"]["EndDate"] = to_iso8601(
-                    cdse_dataset["TemporalFilter"]["EndDate"])
-            except Exception:
-                pass
-            cdse_batch_id_response = create_batch(
-                unique_geopackage_name, cdse_dataset)
-            cdse_batch_id = cdse_batch_id_response.get('batch_id')
-            if cdse_batch_id is None:
-                error = cdse_batch_id_response.get('error', '')
-
-                return self.rsp(f"Error creating CDSE batch: {error}")
-
-            cdse_batch_ids.append(cdse_batch_id)
-            cdse_data_object["CDSEBatchID"] = cdse_batch_id
-            cdse_data_object["Status"] = "QUEUED"
-
-            # Save child task in downloadtool
-            # CDSE tasks are split in child tasks, one for each dataset
-            cdse_data_object['Datasets'] = cdse_dataset
-            cdse_data_object['cdse_task_role'] = "child"
-            cdse_data_object['cdse_task_group_id'] = cdse_task_group_id
-            utility_response_json = utility.datarequest_post(cdse_data_object)
-            utility_task_id = get_task_id(utility_response_json)
-            log.info("utility_task_id: %s", utility_task_id)
-
-            # make sure parent task is independent of the child
-            cdse_parent_task = copy.deepcopy(cdse_data_object)  # placeholder
-            cdse_parent_task.pop('GpkgFileName', None)
-            cdse_parent_task.pop('CDSEBatchID', None)
-
-            # start batch
-            start_batch(cdse_batch_id)
-
-        if len(cdse_datasets["Datasets"]) > 0:
-            # Save parent task in downloadtool, containing all CDSE datasets
-            cdse_parent_task["cdse_task_role"] = "parent"
-            cdse_parent_task["Status"] = "Queued"
-            cdse_parent_task["Datasets"] = cdse_datasets["Datasets"]
-            cdse_parent_task["CDSEBatchIDs"] = cdse_batch_ids
-            cdse_parent_task["GpkgFileNames"] = gpkg_filenames
-            utility_response_json = utility.datarequest_post(cdse_parent_task)
-            utility_task_id = get_task_id(utility_response_json)
-            log.info("utility_task_id: %s", utility_task_id)
-
-        for data_object, is_prepackaged in [
-            (prepacked_download_data_object, True),
-            (general_download_data_object, False),
-        ]:
-            if data_object["Datasets"]:
-                self.process_download_request(
-                    data_object, is_prepackaged, user_id, mail, utility,
-                    fme_results
-                )
-
-        if fme_results["error"] and not fme_results["ok"]:
-            return self.rsp("ALL_FAILED", code=500)
-
-        self.request.response.setStatus(201)
-        return {
-            "TaskIds": fme_results["ok"],
-            "ErrorTaskIds": fme_results["error"],
-        }
