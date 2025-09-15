@@ -399,6 +399,71 @@ class DataRequestPost(Service):
                 )
         return None
 
+    def finalize_request(self, general_download_data_object,
+                         prepacked_download_data_object, cdse_datasets,
+                         user_id, mail, utility
+                         ):
+        """
+        Handle final validations and trigger FME/CDSE requests.
+        Returns either a response dict or an error response.
+        """
+        # Check for a maximum of 5 items
+        if len(general_download_data_object.get("Datasets", [])) > 5:
+            return self.rsp("DOWNLOAD_LIMIT")
+
+        inprogress_requests = utility.datarequest_search(
+            user_id, "In_progress"
+        ).values()
+        queued_requests = utility.datarequest_search(
+            user_id, "Queued"
+        ).values()
+
+        inprogress_datasets = reduce(
+            lambda x, y: x + y,
+            [item.get("Datasets", []) for item in inprogress_requests],
+            [],
+        )
+        queued_datasets = reduce(
+            lambda x, y: x + y,
+            [item.get("Datasets", []) for item in queued_requests],
+            [],
+        )
+
+        if duplicated_values_exist(
+            general_download_data_object.get("Datasets", [])
+            + inprogress_datasets
+            + queued_datasets
+        ):
+            return self.rsp("DUPLICATED")
+
+        fme_results = {"ok": [], "error": []}
+
+        cdse_parent_task, error = self.process_cdse_batches(
+            cdse_datasets, user_id, utility
+        )
+        if error:
+            return error
+        log.info("CDSE parent task: %s", cdse_parent_task)
+
+        for data_object, is_prepackaged in [
+            (prepacked_download_data_object, True),
+            (general_download_data_object, False),
+        ]:
+            if data_object["Datasets"]:
+                self.process_download_request(
+                    data_object, is_prepackaged, user_id, mail,
+                    utility, fme_results
+                )
+
+        if fme_results["error"] and not fme_results["ok"]:
+            return self.rsp("ALL_FAILED", code=500)
+
+        self.request.response.setStatus(201)
+        return {
+            "TaskIds": fme_results["ok"],
+            "ErrorTaskIds": fme_results["error"],
+        }
+
     def reply(self):  # pylint: disable=too-many-statements
         """JSON response"""
         alsoProvides(self.request, IDisableCSRFProtection)
@@ -581,59 +646,11 @@ class DataRequestPost(Service):
                     general_download_data_object["Datasets"].append(
                         response_json)
 
-        # Check for a maximum of 5 items general download items
-        if len(general_download_data_object.get("Datasets", [])) > 5:
-            return self.rsp("DOWNLOAD_LIMIT")
-
-        inprogress_requests = utility.datarequest_search(
-            user_id, "In_progress"
-        ).values()
-
-        queued_requests = utility.datarequest_search(
-            user_id, "Queued"
-        ).values()
-
-        inprogress_datasets = reduce(
-            lambda x, y: x + y,
-            [item.get("Datasets", []) for item in inprogress_requests],
-            [],
+        return self.finalize_request(
+            general_download_data_object,
+            prepacked_download_data_object,
+            cdse_datasets,
+            user_id,
+            mail,
+            utility
         )
-        queued_datasets = reduce(
-            lambda x, y: x + y,
-            [item.get("Datasets", []) for item in queued_requests],
-            [],
-        )
-
-        # Check that the request has no duplicates
-        if duplicated_values_exist(
-            general_download_data_object.get(
-                "Datasets", []) + inprogress_datasets + queued_datasets
-        ):
-            return self.rsp("DUPLICATED")
-
-        fme_results = {"ok": [], "error": []}
-
-        cdse_parent_task, error = self.process_cdse_batches(
-            cdse_datasets, user_id, utility)
-        if error:
-            return error
-        log.info("CDSE parent task: %s", cdse_parent_task)
-
-        for data_object, is_prepackaged in [
-            (prepacked_download_data_object, True),
-            (general_download_data_object, False),
-        ]:
-            if data_object["Datasets"]:
-                self.process_download_request(
-                    data_object, is_prepackaged, user_id, mail, utility,
-                    fme_results
-                )
-
-        if fme_results["error"] and not fme_results["ok"]:
-            return self.rsp("ALL_FAILED", code=500)
-
-        self.request.response.setStatus(201)
-        return {
-            "TaskIds": fme_results["ok"],
-            "ErrorTaskIds": fme_results["error"],
-        }
