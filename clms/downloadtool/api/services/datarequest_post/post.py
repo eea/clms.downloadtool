@@ -201,13 +201,16 @@ class DataRequestPost(Service):
             start_batch(cdse_batch_id)
 
         if cdse_datasets["Datasets"]:
+            temp_datasets = cdse_datasets["Datasets"]
+            paths = get_s3_paths(cdse_batch_ids)
+            for index, dataset in enumerate(temp_datasets):
+                dataset["DatasetPath"] = paths[index]
             cdse_parent_task.update({
                 "cdse_task_role": "parent",
                 "Status": "Queued",
-                "Datasets": cdse_datasets["Datasets"],
+                "Datasets": temp_datasets,
                 "CDSEBatchIDs": cdse_batch_ids,
                 "GpkgFileNames": gpkg_filenames,
-                "DatasetPath": get_s3_paths(cdse_batch_ids),
             })
             utility_response_json = utility.datarequest_post(cdse_parent_task)
             utility_task_id = get_task_id(utility_response_json)
