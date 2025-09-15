@@ -149,6 +149,70 @@ class DataRequestPost(Service):
         log.info("is_cdse_dataset: %s", is_cdse_dataset)
         return is_cdse_dataset
 
+    def process_cdse_batches(self, cdse_datasets, user_id, utility):
+        """Handle CDSE: create child + parent tasks and start batches."""
+        cdse_parent_task = {}
+        cdse_task_group_id = generate_task_group_id()
+        cdse_batch_ids, gpkg_filenames = [], []
+
+        for cdse_dataset in cdse_datasets["Datasets"]:
+            cdse_data_object = {
+                "UserID": user_id,
+                "RegistrationDateTime": datetime.now(timezone.utc).isoformat()
+            }
+
+            unique_geopackage_id = str(uuid.uuid4())
+            unique_geopackage_name = f"{unique_geopackage_id}.gpkg"
+            log.debug("unique_geopackage_name: %s", unique_geopackage_name)
+            cdse_data_object["GpkgFileName"] = unique_geopackage_name
+            gpkg_filenames.append(unique_geopackage_name)
+
+            try:
+                cdse_dataset["TemporalFilter"]["StartDate"] = to_iso8601(
+                    cdse_dataset["TemporalFilter"]["StartDate"])
+                cdse_dataset["TemporalFilter"]["EndDate"] = to_iso8601(
+                    cdse_dataset["TemporalFilter"]["EndDate"])
+            except Exception:
+                pass
+
+            cdse_batch_id_response = create_batch(
+                unique_geopackage_name, cdse_dataset)
+            cdse_batch_id = cdse_batch_id_response.get('batch_id')
+            if cdse_batch_id is None:
+                error = cdse_batch_id_response.get('error', '')
+                return None, self.rsp(f"Error creating CDSE batch: {error}")
+
+            cdse_batch_ids.append(cdse_batch_id)
+            cdse_data_object["CDSEBatchID"] = cdse_batch_id
+            cdse_data_object["Status"] = "QUEUED"
+            cdse_data_object['Datasets'] = cdse_dataset
+            cdse_data_object['cdse_task_role'] = "child"
+            cdse_data_object['cdse_task_group_id'] = cdse_task_group_id
+
+            utility_response_json = utility.datarequest_post(cdse_data_object)
+            utility_task_id = get_task_id(utility_response_json)
+            log.info("utility_task_id: %s", utility_task_id)
+
+            cdse_parent_task = copy.deepcopy(cdse_data_object)
+            cdse_parent_task.pop('GpkgFileName', None)
+            cdse_parent_task.pop('CDSEBatchID', None)
+
+            start_batch(cdse_batch_id)
+
+        if cdse_datasets["Datasets"]:
+            cdse_parent_task.update({
+                "cdse_task_role": "parent",
+                "Status": "Queued",
+                "Datasets": cdse_datasets["Datasets"],
+                "CDSEBatchIDs": cdse_batch_ids,
+                "GpkgFileNames": gpkg_filenames,
+            })
+            utility_response_json = utility.datarequest_post(cdse_parent_task)
+            utility_task_id = get_task_id(utility_response_json)
+            log.info("utility_task_id: %s", utility_task_id)
+
+        return cdse_parent_task, None
+
     def process_file_id(self, dataset_json, dataset_object, response_json,
                         prepacked_download_data_object):
         """
@@ -549,70 +613,11 @@ class DataRequestPost(Service):
 
         fme_results = {"ok": [], "error": []}
 
-        cdse_parent_task = {}  # future FME task with requested CDSE datasets
-        cdse_task_group_id = generate_task_group_id()
-        cdse_batch_ids, gpkg_filenames = [], []
-
-        for cdse_dataset in cdse_datasets["Datasets"]:
-            cdse_data_object = {}
-            cdse_data_object["UserID"] = user_id
-            cdse_data_object["RegistrationDateTime"] = datetime.now(
-                timezone.utc).isoformat()
-
-            # generate unique geopackage file name
-            unique_geopackage_id = str(uuid.uuid4())
-            unique_geopackage_name = f"{unique_geopackage_id}.gpkg"
-            log.debug("unique_geopackage_name: %s", unique_geopackage_name)
-            cdse_data_object["GpkgFileName"] = unique_geopackage_name
-            gpkg_filenames.append(unique_geopackage_name)
-
-            # get batch_id
-            try:
-                cdse_dataset["TemporalFilter"]["StartDate"] = to_iso8601(
-                    cdse_dataset["TemporalFilter"]["StartDate"])
-                cdse_dataset["TemporalFilter"]["EndDate"] = to_iso8601(
-                    cdse_dataset["TemporalFilter"]["EndDate"])
-            except Exception:
-                pass
-            cdse_batch_id_response = create_batch(
-                unique_geopackage_name, cdse_dataset)
-            cdse_batch_id = cdse_batch_id_response.get('batch_id')
-            if cdse_batch_id is None:
-                error = cdse_batch_id_response.get('error', '')
-
-                return self.rsp(f"Error creating CDSE batch: {error}")
-
-            cdse_batch_ids.append(cdse_batch_id)
-            cdse_data_object["CDSEBatchID"] = cdse_batch_id
-            cdse_data_object["Status"] = "QUEUED"
-
-            # Save child task in downloadtool
-            # CDSE tasks are split in child tasks, one for each dataset
-            cdse_data_object['Datasets'] = cdse_dataset
-            cdse_data_object['cdse_task_role'] = "child"
-            cdse_data_object['cdse_task_group_id'] = cdse_task_group_id
-            utility_response_json = utility.datarequest_post(cdse_data_object)
-            utility_task_id = get_task_id(utility_response_json)
-            log.info("utility_task_id: %s", utility_task_id)
-
-            # make sure parent task is independent of the child
-            cdse_parent_task = copy.deepcopy(cdse_data_object)  # placeholder
-            cdse_parent_task.pop('GpkgFileName', None)
-            cdse_parent_task.pop('CDSEBatchID', None)
-
-            # start batch
-            start_batch(cdse_batch_id)
-
-        if len(cdse_datasets["Datasets"]) > 0:
-            # Save parent task in downloadtool, containing all CDSE datasets
-            cdse_parent_task["cdse_task_role"] = "parent"
-            cdse_parent_task["Status"] = "Queued"
-            cdse_parent_task["Datasets"] = cdse_datasets["Datasets"]
-            cdse_parent_task["CDSEBatchIDs"] = cdse_batch_ids
-            cdse_parent_task["GpkgFileNames"] = gpkg_filenames
-            utility_response_json = utility.datarequest_post(cdse_parent_task)
-            utility_task_id = get_task_id(utility_response_json)
-            log.info("utility_task_id: %s", utility_task_id)
+        cdse_parent_task, error = self.process_cdse_batches(
+            cdse_datasets, user_id, utility)
+        if error:
+            return error
+        log.info("CDSE parent task: %s", cdse_parent_task)
 
         for data_object, is_prepackaged in [
             (prepacked_download_data_object, True),
