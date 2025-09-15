@@ -2,23 +2,19 @@
 """
 For HTTP GET operations we can use standard HTTP parameter passing
 through the URL)
-
 """
 import copy
 import uuid
-from datetime import datetime, timezone
-from datetime import timedelta
+from datetime import datetime, timezone, timedelta
 from functools import reduce
 from logging import getLogger
 
 from clms.downloadtool.api.services.utils import (
     duplicated_values_exist,
-)
-from clms.downloadtool.utility import IDownloadToolUtility
-from clms.downloadtool.api.services.utils import (
     calculate_bounding_box_area,
     get_available_gcs_values,
 )
+from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.api.services.cdse.cdse_integration import (
     create_batch, start_batch)
 from clms.downloadtool.api.services.datarequest_post.utils import (
@@ -332,6 +328,8 @@ class DataRequestPost(Service):
         # Iterate through requested datasets
         for dataset_index, dataset_json in enumerate(datasets_json):
             response_json = {}
+            # Pre-init temporal bounds to avoid UnboundLocalError
+            start_date = end_date = None
 
             # Validate dataset
             error = self.validate_dataset_id(dataset_json)
@@ -461,20 +459,17 @@ class DataRequestPost(Service):
 
                 d_l_t = dataset_object.download_limit_temporal_extent
                 if d_l_t is not None and d_l_t > 0:
-                    try:
-                        assert start_date is not None
-                        assert end_date is not None
-                        end_date_datetime = datetime.strptime(
-                            end_date, ISO8601_DATETIME_FORMAT
-                        )
-                        start_date_datetime = datetime.strptime(
-                            start_date, ISO8601_DATETIME_FORMAT
-                        )
-                    except UnboundLocalError:
+                    if start_date is None or end_date is None:
                         return self.rsp("TEMP_MISSING_RANGE")
+                    end_date_datetime = datetime.strptime(
+                        end_date, ISO8601_DATETIME_FORMAT
+                    )
+                    start_date_datetime = datetime.strptime(
+                        start_date, ISO8601_DATETIME_FORMAT
+                    )
 
                     if (end_date_datetime - start_date_datetime) > timedelta(
-                        days=dataset_object.download_limit_temporal_extent
+                        days=d_l_t
                     ):
                         return self.rsp(
                             "You are requesting to download a time series "
@@ -567,7 +562,7 @@ class DataRequestPost(Service):
             # generate unique geopackage file name
             unique_geopackage_id = str(uuid.uuid4())
             unique_geopackage_name = f"{unique_geopackage_id}.gpkg"
-            print("unique_geopackage_name, ", unique_geopackage_name)
+            log.debug("unique_geopackage_name: %s", unique_geopackage_name)
             cdse_data_object["GpkgFileName"] = unique_geopackage_name
             gpkg_filenames.append(unique_geopackage_name)
 
