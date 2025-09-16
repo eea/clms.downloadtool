@@ -2,10 +2,10 @@
 """
 CDSE: CDSE integration scripts
 """
-from shapely.geometry import box, shape
 import io
 import json
 import uuid
+from shapely.geometry import box, shape
 import geopandas as gpd
 import boto3
 import requests
