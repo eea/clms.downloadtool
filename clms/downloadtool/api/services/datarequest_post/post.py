@@ -4,7 +4,6 @@ For HTTP GET operations we can use standard HTTP parameter passing
 through the URL)
 """
 import copy
-import uuid
 from datetime import datetime, timezone, timedelta
 from functools import reduce
 from logging import getLogger
@@ -16,7 +15,7 @@ from clms.downloadtool.api.services.utils import (
 )
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.api.services.cdse.cdse_integration import (
-    create_batch, start_batch)
+    create_batches, start_batch)
 from clms.downloadtool.api.services.datarequest_post.utils import (
     ISO8601_DATETIME_FORMAT,
     base64_encode_path,
@@ -157,17 +156,6 @@ class DataRequestPost(Service):
         cdse_batch_ids, gpkg_filenames = [], []
 
         for cdse_dataset in cdse_datasets["Datasets"]:
-            cdse_data_object = {
-                "UserID": user_id,
-                "RegistrationDateTime": datetime.now(timezone.utc).isoformat()
-            }
-
-            unique_geopackage_id = str(uuid.uuid4())
-            unique_geopackage_name = f"{unique_geopackage_id}.gpkg"
-            log.debug("unique_geopackage_name: %s", unique_geopackage_name)
-            cdse_data_object["GpkgFileName"] = unique_geopackage_name
-            gpkg_filenames.append(unique_geopackage_name)
-
             try:
                 cdse_dataset["TemporalFilter"]["StartDate"] = to_iso8601(
                     cdse_dataset["TemporalFilter"]["StartDate"])
@@ -176,29 +164,40 @@ class DataRequestPost(Service):
             except Exception:
                 pass
 
-            cdse_batch_id_response = create_batch(
-                unique_geopackage_name, cdse_dataset)
-            cdse_batch_id = cdse_batch_id_response.get('batch_id')
-            if cdse_batch_id is None:
-                error = cdse_batch_id_response.get('error', '')
-                return None, self.rsp(f"Error creating CDSE batch: {error}")
+            # Call create_batches -> list of {batch_id, error, gpkg_name}
+            batch_results = create_batches(cdse_dataset)
 
-            cdse_batch_ids.append(cdse_batch_id)
-            cdse_data_object["CDSEBatchID"] = cdse_batch_id
-            cdse_data_object["Status"] = "QUEUED"
-            cdse_data_object['Datasets'] = cdse_dataset
-            cdse_data_object['cdse_task_role'] = "child"
-            cdse_data_object['cdse_task_group_id'] = cdse_task_group_id
+            for result in batch_results:
+                batch_id = result.get("batch_id")
+                if batch_id is None:
+                    error = result.get("error", "")
+                    return None, self.rsp(f"Error creating CDSE batch: {error}")
 
-            utility_response_json = utility.datarequest_post(cdse_data_object)
-            utility_task_id = get_task_id(utility_response_json)
-            log.info("utility_task_id: %s", utility_task_id)
+                gpkg_name = result["gpkg_name"]
+                cdse_batch_ids.append(batch_id)
+                gpkg_filenames.append(gpkg_name)
 
-            cdse_parent_task = copy.deepcopy(cdse_data_object)
-            cdse_parent_task.pop('GpkgFileName', None)
-            cdse_parent_task.pop('CDSEBatchID', None)
+                cdse_data_object = {
+                    "UserID": user_id,
+                    "RegistrationDateTime": datetime.now(timezone.utc).isoformat(),
+                    "GpkgFileName": gpkg_name,
+                    "CDSEBatchID": batch_id,
+                    "Status": "QUEUED",
+                    "Datasets": cdse_dataset,
+                    "cdse_task_role": "child",
+                    "cdse_task_group_id": cdse_task_group_id,
+                }
 
-            start_batch(cdse_batch_id)
+                utility_response_json = utility.datarequest_post(
+                    cdse_data_object)
+                utility_task_id = get_task_id(utility_response_json)
+                log.info("utility_task_id: %s", utility_task_id)
+
+                cdse_parent_task = copy.deepcopy(cdse_data_object)
+                cdse_parent_task.pop('GpkgFileName', None)
+                cdse_parent_task.pop('CDSEBatchID', None)
+
+                start_batch(batch_id)
 
         if cdse_datasets["Datasets"]:
             temp_datasets = cdse_datasets["Datasets"]
