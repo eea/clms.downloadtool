@@ -171,7 +171,8 @@ class DataRequestPost(Service):
                 batch_id = result.get("batch_id")
                 if batch_id is None:
                     error = result.get("error", "")
-                    return None, self.rsp(f"Error creating CDSE batch: {error}")
+                    return None, self.rsp(
+                        f"Error creating CDSE batch: {error}")
 
                 gpkg_name = result["gpkg_name"]
                 cdse_batch_ids.append(batch_id)
@@ -179,7 +180,8 @@ class DataRequestPost(Service):
 
                 cdse_data_object = {
                     "UserID": user_id,
-                    "RegistrationDateTime": datetime.now(timezone.utc).isoformat(),
+                    "RegistrationDateTime": datetime.now(
+                        timezone.utc).isoformat(),
                     "GpkgFileName": gpkg_name,
                     "CDSEBatchID": batch_id,
                     "Status": "QUEUED",
