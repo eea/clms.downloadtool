@@ -31,7 +31,7 @@ from clms.downloadtool.api.services.datarequest_post.utils import (
     get_full_dataset_source,
     get_full_dataset_wekeo_choices,
     get_nuts_by_id,
-    get_s3_paths,
+    get_s3_paths_encoded,
     get_task_id,
     params_for_fme,
     post_request_to_fme,
@@ -203,9 +203,9 @@ class DataRequestPost(Service):
 
         if cdse_datasets["Datasets"]:
             temp_datasets = cdse_datasets["Datasets"]
-            paths = get_s3_paths(cdse_batch_ids)
-            for index, dataset in enumerate(temp_datasets):
-                dataset["DatasetPath"] = paths[index]
+            paths = get_s3_paths_encoded(cdse_batch_ids)
+            for dataset in temp_datasets:
+                dataset["DatasetPath"] = paths
             cdse_parent_task.update({
                 "cdse_task_role": "parent",
                 "Status": "Queued",
