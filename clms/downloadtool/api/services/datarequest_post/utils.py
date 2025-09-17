@@ -344,3 +344,13 @@ def get_s3_paths(batch_ids):
         s3_paths.append(s3_path)
 
     return s3_paths
+
+
+def get_s3_paths_encoded(batch_ids):
+    """Encoded value of DatasetPath list"""
+    paths = get_s3_paths(batch_ids)
+    joined = json.dumps(paths)
+    joined_bytes = joined.encode("utf-8")
+    b64_encoded = base64.b64encode(joined_bytes).decode("utf-8")
+
+    return b64_encoded
