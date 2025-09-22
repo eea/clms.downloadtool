@@ -327,12 +327,13 @@ def start_batch(batch_id):
     print(response.status_code)
 
 
-# pylint: disable=line-too-long
-# CREATED is not queued; it's a batch that waits for the start and that should NOT be a "normal" status  # noqa: E501
+# CREATED is not queued; it's a batch that waits for the start
+# and that should NOT be a "normal" status
 # a batch in CREATED should probably be sent a start call or further checked
 status_map = {
     "CREATED": "QUEUED",
     "ANALYSIS": "QUEUED",
+    "ANALYSING": "QUEUED",
     "ANALYSIS_DONE": "QUEUED",
     "PROCESSING": "IN PROGRESS",
     "DONE": "FINISHED_OK",

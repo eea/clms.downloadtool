@@ -165,6 +165,8 @@ class DownloadToolUtility:
             ]
         if "Message" in data_object:
             registry_item["Message"] = data_object["Message"]
+        if "cdse_errors" in data_object:
+            registry_item["cdse_errors"] = data_object["cdse_errors"]
         registry[task_id] = registry_item
         annotations[ANNOTATION_KEY] = registry
         return registry_item
