@@ -3,7 +3,7 @@ import random
 import json
 import base64
 from logging import getLogger
-from datetime import datetime
+from datetime import datetime, timezone
 
 import requests
 from plone import api
@@ -13,6 +13,7 @@ from clms.downloadtool.api.services.cdse.cdse_integration import (
     get_portal_config)
 from clms.downloadtool.api.services.utils import get_extra_data
 from clms.statstool.utility import IDownloadStatsUtility
+from clms.downloadtool.utility import IDownloadToolUtility
 
 
 ISO8601_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -132,6 +133,30 @@ def save_stats(stats_json):
         log.info(
             "There was an error saving the stats: %s", json.dumps(stats_json)
         )  # noqa
+
+
+def save_stats_for_download_task(download_task_id):
+    """Used by CDSE Status Monitor"""
+
+    utility = getUtility(IDownloadToolUtility)
+    tasks = utility.datarequest_inspect(TaskID=download_task_id)
+    if len(tasks) > 0:
+        download_task = tasks[0]
+        data_object = {}
+        data_object["Status"] = "Queued"
+        user_id = download_task.get("UserID", "")
+        data_object["UserID"] = user_id
+        now_datetime = datetime.now(timezone.utc).isoformat()
+        data_object["RegistrationDateTime"] = download_task.get(
+            "RegistrationDateTime", now_datetime)
+        datasets = {"Datasets": download_task.get("Datasets", [])}
+
+        # WIP data object contains unused values. When FME will be deprecated
+        # I expect RegistrationDateTime to be used as defined here
+        save_stats(build_stats_params(
+            user_id, data_object, datasets, download_task_id
+        ))
+        log.info("Stats saved for download task: %s", download_task_id)
 
 
 def get_dataset_file_path_from_file_id(dataset_object, file_id):
