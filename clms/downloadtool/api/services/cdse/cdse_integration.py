@@ -18,7 +18,7 @@ from clms.downloadtool.api.services.cdse.cdse_helpers import (
     plan_tiles, to_multipolygon, reproject_geom, request_Catalog_API
 )
 
-from clms.dowloadtool.api.services.cdse.polygons import get_polygon
+from clms.downloadtool.api.services.cdse.polygons import get_polygon
 
 TZ = ZoneInfo("Europe/Madrid")
 POLL_INTERVAL = 10
