@@ -2,12 +2,12 @@
 """
 CDSE: S3 Cleanup
 """
-import boto3
 from datetime import datetime, timezone, timedelta
+from logging import getLogger
+import boto3
 from clms.downloadtool.api.services.cdse.cdse_integration import (
     get_portal_config
 )
-from logging import getLogger
 
 
 log = getLogger(__name__)
@@ -67,9 +67,9 @@ def get_creation_date(s3, bucket, key):
         return None
 
 
-def get_dir_creation_date(s3, bucket, dir):
+def get_dir_creation_date(s3, bucket, directory):
     """Get creation date of a directory based on the request file"""
-    key = dir + "request-" + dir.replace('/', '') + ".json"
+    key = directory + "request-" + directory.replace('/', '') + ".json"
     log.info("s3: get dir creation date")
     return get_creation_date(s3, bucket, key)
 
@@ -78,14 +78,15 @@ def delete_directory(s3, bucket, prefix):
     """Delete all objects under a chosen directory (prefix)"""
     # Paginate in case there are many objects
     paginator = s3.get_paginator("list_objects_v2")
+    log.info("s3: Delete directory")
     for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
         if "Contents" in page:
             # Build delete request
             delete_keys = {"Objects": [{"Key": obj["Key"]}
                                        for obj in page["Contents"]]}
             s3.delete_objects(Bucket=bucket, Delete=delete_keys)
-            log.info(
-                f"Deleted {len(delete_keys['Objects'])} objects from {prefix}")
+            # log.info(
+            #     f"Deleted {len(delete_keys['Objects'])} objects > {prefix}")
 
 
 def delete_file(s3, bucket, key):
@@ -94,7 +95,8 @@ def delete_file(s3, bucket, key):
         s3.delete_object(Bucket=bucket, Key=key)
         # print(f"Deleted {key} from {bucket}")
     except Exception as e:
-        log.info(f"Error deleting {key}: {e}")
+        # log.info(f"Error deleting {key}: {e}")
+        log.info(e)
 
 
 def delete_old_data(s3, bucket):

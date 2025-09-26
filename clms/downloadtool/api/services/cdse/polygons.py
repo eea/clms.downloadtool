@@ -2,7 +2,6 @@
 """
 CDSE: NUTS to Polygons - simple in-memory cache
 """
-import json
 from plone import api
 import geopandas as gpd
 

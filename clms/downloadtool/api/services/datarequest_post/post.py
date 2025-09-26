@@ -168,7 +168,8 @@ class DataRequestPost(Service):
             batch_results = create_batches(cdse_dataset)
 
             if len(batch_results) == 0:
-                return None, self.rsp("Error creating CDSE batch: No batches were created.")
+                return None, self.rsp(
+                    "Error creating CDSE batch: No batches were created.")
 
             # Keep track of batch_ids and gpkg_names for the current dataset
             dataset_batch_ids = []

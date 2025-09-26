@@ -6,13 +6,13 @@ import re
 import io
 import json
 import uuid
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from shapely.geometry import box
 import geopandas as gpd
 import boto3
 import requests
 from plone import api
-from datetime import datetime, timedelta, timezone
-from zoneinfo import ZoneInfo
 
 from clms.downloadtool.api.services.cdse.cdse_helpers import (
     plan_tiles, to_multipolygon, reproject_geom, request_Catalog_API
@@ -138,9 +138,10 @@ def create_batches(cdse_dataset):
         value = int(value.strip())
         if unit == "km":
             value *= 1000
-        RESOLUTION_M = value
+        # RESOLUTION_M = value
+        resolution_value = value
 
-        MAX_SIDE_M = RESOLUTION_M * MAX_PX
+        MAX_SIDE_M = resolution_value * MAX_PX
     else:
         raise ValueError("Missing Resolution in Dataset Title in m/km")
 
@@ -154,7 +155,8 @@ def create_batches(cdse_dataset):
     else:
         raise ValueError("Dataset must contain either BoundingBox or NUTSID")
 
-    tiles = plan_tiles(geom_wgs84, 3035, MAX_SIDE_M, MAX_POINTS, RESOLUTION_M)
+    tiles = plan_tiles(geom_wgs84, 3035, MAX_SIDE_M, MAX_POINTS,
+                       resolution_value)
     geoms_out = [to_multipolygon(reproject_geom(
         t["clip_geom"], 3035, 4326)) for t in tiles]
 

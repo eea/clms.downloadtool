@@ -1,5 +1,6 @@
-import requests
+"""CDSE helpers"""
 import math
+import requests
 from shapely.geometry import box, Polygon, MultiPolygon
 from shapely.ops import transform
 import pyproj
@@ -30,7 +31,7 @@ def count_vertices(geom):
     """Count vertices"""
     if isinstance(geom, Polygon):
         return len(geom.exterior.coords)
-    elif isinstance(geom, MultiPolygon):
+    if isinstance(geom, MultiPolygon):
         return sum(len(poly.exterior.coords) for poly in geom.geoms)
     return 0
 
@@ -124,6 +125,5 @@ def request_Catalog_API(token, byoc_id, bbox_array, date_from, date_to,
     if response.status_code == 200:
         print("ok")
         return response.json()
-    else:
-        print(f"Error {response.status_code}: {response.text}")
-        return False
+    print(f"Error {response.status_code}: {response.text}")
+    return False
