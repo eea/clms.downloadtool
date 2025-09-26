@@ -9,12 +9,14 @@ MAX_PX = 3500
 
 
 def reproject_geom(geom, src_epsg, dst_epsg):
+    """Reproject"""
     project = pyproj.Transformer.from_crs(
         f"EPSG:{src_epsg}", f"EPSG:{dst_epsg}", always_xy=True).transform
     return transform(project, geom)
 
 
 def extract_polygons(geom):
+    """Extract polygons"""
     if geom.is_empty:
         return MultiPolygon()
     if isinstance(geom, Polygon):
@@ -25,6 +27,7 @@ def extract_polygons(geom):
 
 
 def count_vertices(geom):
+    """Count vertices"""
     if isinstance(geom, Polygon):
         return len(geom.exterior.coords)
     elif isinstance(geom, MultiPolygon):
@@ -33,6 +36,7 @@ def count_vertices(geom):
 
 
 def make_initial_grid(bounds, cell_size):
+    """Make grid"""
     minx, miny, maxx, maxy = bounds
     xs = np.arange(minx, maxx, cell_size)
     ys = np.arange(miny, maxy, cell_size)
@@ -46,6 +50,7 @@ def make_initial_grid(bounds, cell_size):
 
 
 def split_tile(tile):
+    """Split tile"""
     minx, miny, maxx, maxy = tile.bounds
     w = maxx - minx
     h = maxy - miny
@@ -57,6 +62,7 @@ def split_tile(tile):
 
 
 def plan_tiles(aoi_wgs84, target_epsg, max_side_m, points_limit, resolution):
+    """Plan tiles"""
     aoi_m = reproject_geom(aoi_wgs84, 4326, target_epsg)
     initial_tiles = make_initial_grid(aoi_m.bounds, max_side_m)
     accepted = []
@@ -71,7 +77,8 @@ def plan_tiles(aoi_wgs84, target_epsg, max_side_m, points_limit, resolution):
         minx, miny, maxx, maxy = tile.bounds
         w_m = maxx - minx
         h_m = maxy - miny
-        if n_points <= points_limit and w_m <= max_side_m and h_m <= max_side_m:
+        if n_points <= points_limit and w_m <= max_side_m and \
+                h_m <= max_side_m:
             w_px = int(math.ceil(w_m / resolution))
             h_px = int(math.ceil(h_m / resolution))
             if w_px <= MAX_PX and h_px <= MAX_PX:
@@ -88,6 +95,7 @@ def plan_tiles(aoi_wgs84, target_epsg, max_side_m, points_limit, resolution):
 
 
 def to_multipolygon(geom):
+    """Transform to MultiPolygon"""
     if geom.is_empty:
         return MultiPolygon()
     if isinstance(geom, Polygon):
@@ -97,7 +105,9 @@ def to_multipolygon(geom):
     raise ValueError(f"Unsupported geometry type: {geom.geom_type}")
 
 
-def request_Catalog_API(token, byoc_id, bbox_array, date_from, date_to, url_catalog_api, limit=10):
+def request_Catalog_API(token, byoc_id, bbox_array, date_from, date_to,
+                        url_catalog_api, limit=10):
+    """Request Catalog API"""
     headers = {
         'Content-type': 'application/json',
         'Authorization': f'Bearer {token}',
@@ -105,7 +115,8 @@ def request_Catalog_API(token, byoc_id, bbox_array, date_from, date_to, url_cata
     }
     data = {
         "bbox": bbox_array,
-        "datetime": "{date_from}/{date_to}".format(date_from=date_from, date_to=date_to),
+        "datetime": "{date_from}/{date_to}".format(
+            date_from=date_from, date_to=date_to),
         "collections": [byoc_id],
         "limit": limit
     }

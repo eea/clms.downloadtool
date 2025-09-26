@@ -6,7 +6,7 @@ import re
 import io
 import json
 import uuid
-from shapely.geometry import box, shape
+from shapely.geometry import box
 import geopandas as gpd
 import boto3
 import requests
@@ -18,14 +18,14 @@ from clms.downloadtool.api.services.cdse.cdse_helpers import (
     plan_tiles, to_multipolygon, reproject_geom, request_Catalog_API
 )
 
-from clms.downloadtool.api.services.cdse.polygons import (
-    get_polygon, MAX_POINTS)
+from clms.dowloadtool.api.services.cdse.polygons import get_polygon
 
 TZ = ZoneInfo("Europe/Madrid")
 POLL_INTERVAL = 10
 LOCAL_GPKG_FILE = "area_of_interest.gpkg"
 GPKG_S3_KEY = "custom_grid/area_of_interest.gpkg"
-CATALOG_API_URL = "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search"
+# pylint: disable=line-too-long
+CATALOG_API_URL = "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search"  # noqa: E501
 RESOLUTION_M = 1000  # default
 MAX_PX = 3500
 MAX_POINTS = 1500
@@ -130,6 +130,7 @@ def _generate_crs_url(crs_code):
 
 
 def create_batches(cdse_dataset):
+    """Create batches"""
     match = re.search(r"raster\s+(\d+)\s*(km|m)", cdse_dataset["DatasetTitle"])
 
     if match:
@@ -159,8 +160,8 @@ def create_batches(cdse_dataset):
 
     gdf = gpd.GeoDataFrame(
         {
-            "id": list(range(1, len(tiles)+1)),
-            "identifier": [f"tile_{i}" for i in range(1, len(tiles)+1)],
+            "id": list(range(1, len(tiles) + 1)),
+            "identifier": [f"tile_{i}" for i in range(1, len(tiles) + 1)],
             "width": [t["width_px"] for t in tiles],
             "height": [t["height_px"] for t in tiles]
         },
@@ -199,8 +200,9 @@ def create_batches(cdse_dataset):
     bbox_array = [geom_wgs84.bounds[0], geom_wgs84.bounds[1],
                   geom_wgs84.bounds[2], geom_wgs84.bounds[3]]
 
-    catalog_data = request_Catalog_API(token, "byoc-" + datasource, bbox_array, time_range_start,
-                                       time_range_end, CATALOG_API_URL, limit=LIMIT)
+    catalog_data = request_Catalog_API(
+        token, "byoc-" + datasource, bbox_array, time_range_start,
+        time_range_end, CATALOG_API_URL, limit=LIMIT)
     if not catalog_data or "features" not in catalog_data:
         raise RuntimeError("No data returned from Catalog API")
     headers = {
@@ -256,18 +258,40 @@ def create_batches(cdse_dataset):
                 "processRequest": {
                     "input": {
                         "bounds": payload_bounds,
-                        "data": [{"type": "byoc-" + datasource, "dataFilter": {"timeRange": {"from": start, "to": end}}}]
+                        "data": [
+                            {
+                                "type": "byoc-" + datasource,
+                                "dataFilter": {
+                                    "timeRange": {
+                                        "from": start, "to": end
+                                    }
+                                }
+                            }
+                        ]
                     },
                     "output": {"responses": responses},
                     "evalscript": evalscript
                 },
                 "input": {
                     "type": "geopackage",
-                    "features": {"s3": {"url": gpkg_url, "accessKey": config['s3_access_key'], "secretAccessKey": config['s3_secret_key'], "featureId": feature_id}}
+                    "features": {
+                        "s3": {
+                            "url": gpkg_url,
+                            "accessKey": config['s3_access_key'],
+                            "secretAccessKey": config['s3_secret_key'],
+                            "featureId": feature_id
+                        }
+                    }
                 },
                 "output": {
                     "type": "raster",
-                    "delivery": {"s3": {"url": f"s3://{config['s3_bucket_name']}/output", "accessKey": config['s3_access_key'], "secretAccessKey": config['s3_secret_key']}}
+                    "delivery": {
+                        "s3": {
+                            "url": f"s3://{config['s3_bucket_name']}/output",
+                            "accessKey": config['s3_access_key'],
+                            "secretAccessKey": config['s3_secret_key']
+                        }
+                    }
                 },
                 "description": f"ndvi_{feature_id}"
             }
