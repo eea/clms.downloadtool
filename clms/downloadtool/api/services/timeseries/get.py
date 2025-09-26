@@ -3,8 +3,8 @@ Specific endpoint to get metadata from a dataset W(T)MS service URL
 """
 
 # -*- coding: utf-8 -*-
-import requests
 from datetime import datetime
+import requests
 from clms.downloadtool.api.services.timeseries.utils import (
     get_metadata_from_service,
 )
