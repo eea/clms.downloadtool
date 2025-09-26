@@ -2,6 +2,7 @@
 """
 CDSE: CDSE integration scripts
 """
+import re
 import io
 import json
 import uuid
@@ -10,9 +11,25 @@ import geopandas as gpd
 import boto3
 import requests
 from plone import api
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
+
+from clms.downloadtool.api.services.cdse.cdse_helpers import (
+    plan_tiles, to_multipolygon, reproject_geom, request_Catalog_API
+)
 
 from clms.downloadtool.api.services.cdse.polygons import (
-    get_polygon, process_geometry, MAX_POINTS)
+    get_polygon, MAX_POINTS)
+
+TZ = ZoneInfo("Europe/Madrid")
+POLL_INTERVAL = 10
+LOCAL_GPKG_FILE = "area_of_interest.gpkg"
+GPKG_S3_KEY = "custom_grid/area_of_interest.gpkg"
+CATALOG_API_URL = "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search"
+RESOLUTION_M = 1000  # default
+MAX_PX = 3500
+MAX_POINTS = 1500
+LIMIT = 100
 
 
 def get_portal_config():
@@ -112,11 +129,50 @@ def _generate_crs_url(crs_code):
         crs_code.replace(":", "/0/")
 
 
-def create_batch(geopackage_file, cdse_dataset, subpolygon=None):
-    """Create batch process and return batch ID"""
-    config = get_portal_config()
+def create_batches(cdse_dataset):
+    match = re.search(r"raster\s+(\d+)\s*(km|m)", cdse_dataset["DatasetTitle"])
 
-    target_crs = cdse_dataset["OutputGCS"]
+    if match:
+        value, unit = match.groups()
+        value = int(value.strip())
+        if unit == "km":
+            value *= 1000
+        RESOLUTION_M = value
+
+        MAX_SIDE_M = RESOLUTION_M * MAX_PX
+    else:
+        raise ValueError("Missing Resolution in Dataset Title in m/km")
+
+    token = get_token()
+    if cdse_dataset.get("BoundingBox"):
+        t_bbox = cdse_dataset["BoundingBox"]
+        geom_wgs84 = box(t_bbox[0], t_bbox[1], t_bbox[2], t_bbox[3])
+    elif cdse_dataset.get("NUTSID"):
+        polygon_data = get_polygon(cdse_dataset["NUTSID"])
+        geom_wgs84 = polygon_data["geometry"].iloc[0]
+    else:
+        raise ValueError("Dataset must contain either BoundingBox or NUTSID")
+
+    tiles = plan_tiles(geom_wgs84, 3035, MAX_SIDE_M, MAX_POINTS, RESOLUTION_M)
+    geoms_out = [to_multipolygon(reproject_geom(
+        t["clip_geom"], 3035, 4326)) for t in tiles]
+
+    gdf = gpd.GeoDataFrame(
+        {
+            "id": list(range(1, len(tiles)+1)),
+            "identifier": [f"tile_{i}" for i in range(1, len(tiles)+1)],
+            "width": [t["width_px"] for t in tiles],
+            "height": [t["height_px"] for t in tiles]
+        },
+        geometry=geoms_out,
+        crs="EPSG:4326"
+    )
+
+    buffer = io.BytesIO()
+    gdf.to_file(buffer, driver="GPKG")
+    buffer.seek(0)
+
+    config = get_portal_config()
     datasource = cdse_dataset["ByocCollection"]
 
     brains = api.content.find(UID=cdse_dataset["DatasetID"])
@@ -124,62 +180,7 @@ def create_batch(geopackage_file, cdse_dataset, subpolygon=None):
 
     time_range_start = cdse_dataset["TemporalFilter"]["StartDate"]
     time_range_end = cdse_dataset["TemporalFilter"]["EndDate"]
-
-    geom = None
-    geometry = None
-    gdf_identifier = None
-    geometry_source = None
-    payload_bounds = None
-    crs_url = None
-
-    has_bbox = cdse_dataset.get("BoundingBox", None) is not None
-    has_nutsid = cdse_dataset.get("NUTSID", None) is not None
-
-    if subpolygon is not None:
-        geometry_source = "geometry"
-        geom = subpolygon
-        gdf_identifier = "custom_geometry"
-    elif has_bbox:
-        t_bbox = cdse_dataset["BoundingBox"]
-        geom = box(t_bbox[0], t_bbox[1], t_bbox[2], t_bbox[3])
-        gdf_identifier = "full_tile"
-        geometry_source = "bbox"
-    elif has_nutsid:
-        geometry_source = "nuts"
-        polygon_data = get_polygon(cdse_dataset["NUTSID"])
-        geometry = polygon_data["geometry"]
-        geom = shape(geometry)
-        gdf_identifier = "tile_" + cdse_dataset["NUTSID"]
-
-    resolution = cdse_dataset.get("SpatialResolution")
-    actual_resolution = resolution.split(" ")[0]
-
-    gdf = gpd.GeoDataFrame({
-        "id": [1],
-        "identifier": [gdf_identifier],
-        "resolution": [actual_resolution],
-    }, geometry=[geom], crs="EPSG:4326")
-
-    if target_crs and target_crs.upper() != "EPSG:4326":
-        gdf_processed = gdf.to_crs(target_crs)
-        crs_url = _generate_crs_url(target_crs)
-        minx, miny, maxx, maxy = gdf_processed.total_bounds
-        payload_bounds = {
-            "bbox": [minx, miny, maxx, maxy],
-            "properties": {"crs": crs_url}
-        }
-    else:
-        gdf_processed = gdf
-        crs_url = _generate_crs_url("EPSG:4326")
-        minx, miny, maxx, maxy = gdf_processed.total_bounds
-        payload_bounds = {
-            "bbox": [minx, miny, maxx, maxy],
-            "properties": {"crs": crs_url}
-        }
-
-    buffer = io.BytesIO()
-    gdf_processed.to_file(buffer, driver="GPKG")
-    buffer.seek(0)
+    crs_url = _generate_crs_url("EPSG:4326")
 
     s3 = boto3.client(
         "s3",
@@ -187,16 +188,21 @@ def create_batch(geopackage_file, cdse_dataset, subpolygon=None):
         aws_access_key_id=config['s3_access_key'],
         aws_secret_access_key=config['s3_secret_key']
     )
-    s3.upload_fileobj(buffer, config['s3_bucket_name'], geopackage_file)
-    gpkg_url = f"s3://{config['s3_bucket_name']}/{geopackage_file}"
 
-    description = f"ndvi_{geometry_source}"
-    if geometry_source == "nuts":
-        description += "_" + cdse_dataset["NUTSID"]
-    if target_crs and target_crs.upper() != "EPSG:4326":
-        description += f"_{target_crs.lower().replace(':', '')}"
+    unique_geopackage_id = str(uuid.uuid4())
+    gpkg_name = f"{unique_geopackage_id}.gpkg"
 
-    token = get_token()
+    s3.upload_fileobj(buffer, config['s3_bucket_name'], gpkg_name)
+    gpkg_url = f"s3://{config['s3_bucket_name']}/{gpkg_name}"
+
+    #  Catalog API to get available dates
+    bbox_array = [geom_wgs84.bounds[0], geom_wgs84.bounds[1],
+                  geom_wgs84.bounds[2], geom_wgs84.bounds[3]]
+
+    catalog_data = request_Catalog_API(token, "byoc-" + datasource, bbox_array, time_range_start,
+                                       time_range_end, CATALOG_API_URL, limit=LIMIT)
+    if not catalog_data or "features" not in catalog_data:
+        raise RuntimeError("No data returned from Catalog API")
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
@@ -220,94 +226,77 @@ def create_batch(geopackage_file, cdse_dataset, subpolygon=None):
             "format": {"type": "image/tiff"}
         })
 
-    payload = {
-        "processRequest": {
-            "input": {
-                "bounds": payload_bounds,
-                "data": [
-                    {
-                        "type": "byoc-" + datasource,
-                        "dataFilter": {
-                            "timeRange": {
-                                "from": time_range_start,
-                                "to": time_range_end
-                            }
-                        }
-                    }
-                ]
-            },
-            "output": {"responses": responses},
-            "evalscript": evalscript
-        },
-        "input": {
-            "type": "geopackage",
-            "features": {
-                "s3": {
-                    "url": gpkg_url,
-                    "accessKey": config['s3_access_key'],
-                    "secretAccessKey": config['s3_secret_key']
+    all_results = []
+    for feature in catalog_data["features"]:
+        dt_str = feature["properties"]["datetime"]
+        dt = datetime.strptime(
+            dt_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        start = (dt - timedelta(seconds=10)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        end = (dt + timedelta(seconds=10)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        for idx, tile in enumerate(tiles, start=1):
+            feature_id = f"tile_{idx}"
+            token = get_token()
+            headers = {"Authorization": f"Bearer {token}",
+                       "Content-Type": "application/json"}
+
+            if cdse_dataset.get("BoundingBox"):
+                minx, miny, maxx, maxy = gdf.total_bounds
+                payload_bounds = {
+                    "bbox": [minx, miny, maxx, maxy],
+                    "properties": {"crs": crs_url}
                 }
-            }
-        },
-        "output": {
-            "type": "raster",
-            "delivery": {
-                "s3": {
-                    "url": f"s3://{config['s3_bucket_name']}/output",
-                    "accessKey": config['s3_access_key'],
-                    "secretAccessKey": config['s3_secret_key']
+            else:
+                payload_bounds = {
+                    "geometry": gdf.geometry.iloc[0].__geo_interface__,
+                    "properties": {"crs": crs_url}
                 }
+
+            payload = {
+                "processRequest": {
+                    "input": {
+                        "bounds": payload_bounds,
+                        "data": [{"type": "byoc-" + datasource, "dataFilter": {"timeRange": {"from": start, "to": end}}}]
+                    },
+                    "output": {"responses": responses},
+                    "evalscript": evalscript
+                },
+                "input": {
+                    "type": "geopackage",
+                    "features": {"s3": {"url": gpkg_url, "accessKey": config['s3_access_key'], "secretAccessKey": config['s3_secret_key'], "featureId": feature_id}}
+                },
+                "output": {
+                    "type": "raster",
+                    "delivery": {"s3": {"url": f"s3://{config['s3_bucket_name']}/output", "accessKey": config['s3_access_key'], "secretAccessKey": config['s3_secret_key']}}
+                },
+                "description": f"ndvi_{feature_id}"
             }
-        },
-        "description": description
-    }
+            response = requests.post(
+                config['batch_url'], headers=headers, json=payload)
 
-    response = requests.post(
-        config['batch_url'], headers=headers, json=payload)
+            if response.status_code != 201:
+                print(
+                    f"Batch failed: {response.status_code} - {response.text}")
+                return {'batch_id': None, 'error': response.text}
 
-    if response.status_code != 201:
-        print(f"Batch failed: {response.status_code} - {response.text}")
-        return {'batch_id': None, 'error': response.text}
+            response_json = response.json()
+            batch_id = response_json['id']
 
-    response_json = response.json()
-    batch_id = response_json['id']
+            start_batch_response = start_batch(batch_id)
+            if start_batch_response.status_code not in [200, 204]:
+                print("Error starting batch:", start_batch_response.text)
+                continue
+            print(f"Batch {batch_id} started for {feature_id}")
 
-    print(f"Batch created successfully with ID: {batch_id}")
-    return {'batch_id': batch_id}
+            all_results.append({
+                "batch_id": batch_id,
+                "tile_id": idx,
+                "width": tile["width_px"],
+                "height": tile["height_px"],
+                "gpkg_name": gpkg_name,
+            })
 
-
-def create_batches(cdse_dataset):
-    """
-    - Detects if geometry is bbox or nuts
-    - Splits geometry into smaller polygons
-    - Generates a unique geopackage name per sub-polygon
-    - Calls create_batch for each sub-polygon
-    Returns a list of dicts: {batch_id, error, gpkg_name}.
-    """
-    if cdse_dataset.get("BoundingBox"):
-        t_bbox = cdse_dataset["BoundingBox"]
-        geom = box(t_bbox[0], t_bbox[1], t_bbox[2], t_bbox[3])
-    elif cdse_dataset.get("NUTSID"):
-        polygon_data = get_polygon(cdse_dataset["NUTSID"])
-        geom = shape(polygon_data["geometry"])
-    else:
-        raise ValueError("Dataset must contain either BoundingBox or NUTSID")
-
-    polygons_to_use = process_geometry(geom, MAX_POINTS)
-
-    batch_results = []
-    for poly in polygons_to_use:
-        unique_geopackage_id = str(uuid.uuid4())
-        gpkg_name = f"{unique_geopackage_id}.gpkg"
-
-        result = create_batch(gpkg_name, cdse_dataset, subpolygon=poly)
-        batch_results.append({
-            "batch_id": result.get("batch_id"),
-            "error": result.get("error"),
-            "gpkg_name": gpkg_name,
-        })
-
-    return batch_results
+    return all_results
 
 
 def start_batch(batch_id):
@@ -325,6 +314,7 @@ def start_batch(batch_id):
     # POST request
     response = requests.post(url, headers=headers)
     print(response.status_code)
+    return response
 
 
 # CREATED is not queued; it's a batch that waits for the start
