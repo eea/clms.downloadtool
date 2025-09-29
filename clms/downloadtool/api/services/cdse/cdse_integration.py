@@ -7,6 +7,7 @@ import io
 import json
 import uuid
 from datetime import datetime, timedelta, timezone
+from logging import getLogger
 from zoneinfo import ZoneInfo
 from shapely.geometry import box
 import geopandas as gpd
@@ -17,8 +18,13 @@ from plone import api
 from clms.downloadtool.api.services.cdse.cdse_helpers import (
     plan_tiles, to_multipolygon, reproject_geom, request_Catalog_API
 )
+from clms.downloadtool.api.services.cdse.s3_cleanup import (
+    list_files, delete_file, delete_directory
+)
 
 from clms.downloadtool.api.services.cdse.polygons import get_polygon
+
+log = getLogger(__name__)
 
 TZ = ZoneInfo("Europe/Madrid")
 POLL_INTERVAL = 10
@@ -64,6 +70,24 @@ def get_portal_config():
             "clms.downloadtool.cdse_config_controlpanel.layers_collection_url"
         )
     }
+
+
+def get_s3():
+    """s3 client"""
+    config = get_portal_config()
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=config['s3_endpoint_url'],
+        aws_access_key_id=config['s3_access_key'],
+        aws_secret_access_key=config['s3_secret_key']
+    )
+    return s3
+
+
+def get_s3_bucket():
+    """Bucket name from our config"""
+    config = get_portal_config()
+    return config['s3_bucket_name']
 
 
 def get_token():
@@ -393,8 +417,8 @@ def get_status(token, batch_url, batch_id=None):
     return result
 
 
-def stop_batch(batch_id):
-    """Stop the batch process"""
+def stop_batch_and_remove_s3_directory(s3, bucket, batch_id):
+    """Stop the batch process and remove directory from s3"""
     config = get_portal_config()
     url = f"{config['batch_url']}/{batch_id}/stop"
     print(url)
@@ -407,25 +431,32 @@ def stop_batch(batch_id):
     response = requests.post(url, headers=headers)
     print(response.status_code)
 
-    # WIP retrn the status and block the cancelling in case of error
+    # WIP return the status and block the cancelling in case of error
     # Example:
     # '{"error":{"status":400,"reason":"Bad Request",
     # "message":"Illegal to change userAction from START to STOP with task
     # status CREATED","code":"COMMON_BAD_PAYLOAD"}}'
 
+    delete_directory(s3, bucket, "output/" + batch_id)
 
-def stop_batch_ids(batch_ids):
-    """Stop list of batch_ids"""
+
+def stop_batch_ids_and_remove_s3_directory(batch_ids):
+    """Stop list of batch_ids and remove directories from s3"""
+    s3 = get_s3()
+    bucket = get_s3_bucket()
     for batch_id in batch_ids:
-        stop_batch(batch_id)
+        stop_batch_and_remove_s3_directory(s3, bucket, batch_id)
 
 
 def clean_s3_bucket_files(filenames):
     """Clean s3 bucket files"""
+    s3 = get_s3()
+    bucket = get_s3_bucket()
+    root_files = list_files(s3, bucket)
 
-    for file in filenames:
-        print("WIP implement s3 clean")
-        print(file)
+    for filename in filenames:
+        if filename in root_files:
+            delete_file(s3, bucket, filename)
 
 
 # Example usage:

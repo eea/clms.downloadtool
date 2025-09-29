@@ -4,56 +4,33 @@ CDSE: S3 Cleanup
 """
 from datetime import datetime, timezone, timedelta
 from logging import getLogger
-import boto3
-from clms.downloadtool.api.services.cdse.cdse_integration import (
-    get_portal_config
-)
 
 
 log = getLogger(__name__)
 
 
-def get_s3():
-    """s3 client"""
-    config = get_portal_config()
-    s3 = boto3.client(
-        "s3",
-        endpoint_url=config['s3_endpoint_url'],
-        aws_access_key_id=config['s3_access_key'],
-        aws_secret_access_key=config['s3_secret_key']
-    )
-    log.info("s3: get s3 client")
-    return s3
-
-
-def get_s3_bucket():
-    """Bucket name from our config"""
-    config = get_portal_config()
-    return config['s3_bucket_name']
-
-
-def list_directories(s3, bucket):
-    """List all directories in bucket"""
+def list_directories(s3, bucket, prefix="output/"):
+    """List directories"""
     all_results = []
     paginator = s3.get_paginator("list_objects_v2")
-    for page in paginator.paginate(Bucket=bucket, Delimiter="/"):
+    for page in paginator.paginate(
+            Bucket=bucket, Prefix=prefix, Delimiter="/"):
         if "CommonPrefixes" in page:
             all_results.extend([cp["Prefix"] for cp in page["CommonPrefixes"]])
-    log.info("s3: list directories")
     return all_results
 
 
-def list_root_files(s3, bucket):
-    """List root files"""
-    root_files = []
+def list_files(s3, bucket, prefix=""):
+    """List files"""
+    files = []
     paginator = s3.get_paginator("list_objects_v2")
-    for page in paginator.paginate(Bucket=bucket, Delimiter="/"):
+    for page in paginator.paginate(
+            Bucket=bucket, Prefix=prefix, Delimiter="/"):
         if "Contents" in page:
-            # Collect the Key of each object
             for obj in page["Contents"]:
-                root_files.append(obj["Key"])
-    log.info("s3: list root files")
-    return root_files
+                if obj["Key"] != prefix:  # avoid returning directory itself
+                    files.append(obj["Key"])
+    return files
 
 
 def get_creation_date(s3, bucket, key):
@@ -78,7 +55,7 @@ def delete_directory(s3, bucket, prefix):
     """Delete all objects under a chosen directory (prefix)"""
     # Paginate in case there are many objects
     paginator = s3.get_paginator("list_objects_v2")
-    log.info("s3: Delete directory")
+    log.info("s3: Delete directory %s", prefix)
     for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
         if "Contents" in page:
             # Build delete request
@@ -93,7 +70,7 @@ def delete_file(s3, bucket, key):
     """Delete single file"""
     try:
         s3.delete_object(Bucket=bucket, Key=key)
-        # print(f"Deleted {key} from {bucket}")
+        log.info("Deleted: %s", key)
     except Exception as e:
         # log.info(f"Error deleting {key}: {e}")
         log.info(e)
@@ -112,7 +89,7 @@ def delete_old_data(s3, bucket):
             print(f"Deleting {d} (created {crd})")
             delete_directory(s3, bucket, d)
 
-    files = list_root_files(s3, bucket)
+    files = list_files(s3, bucket)
 
     for f in files:
         crd = get_creation_date(s3, bucket, f)
