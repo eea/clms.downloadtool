@@ -9,28 +9,25 @@ from logging import getLogger
 log = getLogger(__name__)
 
 
-def list_directories(s3, bucket):
-    """List all directories in bucket"""
+def list_directories(s3, bucket, prefix="output/"):
     all_results = []
     paginator = s3.get_paginator("list_objects_v2")
-    for page in paginator.paginate(Bucket=bucket, Delimiter="/"):
+    for page in paginator.paginate(Bucket=bucket, Prefix=prefix, Delimiter="/"):
         if "CommonPrefixes" in page:
             all_results.extend([cp["Prefix"] for cp in page["CommonPrefixes"]])
-    log.info("s3: list directories")
     return all_results
 
 
-def list_root_files(s3, bucket):
-    """List root files"""
-    root_files = []
+def list_files(s3, bucket, prefix=""):
+    """List files"""
+    files = []
     paginator = s3.get_paginator("list_objects_v2")
-    for page in paginator.paginate(Bucket=bucket, Delimiter="/"):
+    for page in paginator.paginate(Bucket=bucket, Prefix=prefix, Delimiter="/"):
         if "Contents" in page:
-            # Collect the Key of each object
             for obj in page["Contents"]:
-                root_files.append(obj["Key"])
-    log.info("s3: list root files")
-    return root_files
+                if obj["Key"] != prefix:  # avoid returning the directory itself
+                    files.append(obj["Key"])
+    return files
 
 
 def get_creation_date(s3, bucket, key):
@@ -55,7 +52,7 @@ def delete_directory(s3, bucket, prefix):
     """Delete all objects under a chosen directory (prefix)"""
     # Paginate in case there are many objects
     paginator = s3.get_paginator("list_objects_v2")
-    log.info("s3: Delete directory")
+    log.info("s3: Delete directory %s", prefix)
     for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
         if "Contents" in page:
             # Build delete request
@@ -70,7 +67,7 @@ def delete_file(s3, bucket, key):
     """Delete single file"""
     try:
         s3.delete_object(Bucket=bucket, Key=key)
-        # print(f"Deleted {key} from {bucket}")
+        log.info("Deleted: %s", key)
     except Exception as e:
         # log.info(f"Error deleting {key}: {e}")
         log.info(e)
@@ -89,7 +86,7 @@ def delete_old_data(s3, bucket):
             print(f"Deleting {d} (created {crd})")
             delete_directory(s3, bucket, d)
 
-    files = list_root_files(s3, bucket)
+    files = list_files(s3, bucket)
 
     for f in files:
         crd = get_creation_date(s3, bucket, f)

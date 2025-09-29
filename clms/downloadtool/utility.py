@@ -26,7 +26,7 @@ from logging import getLogger
 
 from clms.downloadtool.utils import ANNOTATION_KEY, STATUS_LIST
 from clms.downloadtool.api.services.cdse.cdse_integration import (
-    stop_batch_ids, clean_s3_bucket_files)
+    stop_batch_ids_and_remove_s3_directory, clean_s3_bucket_files)
 from zope.annotation.interfaces import IAnnotations
 from zope.component.hooks import getSite
 from zope.interface import Interface, implementer
@@ -92,7 +92,7 @@ class DownloadToolUtility:
             # Cancel child tasks in CDSE and delete files from s3
             cdse_batch_ids = data_object.get('CDSEBatchIDs', [])
             gpkg_filenames = data_object.get('GpkgFileNames', '')
-            stop_batch_ids(cdse_batch_ids)
+            stop_batch_ids_and_remove_s3_directory(cdse_batch_ids)
             clean_s3_bucket_files(gpkg_filenames)
             log.info("Canceled CDSE tasks:")
             log.info(cdse_batch_ids)

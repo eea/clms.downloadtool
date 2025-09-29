@@ -7,6 +7,7 @@ import io
 import json
 import uuid
 from datetime import datetime, timedelta, timezone
+from logging import getLogger
 from zoneinfo import ZoneInfo
 from shapely.geometry import box
 import geopandas as gpd
@@ -18,10 +19,12 @@ from clms.downloadtool.api.services.cdse.cdse_helpers import (
     plan_tiles, to_multipolygon, reproject_geom, request_Catalog_API
 )
 from clms.downloadtool.api.services.cdse.s3_cleanup import (
-    list_root_files, delete_file
+    list_files, delete_file, delete_directory
 )
 
 from clms.downloadtool.api.services.cdse.polygons import get_polygon
+
+log = getLogger(__name__)
 
 TZ = ZoneInfo("Europe/Madrid")
 POLL_INTERVAL = 10
@@ -414,8 +417,8 @@ def get_status(token, batch_url, batch_id=None):
     return result
 
 
-def stop_batch(batch_id):
-    """Stop the batch process"""
+def stop_batch_and_remove_s3_directory(s3, bucket, batch_id):
+    """Stop the batch process and remove directory from s3"""
     config = get_portal_config()
     url = f"{config['batch_url']}/{batch_id}/stop"
     print(url)
@@ -434,18 +437,22 @@ def stop_batch(batch_id):
     # "message":"Illegal to change userAction from START to STOP with task
     # status CREATED","code":"COMMON_BAD_PAYLOAD"}}'
 
+    delete_directory(s3, bucket, "output/" + batch_id)
 
-def stop_batch_ids(batch_ids):
-    """Stop list of batch_ids"""
+
+def stop_batch_ids_and_remove_s3_directory(batch_ids):
+    """Stop list of batch_ids and remove directories from s3"""
+    s3 = get_s3()
+    bucket = get_s3_bucket()
     for batch_id in batch_ids:
-        stop_batch(batch_id)
+        stop_batch_and_remove_s3_directory(s3, bucket, batch_id)
 
 
 def clean_s3_bucket_files(filenames):
     """Clean s3 bucket files"""
     s3 = get_s3()
     bucket = get_s3_bucket()
-    root_files = list_root_files(s3, bucket)
+    root_files = list_files(s3, bucket)
 
     for filename in filenames:
         if filename in root_files:
