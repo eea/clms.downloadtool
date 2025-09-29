@@ -26,7 +26,8 @@ from logging import getLogger
 
 from clms.downloadtool.utils import ANNOTATION_KEY, STATUS_LIST
 from clms.downloadtool.api.services.cdse.cdse_integration import (
-    stop_batch_ids_and_remove_s3_directory, clean_s3_bucket_files)
+    stop_batch_ids_and_remove_s3_directory, clean_s3_bucket_files,
+)
 from zope.annotation.interfaces import IAnnotations
 from zope.component.hooks import getSite
 from zope.interface import Interface, implementer
@@ -42,6 +43,26 @@ class IDownloadToolUtility(Interface):
 @implementer(IDownloadToolUtility)
 class DownloadToolUtility:
     """Downloadtool request methods"""
+
+    def remove_cdse_child_tasks(self, cdse_task_group_id):
+        """Remove child tasks from DownloadTool"""
+        tasks = self.datarequest_inspect()
+
+        cdse_tasks = [
+            task for task in tasks if task.get(
+                'cdse_task_role', None) is not None]
+
+        child_tasks = [task for task in cdse_tasks if task.get(
+            'cdse_task_role', '') == 'child']
+        child_tasks_group = [
+            t for t in child_tasks if t[
+                'cdse_task_group_id'] == cdse_task_group_id
+        ]
+        task_ids = [t["TaskId"] for t in child_tasks_group]
+
+        log.info("Remove child tasks for %s", cdse_task_group_id)
+        for task_id in task_ids:
+            self.datarequest_remove_task(task_id)
 
     def datarequest_post(self, data_request):
         """register new download request"""
@@ -87,6 +108,7 @@ class DownloadToolUtility:
         already_sent = data_object.get("FMETaskId", None) is not None
         if data_object.get('cdse_task_role', '') == 'parent':
             is_cdse_task = True
+            cdse_task_group_id = data_object.get("cdse_task_group_id")
 
         if is_cdse_task and not already_sent:
             # Cancel child tasks in CDSE and delete files from s3
@@ -98,6 +120,8 @@ class DownloadToolUtility:
             log.info(cdse_batch_ids)
             log.info("Removed s3 bucket files:")
             log.info(gpkg_filenames)
+            # Also remove all child tasks for this parent task
+            self.remove_cdse_child_tasks(cdse_task_group_id)
 
         registry[str(task_id)] = data_object
         annotations[ANNOTATION_KEY] = registry
