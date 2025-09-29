@@ -62,26 +62,29 @@ def split_tile(tile):
     return [box(minx, miny, maxx, ym), box(minx, ym, maxx, maxy)]
 
 
-def plan_tiles(aoi_wgs84, target_epsg, max_side_m, points_limit, resolution):
-    """Plan tiles"""
+def plan_tiles(aoi_wgs84, target_epsg, max_side_m, resolution, points_limit=0):
+    """Plan tiles
+    points_limit = 0 when we have bbox
+    """
     aoi_m = reproject_geom(aoi_wgs84, 4326, target_epsg)
     initial_tiles = make_initial_grid(aoi_m.bounds, max_side_m)
     accepted = []
     queue = list(initial_tiles)
+
     while queue:
         tile = queue.pop()
         clip = aoi_m.intersection(tile)
         clip = extract_polygons(clip)
         if clip.is_empty:
             continue
-        n_points = count_vertices(clip)
+
         minx, miny, maxx, maxy = tile.bounds
         w_m = maxx - minx
         h_m = maxy - miny
-        if n_points <= points_limit and w_m <= max_side_m and \
-                h_m <= max_side_m:
-            w_px = int(math.ceil(w_m / resolution))
-            h_px = int(math.ceil(h_m / resolution))
+        w_px = int(math.ceil(w_m / resolution))
+        h_px = int(math.ceil(h_m / resolution))
+
+        if points_limit == 0:
             if w_px <= MAX_PX and h_px <= MAX_PX:
                 accepted.append({
                     "bbox": [minx, miny, maxx, maxy],
@@ -91,6 +94,19 @@ def plan_tiles(aoi_wgs84, target_epsg, max_side_m, points_limit, resolution):
                     "clip_geom": clip
                 })
                 continue
+        else:
+            n_points = count_vertices(clip)
+            if n_points <= points_limit and w_m <= max_side_m and \
+                    h_m <= max_side_m:
+                if w_px <= MAX_PX and h_px <= MAX_PX:
+                    accepted.append({
+                        "bbox": [minx, miny, maxx, maxy],
+                        "bbox_epsg": target_epsg,
+                        "width_px": w_px,
+                        "height_px": h_px,
+                        "clip_geom": clip
+                    })
+                    continue
         queue.extend(split_tile(tile))
     return accepted
 
