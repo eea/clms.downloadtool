@@ -4,32 +4,9 @@ CDSE: S3 Cleanup
 """
 from datetime import datetime, timezone, timedelta
 from logging import getLogger
-import boto3
-from clms.downloadtool.api.services.cdse.cdse_integration import (
-    get_portal_config
-)
 
 
 log = getLogger(__name__)
-
-
-def get_s3():
-    """s3 client"""
-    config = get_portal_config()
-    s3 = boto3.client(
-        "s3",
-        endpoint_url=config['s3_endpoint_url'],
-        aws_access_key_id=config['s3_access_key'],
-        aws_secret_access_key=config['s3_secret_key']
-    )
-    log.info("s3: get s3 client")
-    return s3
-
-
-def get_s3_bucket():
-    """Bucket name from our config"""
-    config = get_portal_config()
-    return config['s3_bucket_name']
 
 
 def list_directories(s3, bucket):

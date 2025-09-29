@@ -17,6 +17,9 @@ from plone import api
 from clms.downloadtool.api.services.cdse.cdse_helpers import (
     plan_tiles, to_multipolygon, reproject_geom, request_Catalog_API
 )
+from clms.downloadtool.api.services.cdse.s3_cleanup import (
+    list_root_files, delete_file
+)
 
 from clms.downloadtool.api.services.cdse.polygons import get_polygon
 
@@ -64,6 +67,24 @@ def get_portal_config():
             "clms.downloadtool.cdse_config_controlpanel.layers_collection_url"
         )
     }
+
+
+def get_s3():
+    """s3 client"""
+    config = get_portal_config()
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=config['s3_endpoint_url'],
+        aws_access_key_id=config['s3_access_key'],
+        aws_secret_access_key=config['s3_secret_key']
+    )
+    return s3
+
+
+def get_s3_bucket():
+    """Bucket name from our config"""
+    config = get_portal_config()
+    return config['s3_bucket_name']
 
 
 def get_token():
@@ -407,7 +428,7 @@ def stop_batch(batch_id):
     response = requests.post(url, headers=headers)
     print(response.status_code)
 
-    # WIP retrn the status and block the cancelling in case of error
+    # WIP return the status and block the cancelling in case of error
     # Example:
     # '{"error":{"status":400,"reason":"Bad Request",
     # "message":"Illegal to change userAction from START to STOP with task
@@ -422,10 +443,13 @@ def stop_batch_ids(batch_ids):
 
 def clean_s3_bucket_files(filenames):
     """Clean s3 bucket files"""
+    s3 = get_s3()
+    bucket = get_s3_bucket()
+    root_files = list_root_files(s3, bucket)
 
-    for file in filenames:
-        print("WIP implement s3 clean")
-        print(file)
+    for filename in filenames:
+        if filename in root_files:
+            delete_file(s3, bucket, filename)
 
 
 # Example usage:
