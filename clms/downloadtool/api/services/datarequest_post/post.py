@@ -15,7 +15,7 @@ from clms.downloadtool.api.services.utils import (
 )
 from clms.downloadtool.utility import IDownloadToolUtility
 from clms.downloadtool.api.services.cdse.cdse_integration import (
-    create_batches, start_batch)
+    create_batches)
 from clms.downloadtool.api.services.datarequest_post.utils import (
     ISO8601_DATETIME_FORMAT,
     base64_encode_path,
@@ -167,6 +167,10 @@ class DataRequestPost(Service):
             # Call create_batches -> list of {batch_id, error, gpkg_name}
             batch_results = create_batches(cdse_dataset)
 
+            if len(batch_results) == 0:
+                return None, self.rsp(
+                    "Error creating CDSE batch: No batches were created.")
+
             # Keep track of batch_ids and gpkg_names for the current dataset
             dataset_batch_ids = []
             dataset_gpkgs = []
@@ -209,9 +213,6 @@ class DataRequestPost(Service):
                 cdse_parent_task = copy.deepcopy(cdse_data_object)
                 cdse_parent_task.pop('GpkgFileName', None)
                 cdse_parent_task.pop('CDSEBatchID', None)
-
-                # Start batch execution
-                start_batch(batch_id)
 
             # Assign only the encoded S3 paths belonging to this dataset
             dataset_paths = get_s3_paths_encoded(dataset_batch_ids)
