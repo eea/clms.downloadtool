@@ -10,9 +10,11 @@ log = getLogger(__name__)
 
 
 def list_directories(s3, bucket, prefix="output/"):
+    """List directories"""
     all_results = []
     paginator = s3.get_paginator("list_objects_v2")
-    for page in paginator.paginate(Bucket=bucket, Prefix=prefix, Delimiter="/"):
+    for page in paginator.paginate(
+            Bucket=bucket, Prefix=prefix, Delimiter="/"):
         if "CommonPrefixes" in page:
             all_results.extend([cp["Prefix"] for cp in page["CommonPrefixes"]])
     return all_results
@@ -22,10 +24,11 @@ def list_files(s3, bucket, prefix=""):
     """List files"""
     files = []
     paginator = s3.get_paginator("list_objects_v2")
-    for page in paginator.paginate(Bucket=bucket, Prefix=prefix, Delimiter="/"):
+    for page in paginator.paginate(
+            Bucket=bucket, Prefix=prefix, Delimiter="/"):
         if "Contents" in page:
             for obj in page["Contents"]:
-                if obj["Key"] != prefix:  # avoid returning the directory itself
+                if obj["Key"] != prefix:  # avoid returning directory itself
                     files.append(obj["Key"])
     return files
 
