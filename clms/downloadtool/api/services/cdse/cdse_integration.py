@@ -107,7 +107,7 @@ def get_token():
     return token
 
 
-def generate_evalscript(layer_ids):
+def generate_evalscript(layer_ids, dt_forName):
     """Generate evalscript dynamically based on layer IDs"""
     # Create input array with layer IDs plus dataMask
     input_array = json.dumps(layer_ids + ["dataMask"])
@@ -115,13 +115,15 @@ def generate_evalscript(layer_ids):
     # Create output array with all layer IDs
     output_items = []
     for layer_id in layer_ids:
-        output_items.append(f'      {{ id: "{layer_id}", bands: 1}}')
+        output_items.append(
+            f'      {{ id: "{layer_id}_{dt_forName}", bands: 1}}')
     output_array = ",\n".join(output_items)
 
     # Create return object for evaluatePixel
     return_items = []
     for layer_id in layer_ids:
-        return_items.append(f'    {layer_id}: [samples.{layer_id}]')
+        return_items.append(
+            f'    {layer_id}_{dt_forName}: [samples.{layer_id}]')
     return_object = ",\n".join(return_items)
 
     # Generate JavaScript evalscript for Sentinel Hub
@@ -147,12 +149,6 @@ function evaluatePixel(samples) {{
     return evalscript
 
 
-def _generate_crs_url(crs_code):
-    """Generate CRS URL from CRS code"""
-    return "http://www.opengis.net/def/crs/" + \
-        crs_code.replace(":", "/0/")
-
-
 def create_batches(cdse_dataset):
     """Create batches"""
     match = re.search(r"raster\s+(\d+)\s*(km|m)", cdse_dataset["DatasetTitle"])
@@ -173,14 +169,15 @@ def create_batches(cdse_dataset):
     if cdse_dataset.get("BoundingBox"):
         t_bbox = cdse_dataset["BoundingBox"]
         geom_wgs84 = box(t_bbox[0], t_bbox[1], t_bbox[2], t_bbox[3])
+        tiles = plan_tiles(geom_wgs84, 3035, MAX_SIDE_M, resolution_value)
     elif cdse_dataset.get("NUTSID"):
         polygon_data = get_polygon(cdse_dataset["NUTSID"])
         geom_wgs84 = polygon_data["geometry"].iloc[0]
+        tiles = plan_tiles(geom_wgs84, 3035, MAX_SIDE_M,
+                           resolution_value, MAX_POINTS)
     else:
         raise ValueError("Dataset must contain either BoundingBox or NUTSID")
 
-    tiles = plan_tiles(geom_wgs84, 3035, MAX_SIDE_M, MAX_POINTS,
-                       resolution_value)
     geoms_out = [to_multipolygon(reproject_geom(
         t["clip_geom"], 3035, 4326)) for t in tiles]
 
@@ -207,7 +204,6 @@ def create_batches(cdse_dataset):
 
     time_range_start = cdse_dataset["TemporalFilter"]["StartDate"]
     time_range_end = cdse_dataset["TemporalFilter"]["EndDate"]
-    crs_url = _generate_crs_url("EPSG:4326")
 
     s3 = boto3.client(
         "s3",
@@ -242,17 +238,9 @@ def create_batches(cdse_dataset):
     if response_layers.status_code == 200:
         data = response_layers.json()
         layer_ids = [d["id"] for d in data]
-        evalscript = generate_evalscript(layer_ids)
     else:
         print(f"Error {response_layers.status_code}: {response_layers.text}")
         return {"batch_id": None, "error": response_layers.text}
-
-    responses = []
-    for layer_id in layer_ids:
-        responses.append({
-            "identifier": layer_id,
-            "format": {"type": "image/tiff"}
-        })
 
     all_results = []
     for feature in catalog_data["features"]:
@@ -262,28 +250,26 @@ def create_batches(cdse_dataset):
         start = (dt - timedelta(seconds=10)).strftime("%Y-%m-%dT%H:%M:%SZ")
         end = (dt + timedelta(seconds=10)).strftime("%Y-%m-%dT%H:%M:%SZ")
 
+        dt_forName = dt.strftime("%Y%m%dT%H%M%SZ")
+
+        evalscript = generate_evalscript(layer_ids, dt_forName)
+        responses = []
+
+        for layer_id in layer_ids:
+            responses.append({
+                "identifier": f"{layer_id}_{dt_forName}",
+                "format": {"type": "image/tiff"}
+            })
+
         for idx, tile in enumerate(tiles, start=1):
             feature_id = f"tile_{idx}"
             token = get_token()
             headers = {"Authorization": f"Bearer {token}",
                        "Content-Type": "application/json"}
 
-            if cdse_dataset.get("BoundingBox"):
-                minx, miny, maxx, maxy = gdf.total_bounds
-                payload_bounds = {
-                    "bbox": [minx, miny, maxx, maxy],
-                    "properties": {"crs": crs_url}
-                }
-            else:
-                payload_bounds = {
-                    "geometry": gdf.geometry.iloc[0].__geo_interface__,
-                    "properties": {"crs": crs_url}
-                }
-
             payload = {
                 "processRequest": {
                     "input": {
-                        "bounds": payload_bounds,
                         "data": [
                             {
                                 "type": "byoc-" + datasource,
