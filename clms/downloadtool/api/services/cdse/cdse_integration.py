@@ -260,77 +260,71 @@ def create_batches(cdse_dataset):
                 "identifier": f"{layer_id}_{dt_forName}",
                 "format": {"type": "image/tiff"}
             })
+        
+        token = get_token()
+        headers = {"Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json"}
 
-        for idx, tile in enumerate(tiles, start=1):
-            feature_id = f"tile_{idx}"
-            token = get_token()
-            headers = {"Authorization": f"Bearer {token}",
-                       "Content-Type": "application/json"}
-
-            payload = {
-                "processRequest": {
-                    "input": {
-                        "data": [
-                            {
-                                "type": "byoc-" + datasource,
-                                "dataFilter": {
-                                    "timeRange": {
-                                        "from": start, "to": end
-                                    }
+        payload = {
+            "processRequest": {
+                "input": {
+                    "data": [
+                        {
+                            "type": "byoc-" + datasource,
+                            "dataFilter": {
+                                "timeRange": {
+                                    "from": start, "to": end
                                 }
                             }
-                        ]
-                    },
-                    "output": {"responses": responses},
-                    "evalscript": evalscript
-                },
-                "input": {
-                    "type": "geopackage",
-                    "features": {
-                        "s3": {
-                            "url": gpkg_url,
-                            "accessKey": config['s3_access_key'],
-                            "secretAccessKey": config['s3_secret_key'],
-                            "featureId": feature_id
                         }
-                    }
+                    ]
                 },
-                "output": {
-                    "type": "raster",
-                    "delivery": {
-                        "s3": {
-                            "url": f"s3://{config['s3_bucket_name']}/output",
-                            "accessKey": config['s3_access_key'],
-                            "secretAccessKey": config['s3_secret_key']
-                        }
+                "output": {"responses": responses},
+                "evalscript": evalscript
+            },
+            "input": {
+                "type": "geopackage",
+                "features": {
+                    "s3": {
+                        "url": gpkg_url,
+                        "accessKey": config['s3_access_key'],
+                        "secretAccessKey": config['s3_secret_key'],                        
                     }
-                },
-                "description": f"ndvi_{feature_id}"
-            }
-            response = requests.post(
-                config['batch_url'], headers=headers, json=payload)
+                }
+            },
+            "output": {
+                "type": "raster",
+                "delivery": {
+                    "s3": {
+                        "url": f"s3://{config['s3_bucket_name']}/output",
+                        "accessKey": config['s3_access_key'],
+                        "secretAccessKey": config['s3_secret_key']
+                    }
+                }
+            },
+            "description": f"{dt_forName}"
+        }
+        response = requests.post(
+            config['batch_url'], headers=headers, json=payload)
 
-            if response.status_code != 201:
-                print(
-                    f"Batch failed: {response.status_code} - {response.text}")
-                return {'batch_id': None, 'error': response.text}
+        if response.status_code != 201:
+            print(
+                f"Batch failed: {response.status_code} - {response.text}")
+            return {'batch_id': None, 'error': response.text}
 
-            response_json = response.json()
-            batch_id = response_json['id']
+        response_json = response.json()
+        batch_id = response_json['id']
 
-            start_batch_response = start_batch(batch_id)
-            if start_batch_response.status_code not in [200, 204]:
-                print("Error starting batch:", start_batch_response.text)
-                continue
-            print(f"Batch {batch_id} started for {feature_id}")
+        start_batch_response = start_batch(batch_id)
+        if start_batch_response.status_code not in [200, 204]:
+            print("Error starting batch:", start_batch_response.text)
+            continue
+        print(f"Batch {batch_id} started for date {dt_str}")
 
-            all_results.append({
-                "batch_id": batch_id,
-                "tile_id": idx,
-                "width": tile["width_px"],
-                "height": tile["height_px"],
-                "gpkg_name": gpkg_name,
-            })
+        all_results.append({
+            "batch_id": batch_id,
+            "gpkg_name": gpkg_name,
+        })
 
     return all_results
 
