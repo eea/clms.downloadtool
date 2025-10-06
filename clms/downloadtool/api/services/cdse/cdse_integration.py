@@ -116,12 +116,14 @@ def generate_evalscript(layer_ids, dt_forName):
     output_items = []
     for layer_id in layer_ids:
         output_items.append(
-            f'      {{ id: "{layer_id}_{dt_forName}", bands: 1}}')
+            f"""{{ id: "{layer_id}_{dt_forName}", bands: 1, sampleType: "FLOAT32"}}""")    # noqa: E501
     output_array = ",\n".join(output_items)
 
     # Create return object for evaluatePixel
     return_items = []
+    band_algebra = ""
     for layer_id in layer_ids:
+        band_algebra = band_algebra + f"""\nvar {layer_id}_outputVal = samples.dataMask === 1 ? samples.{layer_id} : NaN;"""    # noqa: E501
         return_items.append(
             f'    {layer_id}_{dt_forName}: [samples.{layer_id}]')
     return_object = ",\n".join(return_items)
@@ -141,6 +143,7 @@ function setup() {{
 }}
 
 function evaluatePixel(samples) {{
+  {band_algebra}
   return {{
 {return_object}
   }};
