@@ -16,7 +16,7 @@ import requests
 from plone import api
 
 from clms.downloadtool.api.services.cdse.cdse_helpers import (
-    plan_tiles, to_multipolygon, reproject_geom, request_Catalog_API
+    plan_tiles, to_multipolygon, reproject_geom, request_Catalog_API, extract_layer_params_map
 )
 from clms.downloadtool.api.services.cdse.s3_cleanup import (
     list_files, delete_file, delete_directory
@@ -107,7 +107,7 @@ def get_token():
     return token
 
 
-def generate_evalscript(layer_ids, dt_forName):
+def generate_evalscript(layer_ids, extra_parameters, dt_forName):
     """Generate evalscript dynamically based on layer IDs"""
     # Create input array with layer IDs plus dataMask
     input_array = json.dumps(layer_ids + ["dataMask"])
@@ -123,7 +123,10 @@ def generate_evalscript(layer_ids, dt_forName):
     return_items = []
     band_algebra = ""
     for layer_id in layer_ids:
-        band_algebra = band_algebra + f"""\nvar {layer_id}_outputVal = samples.dataMask === 1 ? samples.{layer_id} : NaN;"""    # noqa: E501
+        band_algebra = band_algebra + f"""
+        var {layer_id}_val = samples.{layer_id} * {extra_parameters[layer_id]["factor"]} + {extra_parameters[layer_id]["offset"]};
+        var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : NaN;
+        """    # noqa: E501
         return_items.append(
             f'    {layer_id}_{dt_forName}: [samples.{layer_id}]')
     return_object = ",\n".join(return_items)
@@ -240,7 +243,8 @@ def create_batches(cdse_dataset):
 
     if response_layers.status_code == 200:
         data = response_layers.json()
-        layer_ids = [d["id"] for d in data]
+        parsed_map = extract_layer_params_map(data)
+        layer_ids = list(parsed_map.keys())
     else:
         print(f"Error {response_layers.status_code}: {response_layers.text}")
         return {"batch_id": None, "error": response_layers.text}
@@ -255,7 +259,7 @@ def create_batches(cdse_dataset):
 
         dt_forName = dt.strftime("%Y%m%dT%H%M%SZ")
 
-        evalscript = generate_evalscript(layer_ids, dt_forName)
+        evalscript = generate_evalscript(layer_ids, parsed_map, dt_forName)
         responses = []
 
         for layer_id in layer_ids:

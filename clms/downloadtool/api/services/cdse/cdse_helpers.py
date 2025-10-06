@@ -5,6 +5,11 @@ from shapely.geometry import box, Polygon, MultiPolygon
 from shapely.ops import transform
 import pyproj
 import numpy as np
+import re
+import ast
+import operator
+import json
+
 
 MAX_PX = 3500
 
@@ -143,3 +148,61 @@ def request_Catalog_API(token, byoc_id, bbox_array, date_from, date_to,
         return response.json()
     print(f"Error {response.status_code}: {response.text}")
     return False
+
+def _safe_eval_expr(expr):
+    """
+    Parses string and turns them into number and unary op (+/-) or 
+    binary op (+, -, *, /, //) evaluate left and right, then apply the operator.
+    """
+    def _eval(node):
+        if isinstance(node, ast.Expression):
+            return _eval(node.body)
+        if isinstance(node, ast.Num):
+            return node.n
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+            return node.value
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
+            val = _eval(node.operand)
+            return +val if isinstance(node.op, ast.UAdd) else -val
+        if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv)):
+            left = _eval(node.left)
+            right = _eval(node.right)
+            ops = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul, ast.Div: operator.truediv, ast.FloorDiv: operator.floordiv}
+            return ops[type(node.op)](left, right)
+        raise ValueError("Unsupported expression")
+    tree = ast.parse(expr, mode="eval")
+    return float(_eval(tree))
+
+def parse_factor_offset(evalscript):
+    factor = None
+    offset = None
+    m_factor = re.search(r"\bconst\s+factor\s*=\s*([^;]+);", evalscript, re.IGNORECASE)
+    m_offset = re.search(r"\bconst\s+offset\s*=\s*([^;]+);", evalscript, re.IGNORECASE)
+    if m_factor:
+        factor = _safe_eval_expr(m_factor.group(1).strip())
+    if m_offset:
+        offset = _safe_eval_expr(m_offset.group(1).strip())
+    return factor, offset
+
+def extract_layer_params_map(layers):
+    results = {}
+    for layer in layers:
+        layer_id = layer.get("id")
+        styles = layer.get("styles", [])
+        preferred = layer.get("defaultStyleName") or "default"
+        evalscript = None
+        for s in styles:
+            if s.get("name") == preferred and "evalScript" in s:
+                evalscript = s["evalScript"]
+                break
+        if evalscript is None:
+            for s in styles:
+                if "evalScript" in s:
+                    evalscript = s["evalScript"]
+                    break
+        factor, offset = (None, None) if evalscript is None else parse_factor_offset(evalscript)
+        results[layer_id] = {"offset": offset, "factor": factor}
+    return results
+
+def to_json(data):
+    return json.dumps(data, ensure_ascii=False, indent=2)
