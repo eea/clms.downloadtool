@@ -26,8 +26,8 @@ def get_dates(byoc, token):
     now = datetime.now(timezone.utc)
     now_formatted = now.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    next = -1
-    while next != 0:
+    next_search = -1
+    while next_search != 0:
         search_all = {
             "collections": [f"byoc-{byoc}"],
             "datetime": f"1970-01-01T00:00:00Z/{now_formatted}",
@@ -37,8 +37,8 @@ def get_dates(byoc, token):
         }
         # pylint: disable=line-too-long
         # next: 0 is not allowed by API, so we need to omit it for the first call  # noqa: E501
-        if next != -1:
-            search_all["next"] = next
+        if next_search != -1:
+            search_all["next"] = next_search
 
         search_response = requests.post(
             CATALOG_API_URL, headers=headers, json=search_all
@@ -54,9 +54,9 @@ def get_dates(byoc, token):
 
             # pylint: disable=line-too-long
             if "context" in catalog_entries and "next" in catalog_entries["context"]:  # noqa: E501
-                next = catalog_entries["context"]["next"]
+                next_search = catalog_entries["context"]["next"]
             else:
-                next = 0
+                next_search = 0
         else:
             print(
                 "Error calling catalog API:",
@@ -102,6 +102,7 @@ def get_geometry(byoc, token):
                 entry["geometry"] = f["geometry"]
 
             return entry
+        return None
     else:
         print(
             "Error calling catalog API:",
