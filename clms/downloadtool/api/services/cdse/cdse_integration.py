@@ -154,15 +154,16 @@ function evaluatePixel(samples) {{
 
 def create_batches(cdse_dataset):
     """Create batches"""
-    match = re.search(r"raster\s+(\d+)\s*(km|m)", cdse_dataset["DatasetTitle"])
+    match = re.search(r"raster\s+([\d.]+)\s*(km|m)",
+                      cdse_dataset["DatasetTitle"])
 
     if match:
         value, unit = match.groups()
-        value = int(value.strip())
+        value = float(value.strip())
         if unit == "km":
             value *= 1000
-        # RESOLUTION_M = value
-        resolution_value = value
+
+        resolution_value = int(value)
 
         MAX_SIDE_M = resolution_value * MAX_PX
     else:
