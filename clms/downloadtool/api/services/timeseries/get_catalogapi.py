@@ -102,7 +102,6 @@ def get_geometry(byoc, token):
                 entry["geometry"] = f["geometry"]
 
             return entry
-        return None
     else:
         print(
             "Error calling catalog API:",
@@ -111,6 +110,7 @@ def get_geometry(byoc, token):
         )
         # WIP send error response
         return None
+    return None
 
 
 def get_full_response(byoc, token):
