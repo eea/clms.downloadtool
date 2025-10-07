@@ -138,12 +138,7 @@ def get_cached_response(byoc, force_refresh=False):
     result = get_full_response(byoc, token)
 
     # cache only if it has actual data
-    if (
-        "dates" in result
-        and len(result["dates"]) > 0
-        and "metadata" in result
-        and result["metadata"] is not None
-    ):
+    if "dates" in result and len(result["dates"]) > 0 and "metadata" in result and result["metadata"] is not None:  # noqa: E501
         result["cached"] = cache_key
         _local_dates_cache[byoc] = result
     return result
