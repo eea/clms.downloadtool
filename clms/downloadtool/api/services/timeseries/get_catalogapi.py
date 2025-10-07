@@ -5,7 +5,10 @@ Specific endpoint to get catalog api dates of CDSE dataset
 # -*- coding: utf-8 -*-
 from datetime import datetime, timezone, timedelta
 import requests
-from clms.downloadtool.api.services.cdse.cdse_integration import get_token, CATALOG_API_URL
+from clms.downloadtool.api.services.cdse.cdse_integration import (
+    get_token,
+    CATALOG_API_URL,
+)
 from plone.restapi.services import Service
 
 # cache the results as it can take a lot of requests to get all data
@@ -14,8 +17,10 @@ _local_dates_cache = {}
 
 # Get all dates
 def get_dates(byoc, token):
-    headers = {"Authorization": f"Bearer {token}",
-               "Content-Type": "application/json"}
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
 
     response_dates = []
     now = datetime.now(timezone.utc)
@@ -28,30 +33,37 @@ def get_dates(byoc, token):
             "datetime": f"1970-01-01T00:00:00Z/{now_formatted}",
             "bbox": [-180, -90, 180, 90],
             "distinct": "date",
-            "limit": 100
+            "limit": 100,
         }
         # next: 0 is not allowed by API, so we need to omit it for the first call
         if next != -1:
-            search_all['next'] = next
+            search_all["next"] = next
 
         search_response = requests.post(
-            CATALOG_API_URL, headers=headers, json=search_all)
+            CATALOG_API_URL, headers=headers, json=search_all
+        )
 
         # print(search_response)
         if search_response.status_code == 200:
             # print(search_response.text)
             catalog_entries = search_response.json()
 
-            if 'features' in catalog_entries:
-                response_dates.extend(catalog_entries['features'])
+            if "features" in catalog_entries:
+                response_dates.extend(catalog_entries["features"])
 
-            if 'context' in catalog_entries and 'next' in catalog_entries['context']:
-                next = catalog_entries['context']['next']
+            if (
+                "context" in catalog_entries
+                and "next" in catalog_entries["context"]
+            ):
+                next = catalog_entries["context"]["next"]
             else:
                 next = 0
         else:
-            print("Error calling catalog API:",
-                  search_response.status_code, search_response.text)
+            print(
+                "Error calling catalog API:",
+                search_response.status_code,
+                search_response.text,
+            )
             # TODO send error response
             break
     return response_dates
@@ -59,8 +71,10 @@ def get_dates(byoc, token):
 
 # Get geometry from the first search entry
 def get_geometry(byoc, token):
-    headers = {"Authorization": f"Bearer {token}",
-               "Content-Type": "application/json"}
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
 
     now = datetime.now(timezone.utc)
     now_formatted = now.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -69,29 +83,36 @@ def get_geometry(byoc, token):
         "collections": [f"byoc-{byoc}"],
         "datetime": f"1970-01-01T00:00:00Z/{now_formatted}",
         "bbox": [-180, -90, 180, 90],
-        "limit": 1
+        "limit": 1,
     }
 
     search_response = requests.post(
-        CATALOG_API_URL, headers=headers, json=search_one)
+        CATALOG_API_URL, headers=headers, json=search_one
+    )
 
     # print(search_response)
     if search_response.status_code == 200:
         # print(search_response.text)
         catalog_entries = search_response.json()
 
-        if 'features' in catalog_entries and len(catalog_entries['features']) > 0:
+        if (
+            "features" in catalog_entries
+            and len(catalog_entries["features"]) > 0
+        ):
             entry = {}
-            f = catalog_entries['features'][0]
-            if 'bbox' in f:
-                entry['bbox'] = f['bbox']
-            if 'geometry' in f:
-                entry['geometry'] = f['geometry']
+            f = catalog_entries["features"][0]
+            if "bbox" in f:
+                entry["bbox"] = f["bbox"]
+            if "geometry" in f:
+                entry["geometry"] = f["geometry"]
 
             return entry
     else:
-        print("Error calling catalog API:",
-              search_response.status_code, search_response.text)
+        print(
+            "Error calling catalog API:",
+            search_response.status_code,
+            search_response.text,
+        )
         # TODO send error response
         return None
 
@@ -128,7 +149,12 @@ def get_cached_response(byoc, force_refresh=False):
     result = get_full_response(byoc, token)
 
     # cache only if it has actual data
-    if "dates" in result and len(result["dates"]) > 0 and "metadata" in result and result["metadata"] is not None:
+    if (
+        "dates" in result
+        and len(result["dates"]) > 0
+        and "metadata" in result
+        and result["metadata"] is not None
+    ):
         result["cached"] = cache_key
         _local_dates_cache[byoc] = result
     return result
