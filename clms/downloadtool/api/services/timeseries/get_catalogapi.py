@@ -17,10 +17,8 @@ _local_dates_cache = {}
 
 # Get all dates
 def get_dates(byoc, token):
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-    }
+    headers = {"Authorization": f"Bearer {token}",
+               "Content-Type": "application/json"}
 
     response_dates = []
     now = datetime.now(timezone.utc)
@@ -35,7 +33,7 @@ def get_dates(byoc, token):
             "distinct": "date",
             "limit": 100,
         }
-        # next: 0 is not allowed by API, so we need to omit it for the first call
+        # next: 0 is not allowed by API, so we need to omit it for the first call  # noqa: E501
         if next != -1:
             search_all["next"] = next
 
@@ -51,10 +49,7 @@ def get_dates(byoc, token):
             if "features" in catalog_entries:
                 response_dates.extend(catalog_entries["features"])
 
-            if (
-                "context" in catalog_entries
-                and "next" in catalog_entries["context"]
-            ):
+            if "context" in catalog_entries and "next" in catalog_entries["context"]:  # noqa: E501
                 next = catalog_entries["context"]["next"]
             else:
                 next = 0
@@ -71,10 +66,8 @@ def get_dates(byoc, token):
 
 # Get geometry from the first search entry
 def get_geometry(byoc, token):
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-    }
+    headers = {"Authorization": f"Bearer {token}",
+               "Content-Type": "application/json"}
 
     now = datetime.now(timezone.utc)
     now_formatted = now.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -87,18 +80,14 @@ def get_geometry(byoc, token):
     }
 
     search_response = requests.post(
-        CATALOG_API_URL, headers=headers, json=search_one
-    )
+        CATALOG_API_URL, headers=headers, json=search_one)
 
     # print(search_response)
     if search_response.status_code == 200:
         # print(search_response.text)
         catalog_entries = search_response.json()
 
-        if (
-            "features" in catalog_entries
-            and len(catalog_entries["features"]) > 0
-        ):
+        if "features" in catalog_entries and len(catalog_entries["features"]) > 0:  # noqa: E501
             entry = {}
             f = catalog_entries["features"][0]
             if "bbox" in f:
@@ -123,7 +112,7 @@ def get_full_response(byoc, token):
     return {"metadata": first_geometry, "dates": all_dates}
 
 
-# creates a date cache key that is not at midnight as the CDSE data is usually updated around noon
+# creates a date cache key that is not at midnight as the CDSE data is usually updated around noon  # noqa: E501
 def current_cache_key():
     now = datetime.now(timezone.utc)
 
