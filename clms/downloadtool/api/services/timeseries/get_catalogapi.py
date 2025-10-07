@@ -15,8 +15,10 @@ from plone.restapi.services import Service
 _local_dates_cache = {}
 
 
-# Get all dates
 def get_dates(byoc, token):
+    """
+    Get all dates
+    """
     headers = {"Authorization": f"Bearer {token}",
                "Content-Type": "application/json"}
 
@@ -33,6 +35,7 @@ def get_dates(byoc, token):
             "distinct": "date",
             "limit": 100,
         }
+        # pylint: disable=line-too-long
         # next: 0 is not allowed by API, so we need to omit it for the first call  # noqa: E501
         if next != -1:
             search_all["next"] = next
@@ -49,6 +52,7 @@ def get_dates(byoc, token):
             if "features" in catalog_entries:
                 response_dates.extend(catalog_entries["features"])
 
+            # pylint: disable=line-too-long
             if "context" in catalog_entries and "next" in catalog_entries["context"]:  # noqa: E501
                 next = catalog_entries["context"]["next"]
             else:
@@ -59,13 +63,15 @@ def get_dates(byoc, token):
                 search_response.status_code,
                 search_response.text,
             )
-            # TODO send error response
+            # WIP send error response
             break
     return response_dates
 
 
-# Get geometry from the first search entry
 def get_geometry(byoc, token):
+    """
+    Get geometry from the first search entry
+    """
     headers = {"Authorization": f"Bearer {token}",
                "Content-Type": "application/json"}
 
@@ -86,7 +92,7 @@ def get_geometry(byoc, token):
     if search_response.status_code == 200:
         # print(search_response.text)
         catalog_entries = search_response.json()
-
+        # pylint: disable=line-too-long
         if "features" in catalog_entries and len(catalog_entries["features"]) > 0:  # noqa: E501
             entry = {}
             f = catalog_entries["features"][0]
@@ -102,18 +108,24 @@ def get_geometry(byoc, token):
             search_response.status_code,
             search_response.text,
         )
-        # TODO send error response
+        # WIP send error response
         return None
 
 
 def get_full_response(byoc, token):
+    """
+    Get full response from Catalog API
+    """
     all_dates = get_dates(byoc, token)
     first_geometry = get_geometry(byoc, token)
     return {"metadata": first_geometry, "dates": all_dates}
 
 
-# creates a date cache key that is not at midnight as the CDSE data is usually updated around noon  # noqa: E501
 def current_cache_key():
+    """
+    creates a date cache key that is not at midnight
+    as the CDSE data is usually updated around noon
+    """
     now = datetime.now(timezone.utc)
 
     # define cutoff = today at 15:00 UTC
@@ -129,6 +141,9 @@ def current_cache_key():
 
 
 def get_cached_response(byoc, force_refresh=False):
+    """
+    Get cached response
+    """
     cache_key = current_cache_key()
     if byoc in _local_dates_cache and not force_refresh:
         if _local_dates_cache[byoc]["cached"] == cache_key:
@@ -138,6 +153,7 @@ def get_cached_response(byoc, force_refresh=False):
     result = get_full_response(byoc, token)
 
     # cache only if it has actual data
+    # pylint: disable=line-too-long
     if "dates" in result and len(result["dates"]) > 0 and "metadata" in result and result["metadata"] is not None:  # noqa: E501
         result["cached"] = cache_key
         _local_dates_cache[byoc] = result
