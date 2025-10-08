@@ -173,11 +173,15 @@ def _safe_eval_expr(expr):
             return _eval(node.body)
         if isinstance(node, ast.Num):
             return node.n
+        # pylint: disable=line-too-long        
         if (isinstance(node, ast.Constant) and isinstance(node.value, (int, float))):    # noqa: E501
             return node.value
+        # pylint: disable=line-too-long
+        
         if (isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub))):    # noqa: E501
             val = _eval(node.operand)
             return +val if isinstance(node.op, ast.UAdd) else -val
+        # pylint: disable=line-too-long
         if (isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv),)):    # noqa: E501
             left = _eval(node.left)
             right = _eval(node.right)
