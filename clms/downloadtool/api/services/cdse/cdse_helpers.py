@@ -143,7 +143,7 @@ def request_Catalog_API(token, byoc_id, bbox_array, date_from, date_to,
         "collections": [byoc_id],
         "limit": limit
     }
-    response = requests.post(url_catalog_api, headers=headers, json=data)
+    response = requests.post(url_catalog_api, headers=headers, json=data, timeout=30)
     if response.status_code == 200:
         print("ok")
         return response.json()
