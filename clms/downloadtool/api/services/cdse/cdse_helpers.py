@@ -174,23 +174,17 @@ def _safe_eval_expr(expr):
         if isinstance(node, ast.Num):
             return node.n
         if (
-            isinstance(node, ast.Constant)
-            and isinstance(node.value, (int, float))
+            isinstance(node, ast.Constant) and isinstance(node.value, (int, float))    # noqa: E501
         ):
             return node.value
         if (
-            isinstance(node, ast.UnaryOp)
-            and isinstance(node.op, (ast.UAdd, ast.USub))
+            isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub))    # noqa: E501
         ):
             val = _eval(node.operand)
             return +val if isinstance(node.op, ast.UAdd) else -val
         if (
-            isinstance(node, ast.BinOp)
-            and isinstance(
-                node.op,
-                (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv),
-            )
-        ):
+            isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv),)    # noqa: E501
+            ):
             left = _eval(node.left)
             right = _eval(node.right)
             ops = {
