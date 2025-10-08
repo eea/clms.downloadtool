@@ -162,7 +162,6 @@ def request_Catalog_API(token, byoc_id, bbox_array, date_from, date_to,
     return False
 
 
-
 def _safe_eval_expr(expr):
     """
     Parses string and turns them into number and unary op (+/-), or
@@ -174,18 +173,24 @@ def _safe_eval_expr(expr):
             return _eval(node.body)
         if isinstance(node, ast.Num):
             return node.n
-        if isinstance(node, ast.Constant) and \
-                isinstance(node.value, (int, float)):
+        if (
+            isinstance(node, ast.Constant)
+            and isinstance(node.value, (int, float))
+        ):
             return node.value
-        if isinstance(node, ast.UnaryOp) and \
-                isinstance(node.op, (ast.UAdd, ast.USub)):
+        if (
+            isinstance(node, ast.UnaryOp)
+            and isinstance(node.op, (ast.UAdd, ast.USub))
+        ):
             val = _eval(node.operand)
             return +val if isinstance(node.op, ast.UAdd) else -val
-        if isinstance(node, ast.BinOp) and \
-                isinstance(
-                    node.op,
-                    (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv),
-                ):
+        if (
+            isinstance(node, ast.BinOp)
+            and isinstance(
+                node.op,
+                (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv),
+            )
+        ):
             left = _eval(node.left)
             right = _eval(node.right)
             ops = {
@@ -199,7 +204,6 @@ def _safe_eval_expr(expr):
         raise ValueError("Unsupported expression")
     tree = ast.parse(expr, mode="eval")
     return float(_eval(tree))
-
 
 
 def parse_factor_offset(evalscript):
@@ -221,7 +225,6 @@ def parse_factor_offset(evalscript):
     if m_offset:
         offset = _safe_eval_expr(m_offset.group(1).strip())
     return factor, offset
-
 
 
 def extract_layer_params_map(layers):
@@ -247,7 +250,6 @@ def extract_layer_params_map(layers):
         )
         results[layer_id] = {"offset": offset, "factor": factor}
     return results
-
 
 
 def to_json(data):
