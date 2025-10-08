@@ -11,4 +11,12 @@
       name="@get-time-series-metadata"
       />
 
+    <plone:service
+      method="GET"
+      factory=".get_catalogapi.GetCatalogApiDates"
+      for="Products.CMFCore.interfaces.ISiteRoot"
+      permission="clms.downloadtool.usedownloadtool"
+      name="@get_catalogapi_dates"
+      />
+
 </configure>
