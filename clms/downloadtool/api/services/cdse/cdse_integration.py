@@ -134,13 +134,11 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
         var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : NaN;
         """    # noqa: E501
         return_items.append(
-            f'    {layer_id}_{dt_forName}: [samples.{layer_id}]')
+            f'    {layer_id}_{dt_forName}: [{layer_id}_outputVal]')
     return_object = ",\n".join(return_items)
 
     # Generate JavaScript evalscript for Sentinel Hub
     evalscript = f"""//VERSION=3
-const factor = 1;
-const offset = 0;
 
 function setup() {{
   return {{

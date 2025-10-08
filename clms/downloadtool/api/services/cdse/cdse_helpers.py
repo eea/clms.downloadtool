@@ -18,7 +18,10 @@ MAX_PX = 3500
 def reproject_geom(geom, src_epsg, dst_epsg):
     """Reproject"""
     project = pyproj.Transformer.from_crs(
-        f"EPSG:{src_epsg}", f"EPSG:{dst_epsg}", always_xy=True).transform
+        f"EPSG:{src_epsg}",
+        f"EPSG:{dst_epsg}",
+        always_xy=True,
+    ).transform
     return transform(project, geom)
 
 
@@ -30,7 +33,9 @@ def extract_polygons(geom):
         return MultiPolygon([geom])
     if isinstance(geom, MultiPolygon):
         return geom
-    raise ValueError(f"Unsupported geometry type: {geom.geom_type}")
+    raise ValueError(
+        f"Unsupported geometry type: {geom.geom_type}"
+    )
 
 
 def count_vertices(geom):
@@ -125,7 +130,9 @@ def to_multipolygon(geom):
         return MultiPolygon([geom])
     if isinstance(geom, MultiPolygon):
         return geom
-    raise ValueError(f"Unsupported geometry type: {geom.geom_type}")
+    raise ValueError(
+        f"Unsupported geometry type: {geom.geom_type}"
+    )
 
 
 def request_Catalog_API(token, byoc_id, bbox_array, date_from, date_to,
@@ -143,7 +150,11 @@ def request_Catalog_API(token, byoc_id, bbox_array, date_from, date_to,
         "collections": [byoc_id],
         "limit": limit
     }
-    response = requests.post(url_catalog_api, headers=headers, json=data, timeout=30)
+    response = requests.post(
+        url_catalog_api,
+        headers=headers,
+        json=data,
+    )
     if response.status_code == 200:
         print("ok")
         return response.json()
@@ -154,33 +165,27 @@ def request_Catalog_API(token, byoc_id, bbox_array, date_from, date_to,
 
 def _safe_eval_expr(expr):
     """
-    Parses string and turns them into number and unary op (+/-) or
-    binary op (+, -, *, /, //) evaluate left and right, then apply the
-    operator.
+    Parses string and turns them into number and unary op (+/-), or
+    binary op (+, -, *, /, //).
+    Evaluate left and right, then apply the operator.
     """
     def _eval(node):
         if isinstance(node, ast.Expression):
             return _eval(node.body)
         if isinstance(node, ast.Num):
             return node.n
-        if (
-            isinstance(node, ast.Constant)
-            and isinstance(node.value, (int, float))
-        ):
+        if isinstance(node, ast.Constant) and \
+                isinstance(node.value, (int, float)):
             return node.value
-        if (
-            isinstance(node, ast.UnaryOp)
-            and isinstance(node.op, (ast.UAdd, ast.USub))
-        ):
+        if isinstance(node, ast.UnaryOp) and \
+                isinstance(node.op, (ast.UAdd, ast.USub)):
             val = _eval(node.operand)
             return +val if isinstance(node.op, ast.UAdd) else -val
-        if (
-            isinstance(node, ast.BinOp)
-            and isinstance(
-                node.op,
-                (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv),
-            )
-        ):
+        if isinstance(node, ast.BinOp) and \
+                isinstance(
+                    node.op,
+                    (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv),
+                ):
             left = _eval(node.left)
             right = _eval(node.right)
             ops = {
@@ -237,8 +242,7 @@ def extract_layer_params_map(layers):
                     evalscript = s["evalScript"]
                     break
         factor, offset = (
-            (None, None)
-            if evalscript is None
+            (None, None) if evalscript is None
             else parse_factor_offset(evalscript)
         )
         results[layer_id] = {"offset": offset, "factor": factor}
