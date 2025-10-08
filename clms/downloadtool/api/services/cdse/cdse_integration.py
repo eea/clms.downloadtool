@@ -16,7 +16,11 @@ import requests
 from plone import api
 
 from clms.downloadtool.api.services.cdse.cdse_helpers import (
-    plan_tiles, to_multipolygon, reproject_geom, request_Catalog_API
+    plan_tiles,
+    to_multipolygon,
+    reproject_geom,
+    request_Catalog_API,
+    extract_layer_params_map,
 )
 from clms.downloadtool.api.services.cdse.s3_cleanup import (
     list_files, delete_file, delete_directory
@@ -31,7 +35,9 @@ POLL_INTERVAL = 10
 LOCAL_GPKG_FILE = "area_of_interest.gpkg"
 GPKG_S3_KEY = "custom_grid/area_of_interest.gpkg"
 # pylint: disable=line-too-long
-CATALOG_API_URL = "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search"  # noqa: E501
+CATALOG_API_URL = (
+    "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search"
+)
 RESOLUTION_M = 1000  # default
 MAX_PX = 3500
 MAX_POINTS = 1500
@@ -107,7 +113,7 @@ def get_token():
     return token
 
 
-def generate_evalscript(layer_ids, dt_forName):
+def generate_evalscript(layer_ids, extra_parameters, dt_forName):
     """Generate evalscript dynamically based on layer IDs"""
     # Create input array with layer IDs plus dataMask
     input_array = json.dumps(layer_ids + ["dataMask"])
@@ -123,15 +129,16 @@ def generate_evalscript(layer_ids, dt_forName):
     return_items = []
     band_algebra = ""
     for layer_id in layer_ids:
-        band_algebra = band_algebra + f"""\nvar {layer_id}_outputVal = samples.dataMask === 1 ? samples.{layer_id} : NaN;"""    # noqa: E501
+        band_algebra = band_algebra + f"""
+        var {layer_id}_val = samples.{layer_id} * {extra_parameters[layer_id]["factor"]} + {extra_parameters[layer_id]["offset"]};
+        var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : NaN;
+        """    # noqa: E501
         return_items.append(
-            f'    {layer_id}_{dt_forName}: [samples.{layer_id}]')
+            f'    {layer_id}_{dt_forName}: [{layer_id}_outputVal]')
     return_object = ",\n".join(return_items)
 
     # Generate JavaScript evalscript for Sentinel Hub
     evalscript = f"""//VERSION=3
-const factor = 1;
-const offset = 0;
 
 function setup() {{
   return {{
@@ -241,7 +248,8 @@ def create_batches(cdse_dataset):
 
     if response_layers.status_code == 200:
         data = response_layers.json()
-        layer_ids = [d["id"] for d in data]
+        parsed_map = extract_layer_params_map(data)
+        layer_ids = list(parsed_map.keys())
     else:
         print(f"Error {response_layers.status_code}: {response_layers.text}")
         return {"batch_id": None, "error": response_layers.text}
@@ -256,7 +264,7 @@ def create_batches(cdse_dataset):
 
         dt_forName = dt.strftime("%Y%m%dT%H%M%SZ")
 
-        evalscript = generate_evalscript(layer_ids, dt_forName)
+        evalscript = generate_evalscript(layer_ids, parsed_map, dt_forName)
         responses = []
 
         for layer_id in layer_ids:
@@ -265,76 +273,72 @@ def create_batches(cdse_dataset):
                 "format": {"type": "image/tiff"}
             })
 
-        for idx, tile in enumerate(tiles, start=1):
-            feature_id = f"tile_{idx}"
-            token = get_token()
-            headers = {"Authorization": f"Bearer {token}",
-                       "Content-Type": "application/json"}
+        token = get_token()
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
 
-            payload = {
-                "processRequest": {
-                    "input": {
-                        "data": [
-                            {
-                                "type": "byoc-" + datasource,
-                                "dataFilter": {
-                                    "timeRange": {
-                                        "from": start, "to": end
-                                    }
+        payload = {
+            "processRequest": {
+                "input": {
+                    "data": [
+                        {
+                            "type": "byoc-" + datasource,
+                            "dataFilter": {
+                                "timeRange": {
+                                    "from": start, "to": end
                                 }
                             }
-                        ]
-                    },
-                    "output": {"responses": responses},
-                    "evalscript": evalscript
-                },
-                "input": {
-                    "type": "geopackage",
-                    "features": {
-                        "s3": {
-                            "url": gpkg_url,
-                            "accessKey": config['s3_access_key'],
-                            "secretAccessKey": config['s3_secret_key'],
-                            "featureId": feature_id
                         }
-                    }
+                    ]
                 },
-                "output": {
-                    "type": "raster",
-                    "delivery": {
-                        "s3": {
-                            "url": f"s3://{config['s3_bucket_name']}/output",
-                            "accessKey": config['s3_access_key'],
-                            "secretAccessKey": config['s3_secret_key']
-                        }
+                "output": {"responses": responses},
+                "evalscript": evalscript
+            },
+            "input": {
+                "type": "geopackage",
+                "features": {
+                    "s3": {
+                        "url": gpkg_url,
+                        "accessKey": config['s3_access_key'],
+                        "secretAccessKey": config['s3_secret_key'],
                     }
-                },
-                "description": f"ndvi_{feature_id}"
-            }
-            response = requests.post(
-                config['batch_url'], headers=headers, json=payload)
+                }
+            },
+            "output": {
+                "type": "raster",
+                "delivery": {
+                    "s3": {
+                        "url": f"s3://{config['s3_bucket_name']}/output",
+                        "accessKey": config['s3_access_key'],
+                        "secretAccessKey": config['s3_secret_key']
+                    }
+                }
+            },
+            "description": f"{dt_forName}"
+        }
+        response = requests.post(
+            config['batch_url'], headers=headers, json=payload)
 
-            if response.status_code != 201:
-                print(
-                    f"Batch failed: {response.status_code} - {response.text}")
-                return {'batch_id': None, 'error': response.text}
+        if response.status_code != 201:
+            print(
+                f"Batch failed: {response.status_code} - {response.text}")
+            return {'batch_id': None, 'error': response.text}
 
-            response_json = response.json()
-            batch_id = response_json['id']
+        response_json = response.json()
+        batch_id = response_json['id']
 
-            start_batch_response = start_batch(batch_id)
-            if start_batch_response.status_code not in [200, 204]:
-                print("Error starting batch:", start_batch_response.text)
-                continue
-            print(f"Batch {batch_id} started for {feature_id}")
+        start_batch_response = start_batch(batch_id)
+        if start_batch_response.status_code not in [200, 204]:
+            print("Error starting batch:", start_batch_response.text)
+            continue
+        print(f"Batch {batch_id} started for date {dt_str}")
 
-            all_results.append({
-                "batch_id": batch_id,
-                "tile_id": idx,
-                "width": tile["width_px"],
-                "height": tile["height_px"],
-                "gpkg_name": gpkg_name,
-            })
+        all_results.append({
+            "batch_id": batch_id,
+            "gpkg_name": gpkg_name,
+        })
 
     return all_results
 
