@@ -16,7 +16,11 @@ import requests
 from plone import api
 
 from clms.downloadtool.api.services.cdse.cdse_helpers import (
-    plan_tiles, to_multipolygon, reproject_geom, request_Catalog_API, extract_layer_params_map
+    plan_tiles,
+    to_multipolygon,
+    reproject_geom,
+    request_Catalog_API,
+    extract_layer_params_map,
 )
 from clms.downloadtool.api.services.cdse.s3_cleanup import (
     list_files, delete_file, delete_directory
@@ -31,7 +35,9 @@ POLL_INTERVAL = 10
 LOCAL_GPKG_FILE = "area_of_interest.gpkg"
 GPKG_S3_KEY = "custom_grid/area_of_interest.gpkg"
 # pylint: disable=line-too-long
-CATALOG_API_URL = "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search"  # noqa: E501
+CATALOG_API_URL = (
+    "https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/search"
+)
 RESOLUTION_M = 1000  # default
 MAX_PX = 3500
 MAX_POINTS = 1500
@@ -267,10 +273,12 @@ def create_batches(cdse_dataset):
                 "identifier": f"{layer_id}_{dt_forName}",
                 "format": {"type": "image/tiff"}
             })
-        
+
         token = get_token()
-        headers = {"Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json"}
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
 
         payload = {
             "processRequest": {
@@ -295,7 +303,7 @@ def create_batches(cdse_dataset):
                     "s3": {
                         "url": gpkg_url,
                         "accessKey": config['s3_access_key'],
-                        "secretAccessKey": config['s3_secret_key'],                        
+                        "secretAccessKey": config['s3_secret_key'],
                     }
                 }
             },
