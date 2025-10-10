@@ -15,7 +15,7 @@
       method="GET"
       factory=".get_catalogapi.GetCatalogApiDates"
       for="Products.CMFCore.interfaces.ISiteRoot"
-      permission="clms.downloadtool.usedownloadtool"
+      permission="zope2.View"
       name="@get_catalogapi_dates"
       />
 
