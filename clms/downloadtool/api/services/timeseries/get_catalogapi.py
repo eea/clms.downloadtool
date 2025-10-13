@@ -35,8 +35,7 @@ def get_dates(byoc, token):
             "distinct": "date",
             "limit": 100,
         }
-        # pylint: disable=line-too-long
-        # next: 0 is not allowed by API, so we need to omit it for the first call  # noqa: E501
+        # next: 0 is not allowed by API, so we omit it for the first call
         if next_search != -1:
             search_all["next"] = next_search
 
@@ -52,8 +51,8 @@ def get_dates(byoc, token):
             if "features" in catalog_entries:
                 response_dates.extend(catalog_entries["features"])
 
-            # pylint: disable=line-too-long
-            if "context" in catalog_entries and "next" in catalog_entries["context"]:  # noqa: E501
+            if "context" in catalog_entries and "next" in catalog_entries[
+                    "context"]:
                 next_search = catalog_entries["context"]["next"]
             else:
                 next_search = 0
@@ -92,8 +91,8 @@ def get_geometry(byoc, token):
     if search_response.status_code == 200:
         # print(search_response.text)
         catalog_entries = search_response.json()
-        # pylint: disable=line-too-long
-        if "features" in catalog_entries and len(catalog_entries["features"]) > 0:  # noqa: E501
+        if "features" in catalog_entries and len(
+                catalog_entries["features"]) > 0:
             entry = {}
             f = catalog_entries["features"][0]
             if "bbox" in f:
@@ -154,15 +153,20 @@ def get_cached_response(byoc, force_refresh=False):
     result = get_full_response(byoc, token)
 
     # cache only if it has actual data
-    # pylint: disable=line-too-long
-    if "dates" in result and len(result["dates"]) > 0 and "metadata" in result and result["metadata"] is not None:  # noqa: E501
+    if "dates" in result and len(
+        result["dates"]) > 0 and "metadata" in result and result[
+            "metadata"] is not None:
         result["cached"] = cache_key
         _local_dates_cache[byoc] = result
     return result
 
 
 class GetCatalogApiDates(Service):
-    """Endpoint to get the catalog api dates of a given dataset via byoc"""
+    """
+        Endpoint to get the catalog api dates of a given dataset via byoc
+        '/@get_catalogapi_dates?byoc=' + byoc + '&' +
+        'force_refresh=' + force_refresh
+    """
 
     def reply(self):
         """endpoint response"""
