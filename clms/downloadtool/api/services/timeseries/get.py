@@ -4,80 +4,51 @@ Specific endpoint to get metadata from a dataset W(T)MS service URL
 
 # -*- coding: utf-8 -*-
 from datetime import datetime
-import requests
 from clms.downloadtool.api.services.timeseries.utils import (
     get_metadata_from_service,
 )
 from clms.downloadtool.api.services.cdse.utils import is_cdse_dataset
+from clms.downloadtool.api.services.timeseries.get_catalogapi import (
+    get_cached_response
+)
 from plone import api
 from plone.restapi.services import Service
 
 
-def get_time_series_metadata_cdse(dataset):
-    """Get time series metadata for CDSE dataset"""
-    # View service
-    # https://land.copernicus.eu/cdse/swi_europe_1km_daily_v1?SERVICE=WMTS&REQUEST=GetCapabilities&VERSION=1.0.0
-    # Example from Unai
-    # https://land.copernicus.eu/cdse/wfs/swi_europe_1km_daily_v1?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0&TYPENAMES=byoc-bd02588b-7236-4b1e-9480-aeae7dce3c7a&COUNT=100&BBOX=-21039383,-22375217,21039383,22375217&OUTPUTFORMAT=application/json
-
-    # Example: 'swi_europe_1km_daily_v1' (from Mapviewer - View service)
-    cdse_dataset_id = dataset.mapviewer_viewservice.split("?")[
-        0].split("/")[-1]
-
-    download_info_items = dataset.dataset_download_information.get("items", [])
-    print("Get time series")
-    for info in download_info_items:
-        print("INFO")
-        byoc_collection_id = info.get("byoc_collection", "")
-
-        rev_proxy_url = "https://land.copernicus.eu/cdse"
-
-        fetch_url = (
-            f"{rev_proxy_url}/wfs/{cdse_dataset_id}"
-            f"?SERVICE=WFS&REQUEST=GetFeature&VERSION=2.0.0"
-            f"&TYPENAMES=byoc-{byoc_collection_id}&COUNT=100"
-            f"&BBOX=-21039383,-22375217,21039383,22375217"
-            f"&OUTPUTFORMAT=application/json"
-        )
-        print(fetch_url)
-
-        try:
-            res = requests.get(fetch_url)
-            if res.status_code != 200:
-                return {}
-            data = res.json()
-        except Exception:
-            return {}
-
-        dates = []
-        for feature in data['features']:
-            dates.append(feature['properties']['date'])
-
-        date_objs = [datetime.strptime(d, "%Y-%m-%d") for d in dates]
-        start_date = min(date_objs).strftime("%Y-%m-%d")
-        end_date = max(date_objs).strftime("%Y-%m-%d")
-
-        # value = {
-        #     'start': '2017-01-01',
-        #     'end': '2023-01-01',
-        #     'period': 'P1D',
-        #     'data_arrays':
-        #         ['2017-01-01', '2017-01-01', ..., '2023-01-01'],
-        #     'download_limit_temporal_extent': 365,
-        #     'mapviewer_istimeseries': True
-        # }
-
-        value = {}
-        value['start'] = start_date
-        value['end'] = end_date
-        value['data_arrays'] = dates
-        value['period'] = 'P1D'
-
-        return value
-
-
 class GetTimeSeriesMetadata(Service):
     """Endpoint to get the time series metadata of a given dataset"""
+
+    def get_time_series_metadata_cdse(self, dataset):
+        """Get time series metadata for CDSE dataset"""
+
+        download_info_items = dataset.dataset_download_information.get(
+            "items", [])
+        for info in download_info_items:
+            byoc_collection_id = info.get("byoc_collection", "")
+            res = get_cached_response(byoc_collection_id, force_refresh=False)
+            dates = res.get("dates", [])
+
+            date_objs = [datetime.strptime(d, "%Y-%m-%d") for d in dates]
+            start_date = min(date_objs).strftime("%Y-%m-%d")
+            end_date = max(date_objs).strftime("%Y-%m-%d")
+
+            # value = {
+            #     'start': '2017-01-01',
+            #     'end': '2023-01-01',
+            #     'period': 'P1D',
+            #     'data_arrays':
+            #         ['2017-01-01', '2017-01-01', ..., '2023-01-01'],
+            #     'download_limit_temporal_extent': 365,
+            #     'mapviewer_istimeseries': True
+            # }
+
+            value = {}
+            value['start'] = start_date
+            value['end'] = end_date
+            value['data_arrays'] = dates
+            value['period'] = 'P1D'
+
+            return value
 
     def reply(self):
         """endpoint response"""
@@ -100,7 +71,7 @@ class GetTimeSeriesMetadata(Service):
         is_cdse = is_cdse_dataset(dataset)
         if is_cdse:
             print("CDSE dataset")
-            value = get_time_series_metadata_cdse(dataset)
+            value = self.get_time_series_metadata_cdse(dataset)
         else:
             print("NON CDSE dataset")
 
