@@ -5,6 +5,7 @@ CDSE: CDSE integration scripts
 import re
 import io
 import json
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from logging import getLogger
@@ -157,6 +158,57 @@ function evaluatePixel(samples) {{
 }}
 """
     return evalscript
+
+
+def try_create_batch(config, headers, payload, dt_str, max_retries=10):
+    """
+        Attempt to create a CDSE batch with retry logic for rate limits
+        and other errors.
+    """
+    retry_count = 0
+    error_msg = ""
+
+    while retry_count < max_retries:
+        response = requests.post(
+            config['batch_url'], headers=headers, json=payload)
+
+        if response.status_code == 201:
+            # Success - batch created
+            response_json = response.json()
+            batch_id = response_json['id']
+
+            start_res = start_batch(batch_id)
+            if start_res.status_code not in [200, 204]:
+                print(f"Error starting batch {batch_id}: {start_res.text}")
+                break
+
+            print(f"Batch {batch_id} started for date {dt_str}")
+            return batch_id, None
+
+        retry_count += 1
+
+        # Handle rate limiting (HTTP 429)
+        if response.status_code == 429:
+            retry_after = response.headers.get("retry-after")
+            if retry_after is not None:
+                try:
+                    wait_time = int(retry_after) / 1000  # ms to seconds
+                except ValueError:
+                    wait_time = 3
+            else:
+                wait_time = 3
+            print(f"[{retry_count}/{max_retries}] Retry after {wait_time}s...")
+            time.sleep(wait_time)
+
+            error_msg = response.text
+            continue
+
+        # Handle other server or network errors
+        print(f"[{retry_count}/{max_retries}] - {response.status_code}")
+        time.sleep(3)
+
+    print(f"Failed after {max_retries} retries for date {dt_str}")
+    return None, error_msg
 
 
 def create_batches(cdse_dataset):
@@ -318,22 +370,12 @@ def create_batches(cdse_dataset):
             },
             "description": f"{dt_forName}"
         }
-        response = requests.post(
-            config['batch_url'], headers=headers, json=payload)
 
-        if response.status_code != 201:
-            print(
-                f"Batch failed: {response.status_code} - {response.text}")
-            return {'batch_id': None, 'error': response.text}
+        batch_id, batch_error_msg = try_create_batch(
+            config, headers, payload, dt_str)
 
-        response_json = response.json()
-        batch_id = response_json['id']
-
-        start_batch_response = start_batch(batch_id)
-        if start_batch_response.status_code not in [200, 204]:
-            print("Error starting batch:", start_batch_response.text)
-            continue
-        print(f"Batch {batch_id} started for date {dt_str}")
+        if not batch_id:
+            return {'batch_id': None, 'error': batch_error_msg}
 
         all_results.append({
             "batch_id": batch_id,
