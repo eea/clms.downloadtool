@@ -3,7 +3,7 @@
 Download tool patch operation
 """
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import getLogger
 
 from clms.downloadtool.api.services.utils import get_extra_data
@@ -79,11 +79,9 @@ class datarequest_status_patch(Service):
             response_json.update({"Message": message})
 
         if status not in ["Queued", "In_progress"]:
-            # pylint: disable=line-too-long
-            response_json[
-                "FinalizationDateTime"
-            ] = datetime.utcnow().isoformat()  # noqa: E501
-            stats_data.update({"End": datetime.utcnow().isoformat()})
+            now_datetime = datetime.now(timezone.utc).isoformat()
+            response_json["FinalizationDateTime"] = now_datetime
+            stats_data.update({"End": now_datetime})
         stats_data.update({"Status": status})
         stats_data.update({"TaskID": task_id})
         # Save stats data

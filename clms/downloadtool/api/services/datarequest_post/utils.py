@@ -328,8 +328,9 @@ def params_for_fme(user_id, utility_task_id, mail, datasets):
 
 def build_stats_params(user_id, data_object, datasets, utility_task_id):
     """Prepare stats params"""
+    now_datetime = datetime.now(timezone.utc).isoformat()
     stats_params = {
-        "Start": datetime.utcnow().isoformat(),
+        "Start": now_datetime,
         "User": str(user_id),
         "Dataset": [item["DatasetID"] for item in data_object.get(
             "Datasets", [])],
