@@ -21,7 +21,7 @@ We have to understand the utility as being a Singleton object.
 
 """
 import random
-from datetime import datetime
+from datetime import datetime, timezone
 from logging import getLogger
 
 from clms.downloadtool.utils import ANNOTATION_KEY, STATUS_LIST
@@ -102,7 +102,8 @@ class DownloadToolUtility:
             return "Error, permission denied"
 
         data_object["Status"] = "Cancelled"
-        data_object["FinalizationDateTime"] = datetime.utcnow().isoformat()
+        now_datetime = datetime.now(timezone.utc).isoformat()
+        data_object["FinalizationDateTime"] = now_datetime
 
         is_cdse_task = False
         already_sent = data_object.get("FMETaskId", None) is not None
