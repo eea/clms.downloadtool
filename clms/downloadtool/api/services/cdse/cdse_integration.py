@@ -131,7 +131,7 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
     band_algebra = ""
     for layer_id in layer_ids:
         # pylint: disable=line-too-long
-        band_algebra = band_algebra + f"""var {layer_id}_val = samples.{layer_id} * {extra_parameters[layer_id]["factor"]} + {extra_parameters[layer_id]["offset"]};        
+        band_algebra = band_algebra + f"""var {layer_id}_val = samples.{layer_id} * {extra_parameters[layer_id]["factor"]} + {extra_parameters[layer_id]["offset"]};
         var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : 0;"""    # noqa: E501
         return_items.append(
             f'    {layer_id}_{dt_forName}: [{layer_id}_outputVal]')
