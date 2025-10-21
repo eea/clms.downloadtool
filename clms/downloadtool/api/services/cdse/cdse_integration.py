@@ -133,7 +133,7 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
         # pylint: disable=line-too-long
         band_algebra = band_algebra + f"""var {layer_id}_val = samples.{layer_id} * {extra_parameters[layer_id]["factor"]} + {extra_parameters[layer_id]["offset"]};"""    # noqa: E501
         # pylint: disable=line-too-long
-        # var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : NaN;    # noqa: E501    
+        # var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : NaN;    # noqa: E501
         return_items.append(
             f'    {layer_id}_{dt_forName}: [{layer_id}_val]')
     return_object = ",\n".join(return_items)
