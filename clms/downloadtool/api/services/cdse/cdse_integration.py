@@ -75,7 +75,10 @@ def get_portal_config():
         ),
         'layers_collection_url': api.portal.get_registry_record(
             "clms.downloadtool.cdse_config_controlpanel.layers_collection_url"
-        )
+        ),
+        'account_id': api.portal.get_registry_record(
+            "clms.downloadtool.cdse_config_controlpanel.account_id"
+        ),
     }
 
 
