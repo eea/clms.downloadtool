@@ -5,8 +5,8 @@ import logging
 import os
 from Products.Five.browser import BrowserView
 from plone.api.env import adopt_user
-from zope.interface import alsoProvides
 from plone.protect.interfaces import IDisableCSRFProtection
+from zope.interface import alsoProvides
 from zExceptions import Unauthorized
 from clms.downloadtool.api.services.cdse.cdse_tasks_queue import (
     process_cdse_batches,

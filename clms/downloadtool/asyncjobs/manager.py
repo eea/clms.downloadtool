@@ -13,7 +13,7 @@ import transaction
 logger = logging.getLogger(__name__)
 
 
-class CallbacksDataManager(object):
+class CallbacksDataManager:
     """Transaction aware data manager for calling callbacks at commit time"""
 
     def __init__(self):
@@ -22,15 +22,19 @@ class CallbacksDataManager(object):
         self.txn = None
 
     def tpc_begin(self, txn):
+        """tpc begin"""
         self.txn = txn
 
     def tpc_finish(self, txn):
+        """tpc finish"""
         self.callbacks = []
 
     def tpc_vote(self, txn):
+        """tpc vote"""
         pass
 
     def tpc_abort(self, txn):
+        """tpc abort"""
         self._checkTransaction(txn)
 
         if self.txn is not None:
@@ -39,9 +43,11 @@ class CallbacksDataManager(object):
         self.callbacks = []
 
     def abort(self, txn):
+        """abort"""
         self.callbacks = []
 
     def commit(self, txn):
+        """commit"""
         self._checkTransaction(txn)
 
         for callback in self.callbacks:
@@ -54,23 +60,27 @@ class CallbacksDataManager(object):
         self.callbacks = []
 
     def savepoint(self):
+        """savepoint"""
         self.sp += 1
 
         return Savepoint(self)
 
     def sortKey(self):
+        """sortKey"""
         return self.__class__.__name__
 
     def add(self, callback):
+        """add"""
         logger.info("Add callback to queue %s", callback)
         self.callbacks.append(callback)
 
     def _checkTransaction(self, txn):
+        """check transaction"""
         if txn is not self.txn and self.txn is not None:
             raise TypeError("Transaction missmatch", txn, self.txn)
 
 
-class Savepoint(object):
+class Savepoint:
     """Savepoint implementation to allow rollback of queued callbacks"""
 
     def __init__(self, dm):
@@ -80,18 +90,21 @@ class Savepoint(object):
         self.txn = dm.txn
 
     def rollback(self):
+        """rollback"""
         if self.txn is not self.dm.txn:
             raise TypeError("Attempt to rollback stale rollback")
 
         if self.dm.sp < self.sp:
             raise TypeError(
-                "Attempt to roll back to invalid save point", self.sp, self.dm.sp
+                "Attempt to roll back to invalid save point",
+                self.sp, self.dm.sp
             )
         self.dm.sp = self.sp
         self.dm.callbacks = self.callbacks[:]
 
 
 def queue_callback(callback):
+    """queue callback"""
     cdm = CallbacksDataManager()
     transaction.get().join(cdm)
     cdm.add(callback)
