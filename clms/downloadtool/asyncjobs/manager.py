@@ -31,7 +31,6 @@ class CallbacksDataManager:
 
     def tpc_vote(self, txn):
         """tpc vote"""
-        pass
 
     def tpc_abort(self, txn):
         """tpc abort"""

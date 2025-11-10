@@ -47,7 +47,7 @@ def process_cdse_batches(cdse_datasets, user_id):
             batch_id = result.get("batch_id")
             if batch_id is None:
                 error = result.get("error", "")
-                log.info(f"Error creating CDSE batch: {error}")
+                log.info("Error creating CDSE batch: %s", error)
 
             gpkg_name = result.get("gpkg_name")
             dataset_batch_ids.append(batch_id)
