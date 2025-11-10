@@ -15,6 +15,7 @@
   <include package="clms.types" />
   <include file="permissions.zcml" />
   <include package=".api" />
+  <include package=".asyncjobs" />
   <include package=".controlpanels" />
   <include package=".restapi" />
   <include package=".upgrades" />
