@@ -62,7 +62,8 @@ setup(
         "eea.cache",
         "PyProj",
         "geopandas",
-        "boto3"
+        "boto3",
+        "bullmq"
     ],
     extras_require={
         "test": [

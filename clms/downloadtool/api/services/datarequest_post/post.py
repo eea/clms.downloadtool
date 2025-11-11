@@ -3,7 +3,6 @@
 For HTTP GET operations we can use standard HTTP parameter passing
 through the URL)
 """
-import copy
 from datetime import datetime, timezone, timedelta
 from functools import reduce
 from logging import getLogger
@@ -14,15 +13,12 @@ from clms.downloadtool.api.services.utils import (
     get_available_gcs_values,
 )
 from clms.downloadtool.utility import IDownloadToolUtility
-from clms.downloadtool.api.services.cdse.cdse_integration import (
-    create_batches)
 from clms.downloadtool.api.services.datarequest_post.utils import (
     ISO8601_DATETIME_FORMAT,
     base64_encode_path,
     build_stats_params,
     build_metadata_urls,
     extract_dates_from_temporal_filter,
-    generate_task_group_id,
     get_dataset_by_uid,
     get_dataset_file_path_from_file_id,
     get_dataset_file_source_from_file_id,
@@ -31,12 +27,10 @@ from clms.downloadtool.api.services.datarequest_post.utils import (
     get_full_dataset_source,
     get_full_dataset_wekeo_choices,
     get_nuts_by_id,
-    get_s3_paths_encoded,
     get_task_id,
     params_for_fme,
     post_request_to_fme,
     save_stats,
-    to_iso8601,
 )
 from clms.downloadtool.api.services.datarequest_post.validation import (
     MESSAGES,
@@ -46,6 +40,7 @@ from clms.downloadtool.api.services.datarequest_post.validation import (
     validate_full_download_restrictions,
     validate_dataset_format_and_output,
 )
+from clms.downloadtool.asyncjobs.queues import queue_job
 
 from plone import api
 from plone.memoize.ram import cache
@@ -148,91 +143,6 @@ class DataRequestPost(Service):
 
         log.info("is_cdse_dataset: %s", is_cdse_dataset)
         return is_cdse_dataset
-
-    def process_cdse_batches(self, cdse_datasets, user_id, utility):
-        """Handle CDSE: create child + parent tasks and start batches."""
-        cdse_parent_task = {}
-        cdse_task_group_id = generate_task_group_id()
-        cdse_batch_ids, gpkg_filenames = [], []
-
-        for cdse_dataset in cdse_datasets["Datasets"]:
-            try:
-                cdse_dataset["TemporalFilter"]["StartDate"] = to_iso8601(
-                    cdse_dataset["TemporalFilter"]["StartDate"])
-                cdse_dataset["TemporalFilter"]["EndDate"] = to_iso8601(
-                    cdse_dataset["TemporalFilter"]["EndDate"])
-            except Exception:
-                pass
-
-            # Call create_batches -> list of {batch_id, error, gpkg_name}
-            batch_results = create_batches(cdse_dataset)
-
-            if len(batch_results) == 0:
-                return None, self.rsp(
-                    "Error creating CDSE batch: No batches were created.")
-
-            # Keep track of batch_ids and gpkg_names for the current dataset
-            dataset_batch_ids = []
-            dataset_gpkgs = []
-
-            for result in batch_results:
-                batch_id = result.get("batch_id")
-                if batch_id is None:
-                    error = result.get("error", "")
-                    return None, self.rsp(
-                        f"Error creating CDSE batch: {error}")
-
-                gpkg_name = result["gpkg_name"]
-                dataset_batch_ids.append(batch_id)
-                dataset_gpkgs.append(gpkg_name)
-
-                # Keep also global tracking for the parent task
-                cdse_batch_ids.append(batch_id)
-                gpkg_filenames.append(gpkg_name)
-
-                # Create child task object
-                cdse_data_object = {
-                    "UserID": user_id,
-                    "RegistrationDateTime": datetime.now(
-                        timezone.utc).isoformat(),
-                    "GpkgFileName": gpkg_name,
-                    "CDSEBatchID": batch_id,
-                    "Status": "QUEUED",
-                    "Datasets": cdse_dataset,
-                    "cdse_task_role": "child",
-                    "cdse_task_group_id": cdse_task_group_id,
-                }
-
-                # Post child task to utility
-                utility_response_json = utility.datarequest_post(
-                    cdse_data_object)
-                utility_task_id = get_task_id(utility_response_json)
-                log.info("utility_task_id: %s", utility_task_id)
-
-                # Prepare parent task base object (without file-specific info)
-                cdse_parent_task = copy.deepcopy(cdse_data_object)
-                cdse_parent_task.pop('GpkgFileName', None)
-                cdse_parent_task.pop('CDSEBatchID', None)
-
-            # Assign only the encoded S3 paths belonging to this dataset
-            dataset_paths = get_s3_paths_encoded(dataset_batch_ids)
-            cdse_dataset["DatasetPath"] = dataset_paths
-
-        # After processing all datasets, create the parent task
-        if cdse_datasets["Datasets"]:
-            temp_datasets = cdse_datasets["Datasets"]
-            cdse_parent_task.update({
-                "cdse_task_role": "parent",
-                "Status": "Queued",
-                "Datasets": temp_datasets,
-                "CDSEBatchIDs": cdse_batch_ids,
-                "GpkgFileNames": gpkg_filenames,
-            })
-            utility_response_json = utility.datarequest_post(cdse_parent_task)
-            utility_task_id = get_task_id(utility_response_json)
-            log.info("utility_task_id: %s", utility_task_id)
-
-        return cdse_parent_task, None
 
     def process_file_id(self, dataset_json, dataset_object, response_json,
                         prepacked_download_data_object):
@@ -458,12 +368,12 @@ class DataRequestPost(Service):
 
         fme_results = {"ok": [], "error": []}
 
-        cdse_parent_task, error = self.process_cdse_batches(
-            cdse_datasets, user_id, utility
-        )
-        if error:
-            return error
-        log.info("CDSE parent task: %s", cdse_parent_task)
+        data = {
+            "user_id": user_id,
+            "cdse_datasets": cdse_datasets,
+        }
+        queue_job("cdse_jobs", "create_cdse_batches", data)
+        log.info("CDSE batch job queued for async processing.")
 
         for data_object, is_prepackaged in [
             (prepacked_download_data_object, True),

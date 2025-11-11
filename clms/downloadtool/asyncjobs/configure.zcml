@@ -1,0 +1,12 @@
+<configure
+  xmlns="http://namespaces.zope.org/zope"
+  xmlns:browser="http://namespaces.zope.org/browser"
+  i18n_domain="clms">
+
+  <browser:page
+      name="start-cdse-batch"
+      for="*"
+      class=".views.StartCDSEBatch"
+      permission="zope2.View"
+      />
+</configure>
