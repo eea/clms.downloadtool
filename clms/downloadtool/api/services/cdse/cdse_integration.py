@@ -138,7 +138,7 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
     for layer_id in layer_ids:
         # pylint: disable=line-too-long
         band_algebra = band_algebra + f"""var {layer_id}_val = samples.{layer_id} * {extra_parameters[layer_id]["factor"]} + {extra_parameters[layer_id]["offset"]};
-        var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : 0;"""    # noqa: E501
+        var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : {extra_parameters[layer_id]["nodata"]};"""    # noqa: E501
         return_items.append(
             f'    {layer_id}_{dt_forName}: [{layer_id}_outputVal]')
     return_object = ",\n".join(return_items)
@@ -340,13 +340,40 @@ def create_batches(cdse_dataset):
     layers_url = config['layers_collection_url'] + service_endpoint + "/layers"
     response_layers = requests.get(layers_url, headers=headers)
 
+    parsed_map = {}
+    layer_ids = []
+
     if response_layers.status_code == 200:
         data = response_layers.json()
         parsed_map = extract_layer_params_map(data)
-        layer_ids = list(parsed_map.keys())
+        layer_ids = list(parsed_map.keys())  
     else:
         print(f"Error {response_layers.status_code}: {response_layers.text}")
-        return {"batch_id": None, "error": response_layers.text}
+
+    stac_layers_url = config['layers_url'] + "byoc-" + cdse_dataset["ByocCollection"]
+    response_layers_stac = requests.get(stac_layers_url, headers=headers)
+
+    if response_layers_stac.status_code == 200:
+        stac_data = response_layers_stac.json()
+        summaries = stac_data.get("summaries", {})
+        eo_bands = summaries.get("eo:bands", [])
+        raster_bands = summaries.get("raster:bands", [])
+        if isinstance(eo_bands, list) and isinstance(raster_bands, list):
+            n = min(len(eo_bands), len(raster_bands))
+            for i in range(n):
+                b = eo_bands[i]
+                rb = raster_bands[i]
+                name = b.get("name") if isinstance(b, dict) else None
+                nodata = rb.get("nodata") if isinstance(rb, dict) else None
+                if name:
+                    if name in parsed_map:
+                        if "nodata" not in parsed_map[name]:
+                            parsed_map[name]["nodata"] = nodata
+                    else:
+                        parsed_map[name] = {"offset": 0.0, "factor": 1.0, "nodata": nodata}
+        layer_ids = list(parsed_map.keys())
+    else:
+        print(f"Error {response_layers_stac.status_code}: {response_layers_stac.text}")
 
     all_results = []
     for feature in catalog_data["features"]:
