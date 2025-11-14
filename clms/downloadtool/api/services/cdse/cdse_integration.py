@@ -222,8 +222,7 @@ def try_start_batch(batch_id, max_retries=10):
             # Success - batch started
             print(f"Batch {batch_id} started")
             return batch_id, None
-        else:
-            print(f"Error starting batch {batch_id}: {start_res.text}")
+        print(f"Error starting batch {batch_id}: {start_res.text}")
 
         retry_count += 1
 
