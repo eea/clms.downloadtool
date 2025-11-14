@@ -24,6 +24,7 @@ def process_cdse_batches(cdse_datasets, user_id):
     cdse_task_group_id = generate_task_group_id()
     cdse_batch_ids, gpkg_filenames = [], []
 
+    is_failed_in_cdse = False
     for cdse_dataset in cdse_datasets["Datasets"]:
         try:
             cdse_dataset["TemporalFilter"]["StartDate"] = to_iso8601(
@@ -37,7 +38,8 @@ def process_cdse_batches(cdse_datasets, user_id):
         batch_results = create_batches(cdse_dataset)
 
         if len(batch_results) == 0:
-            log.info("Error creating CDSE batch: No batches were created.")
+            log.warning("Error creating CDSE batch: No batches were created.")
+            is_failed_in_cdse = True
 
         # Keep track of batch_ids and gpkg_names for the current dataset
         dataset_batch_ids = []
@@ -89,12 +91,20 @@ def process_cdse_batches(cdse_datasets, user_id):
     if cdse_datasets["Datasets"]:
         temp_datasets = cdse_datasets["Datasets"]
         cdse_parent_task.update({
+            "UserID": user_id,
+            "cdse_task_group_id": cdse_task_group_id,
+            "RegistrationDateTime": datetime.now(timezone.utc).isoformat(),
             "cdse_task_role": "parent",
             "Status": "Queued",
             "Datasets": temp_datasets,
             "CDSEBatchIDs": cdse_batch_ids,
             "GpkgFileNames": gpkg_filenames,
         })
+        if is_failed_in_cdse:
+            cdse_parent_task.update({
+                "Status": "Rejected",
+                "Message": "Failed to create batches in CDSE."
+            })
         utility_response_json = utility.datarequest_post(cdse_parent_task)
         utility_task_id = get_task_id(utility_response_json)
         log.info("utility_task_id: %s", utility_task_id)

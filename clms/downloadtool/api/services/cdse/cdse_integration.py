@@ -179,12 +179,7 @@ def try_create_batch(config, headers, payload, dt_str, max_retries=10):
             response_json = response.json()
             batch_id = response_json['id']
 
-            start_res = start_batch(batch_id)
-            if start_res.status_code not in [200, 204]:
-                print(f"Error starting batch {batch_id}: {start_res.text}")
-                break
-
-            print(f"Batch {batch_id} started for date {dt_str}")
+            print(f"Batch {batch_id} created for date {dt_str}")
             return batch_id, None
 
         retry_count += 1
@@ -209,7 +204,53 @@ def try_create_batch(config, headers, payload, dt_str, max_retries=10):
         print(f"[{retry_count}/{max_retries}] - {response.status_code}")
         time.sleep(3)
 
-    print(f"Failed after {max_retries} retries for date {dt_str}")
+    print(f"Failed after {max_retries} retries for date {dt_str}: {error_msg}")
+    return None, error_msg
+
+
+def try_start_batch(batch_id, max_retries=10):
+    """
+        Attempt to start a CDSE batch with retry logic for rate limits
+        and other errors.
+    """
+    retry_count = 0
+    error_msg = ""
+
+    while retry_count < max_retries:
+
+        start_res = start_batch(batch_id)
+        if start_res.status_code == 201:
+            # Success - batch started
+            print(f"Batch {batch_id} started")
+            return batch_id, None
+
+        if start_res.status_code not in [200, 204]:
+            print(f"Error starting batch {batch_id}: {start_res.text}")
+            break
+
+        retry_count += 1
+
+        # Handle rate limiting (HTTP 429)
+        if start_res.status_code == 429:
+            retry_after = start_res.headers.get("retry-after")
+            if retry_after is not None:
+                try:
+                    wait_time = int(retry_after) / 1000  # ms to seconds
+                except ValueError:
+                    wait_time = 3
+            else:
+                wait_time = 3
+            print(f"[{retry_count}/{max_retries}] Retry after {wait_time}s...")
+            time.sleep(wait_time)
+
+            error_msg = start_res.text
+            continue
+
+        # Handle other server or network errors
+        print(f"[{retry_count}/{max_retries}] - {start_res.status_code}")
+        time.sleep(3)
+
+    print(f"Failed to start {batch_id} after {max_retries} retries")
     return None, error_msg
 
 
@@ -376,13 +417,28 @@ def create_batches(cdse_dataset):
         batch_id, batch_error_msg = try_create_batch(
             config, headers, payload, dt_str)
 
+        log.info(batch_error_msg)
+
         if not batch_id:
-            return {'batch_id': None, 'error': batch_error_msg}
+            return []
 
         all_results.append({
             "batch_id": batch_id,
             "gpkg_name": gpkg_name,
         })
+
+    started = []
+    for batch in all_results:
+        res_batch_id, start_err = try_start_batch(batch['batch_id'])
+        if res_batch_id:
+            started.append(batch)
+        else:
+            log.info(start_err)
+            batch_ids = [r['batch_id'] for r in started]
+            stop_batch_ids_and_remove_s3_directory(batch_ids)
+            filenames = [r['gpkg_name'] for r in all_results]
+            clean_s3_bucket_files(filenames)
+            return []
 
     return all_results
 
