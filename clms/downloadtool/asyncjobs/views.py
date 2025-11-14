@@ -13,7 +13,7 @@ from clms.downloadtool.api.services.cdse.cdse_tasks_queue import (
 )
 
 logger = logging.getLogger(__name__)
-PLONE_AUTH_TOKEN = os.environ.get("PLONE_AUTH_TOKEN", "")
+PLONE_AUTH_TOKEN = os.environ.get("PLONE_AUTH_TOKEN", "hello1234")
 
 
 def check_token_security(request):

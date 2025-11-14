@@ -100,10 +100,12 @@ def process_cdse_batches(cdse_datasets, user_id):
             "CDSEBatchIDs": cdse_batch_ids,
             "GpkgFileNames": gpkg_filenames,
         })
+        now = datetime.now(timezone.utc).isoformat()
         if is_failed_in_cdse:
             cdse_parent_task.update({
                 "Status": "Rejected",
-                "Message": "Failed to create batches in CDSE."
+                "Message": "Failed to create batches in CDSE.",
+                "FinalizationDateTime": now
             })
         utility_response_json = utility.datarequest_post(cdse_parent_task)
         utility_task_id = get_task_id(utility_response_json)

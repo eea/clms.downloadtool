@@ -217,16 +217,12 @@ def try_start_batch(batch_id, max_retries=10):
     error_msg = ""
 
     while retry_count < max_retries:
-
         start_res = start_batch(batch_id)
-        if start_res.status_code == 201:
+        if start_res.status_code in [200, 204]:
             # Success - batch started
             print(f"Batch {batch_id} started")
             return batch_id, None
-
-        if start_res.status_code not in [200, 204]:
-            print(f"Error starting batch {batch_id}: {start_res.text}")
-            break
+        print(f"Error starting batch {batch_id}: {start_res.text}")
 
         retry_count += 1
 
