@@ -138,6 +138,20 @@ class ICDSEConfigControlPanel(Interface):
         readonly=False,
     )
 
+    layers_url = schema.TextLine(
+        title=_(
+            "Sentinel Hub Layers Catalog URL v1"
+        ),
+        description=_(
+            # pylint: disable=line-too-long
+            "This URL will be used to get layers/bands from a collection/dataset v1"  # noqa: E501
+        ),
+        # pylint: disable=line-too-long
+        default=u"https://sh.dataspace.copernicus.eu/api/v1/catalog/1.0.0/collections/",  # noqa: E501
+        required=True,
+        readonly=False,
+    )
+
 
 class CDSEConfigControlPanel(RegistryEditForm):
     """control panel rest API endpoint configuration"""
