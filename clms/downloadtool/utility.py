@@ -196,6 +196,55 @@ class DownloadToolUtility:
         annotations[ANNOTATION_KEY] = registry
         return registry_item
 
+    def datarequest_status_patch_multiple(self, updates):
+        """modify multiple download tasks' information"""
+        site = getSite()
+        annotations = IAnnotations(site)
+        registry = annotations.get(ANNOTATION_KEY, OOBTree())
+
+        if not isinstance(updates, dict):
+            return "Error, invalid payload"
+
+        updated_items = {}
+        errors = {}
+
+        for task_id, data_object in updates.items():
+            task_key = str(task_id)
+            if task_key not in registry:
+                errors[task_key] = "Error, task_id not registered"
+                continue
+
+            if not isinstance(data_object, dict):
+                errors[task_key] = "Error, invalid data_object"
+                continue
+
+            registry_item = registry.get(task_key, None)
+
+            if "Status" in data_object:
+                registry_item["Status"] = data_object["Status"]
+            if "DownloadURL" in data_object:
+                registry_item["DownloadURL"] = data_object["DownloadURL"]
+            if "FileSize" in data_object:
+                registry_item["FileSize"] = data_object["FileSize"]
+            if "FinalizationDateTime" in data_object:
+                registry_item["FinalizationDateTime"] = data_object[
+                    "FinalizationDateTime"
+                ]
+            if "Message" in data_object:
+                registry_item["Message"] = data_object["Message"]
+            if "cdse_errors" in data_object:
+                registry_item["cdse_errors"] = data_object["cdse_errors"]
+
+            registry[task_key] = registry_item
+            updated_items[task_key] = registry_item
+
+        annotations[ANNOTATION_KEY] = registry
+
+        if errors:
+            return {"updated": updated_items, "errors": errors}
+
+        return updated_items
+
     def delete_data(self):
         """a method to delete all data from the registry"""
         site = getSite()
