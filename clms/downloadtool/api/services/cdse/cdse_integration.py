@@ -124,44 +124,63 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
     """Generate evalscript dynamically based on layer IDs"""
     # Create input array with layer IDs plus dataMask
     input_array = json.dumps(layer_ids + ["dataMask"])
-
+    # input_array = json.dumps([layer_ids[0]] + ["dataMask"])
     # Create output array with all layer IDs
     output_items = []
     for layer_id in layer_ids:
         output_items.append(
-            f"""{{ id: "{layer_id}_{dt_forName}", bands: 1, sampleType: "FLOAT32"}}""")    # noqa: E501
+            f'{{id: "{layer_id}_{dt_forName}", bands: 1, sampleType: "FLOAT32" }}')  # noqa: E501
     output_array = ",\n".join(output_items)
 
     # Create return object for evaluatePixel
     return_items = []
     band_algebra = ""
     for layer_id in layer_ids:
-        # pylint: disable=line-too-long
-        band_algebra = band_algebra + f"""var {layer_id}_val = samples.{layer_id} * {extra_parameters[layer_id]["factor"]} + {extra_parameters[layer_id]["offset"]};
-        var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : 0;"""    # noqa: E501
+        params = extra_parameters.get(layer_id, {})
+        f_val = params.get("factor")
+        o_val = params.get("offset")
+        n_val = params.get("nodata")
+        factor = 1.0 if f_val is None else f_val
+        offset = 0.0 if o_val is None else o_val
+        if n_val is None:
+            # pylint: disable=line-too-long
+            band_algebra = band_algebra + f"""
+        var {layer_id}_val = samples.{layer_id} * {factor} + {offset};
+        var {layer_id}_outputVal = {layer_id}_val;
+        """    # noqa: E501
+        else:
+            # pylint: disable=line-too-long
+            band_algebra = band_algebra + f"""
+        var {layer_id}_val = samples.{layer_id} * {factor} + {offset};
+        var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : {n_val};
+        """    # noqa: E501
+
         return_items.append(
-            f'    {layer_id}_{dt_forName}: [{layer_id}_outputVal]')
+            f'"{layer_id}_{dt_forName}": [{layer_id}_outputVal]')
+
     return_object = ",\n".join(return_items)
 
     # Generate JavaScript evalscript for Sentinel Hub
     evalscript = f"""//VERSION=3
+    const factor = 1;
+    const offset = 0;
 
-function setup() {{
-  return {{
-    input: {input_array},
-    output: [
-{output_array}
-    ],
-  }};
-}}
+    function setup() {{
+    return {{
+        input: {input_array},
+        output: [
+    {output_array}
+        ],
+    }};
+    }}
 
-function evaluatePixel(samples) {{
-  {band_algebra}
-  return {{
-{return_object}
-  }};
-}}
-"""
+    function evaluatePixel(samples) {{
+    {band_algebra}
+    return {{
+        {return_object}
+        }};
+        }}
+        """
     return evalscript
 
 
@@ -253,6 +272,36 @@ def try_start_batch(batch_id, max_retries=10):
     return None, error_msg
 
 
+def _populate_parsed_map_from_stac(stac_data, parsed_map):
+    """Populate or update parsed_map using STAC `summaries`.
+
+    This extracts band names and nodata values and updates `parsed_map`.
+    Extracted into a helper to reduce nesting depth in `create_batches`.
+    """
+    summaries = stac_data.get("summaries", {})
+    eo_bands = summaries.get("eo:bands", [])
+    raster_bands = summaries.get("raster:bands", [])
+
+    if not (isinstance(eo_bands, list) and isinstance(raster_bands, list)):
+        return parsed_map
+
+    n = min(len(eo_bands), len(raster_bands))
+    for i in range(n):
+        b = eo_bands[i]
+        rb = raster_bands[i]
+        name = b.get("name") if isinstance(b, dict) else None
+        nodata = rb.get("nodata") if isinstance(rb, dict) else None
+        if not name:
+            continue
+        if name in parsed_map:
+            if "nodata" not in parsed_map[name]:
+                parsed_map[name]["nodata"] = nodata
+        else:
+            parsed_map[name] = {"offset": 0.0, "factor": 1.0, "nodata": nodata}
+
+    return parsed_map
+
+
 def create_batches(cdse_dataset):
     """Create batches"""
     match = re.search(r"raster\s+([\d.]+)\s*(km|m)",
@@ -340,21 +389,40 @@ def create_batches(cdse_dataset):
     layers_url = config['layers_collection_url'] + service_endpoint + "/layers"
     response_layers = requests.get(layers_url, headers=headers)
 
+    parsed_map = {}
+    layer_ids = []
+
     if response_layers.status_code == 200:
         data = response_layers.json()
         parsed_map = extract_layer_params_map(data)
         layer_ids = list(parsed_map.keys())
     else:
         print(f"Error {response_layers.status_code}: {response_layers.text}")
-        return {"batch_id": None, "error": response_layers.text}
 
+    stac_layers_url = (
+        config['layers_url'] + "byoc-" + cdse_dataset["ByocCollection"]
+    )
+    response_layers_stac = requests.get(stac_layers_url, headers=headers)
+
+    if response_layers_stac.status_code == 200:
+        stac_data = response_layers_stac.json()
+        parsed_map = _populate_parsed_map_from_stac(stac_data, parsed_map)
+        layer_ids = list(parsed_map.keys())
+    else:
+        # pylint: disable=line-too-long
+        print(f"Error {response_layers_stac.status_code}: {response_layers_stac.text}")    # noqa: E501
     all_results = []
     for feature in catalog_data["features"]:
         dt_str = feature["properties"]["datetime"]
         dt = datetime.strptime(
-            dt_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-        start = (dt - timedelta(seconds=10)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        end = (dt + timedelta(seconds=10)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            dt_str, "%Y-%m-%dT%H:%M:%SZ"
+        ).replace(tzinfo=timezone.utc)
+        start = (dt - timedelta(seconds=10)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+        end = (dt + timedelta(seconds=10)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
 
         dt_forName = dt.strftime("%Y%m%dT%H%M%SZ")
 
@@ -404,7 +472,9 @@ def create_batches(cdse_dataset):
                 "type": "raster",
                 "delivery": {
                     "s3": {
-                        "url": f"s3://{config['s3_bucket_name']}/output",
+                        "url": (
+                            f"s3://{config['s3_bucket_name']}/output"
+                        ),
                         "accessKey": config['s3_access_key'],
                         "secretAccessKey": config['s3_secret_key']
                     }
