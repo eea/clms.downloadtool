@@ -272,6 +272,36 @@ def try_start_batch(batch_id, max_retries=10):
     return None, error_msg
 
 
+def _populate_parsed_map_from_stac(stac_data, parsed_map):
+    """Populate or update parsed_map using STAC `summaries`.
+
+    This extracts band names and nodata values and updates `parsed_map`.
+    Extracted into a helper to reduce nesting depth in `create_batches`.
+    """
+    summaries = stac_data.get("summaries", {})
+    eo_bands = summaries.get("eo:bands", [])
+    raster_bands = summaries.get("raster:bands", [])
+
+    if not (isinstance(eo_bands, list) and isinstance(raster_bands, list)):
+        return parsed_map
+
+    n = min(len(eo_bands), len(raster_bands))
+    for i in range(n):
+        b = eo_bands[i]
+        rb = raster_bands[i]
+        name = b.get("name") if isinstance(b, dict) else None
+        nodata = rb.get("nodata") if isinstance(rb, dict) else None
+        if not name:
+            continue
+        if name in parsed_map:
+            if "nodata" not in parsed_map[name]:
+                parsed_map[name]["nodata"] = nodata
+        else:
+            parsed_map[name] = {"offset": 0.0, "factor": 1.0, "nodata": nodata}
+
+    return parsed_map
+
+
 def create_batches(cdse_dataset):
     """Create batches"""
     match = re.search(r"raster\s+([\d.]+)\s*(km|m)",
@@ -376,26 +406,7 @@ def create_batches(cdse_dataset):
 
     if response_layers_stac.status_code == 200:
         stac_data = response_layers_stac.json()
-        summaries = stac_data.get("summaries", {})
-        eo_bands = summaries.get("eo:bands", [])
-        raster_bands = summaries.get("raster:bands", [])
-        if isinstance(eo_bands, list) and isinstance(raster_bands, list):
-            n = min(len(eo_bands), len(raster_bands))
-            for i in range(n):
-                b = eo_bands[i]
-                rb = raster_bands[i]
-                name = b.get("name") if isinstance(b, dict) else None
-                nodata = rb.get("nodata") if isinstance(rb, dict) else None
-                if name:
-                    if name in parsed_map:
-                        if "nodata" not in parsed_map[name]:
-                            parsed_map[name]["nodata"] = nodata
-                    else:
-                        parsed_map[name] = {
-                            "offset": 0.0,
-                            "factor": 1.0,
-                            "nodata": nodata,
-                        }
+        parsed_map = _populate_parsed_map_from_stac(stac_data, parsed_map)
         layer_ids = list(parsed_map.keys())
     else:
         # pylint: disable=line-too-long
