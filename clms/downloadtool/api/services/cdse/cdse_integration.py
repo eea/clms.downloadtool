@@ -124,8 +124,7 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
     """Generate evalscript dynamically based on layer IDs"""
     # Create input array with layer IDs plus dataMask
     input_array = json.dumps(layer_ids + ["dataMask"])
-    # input_array = json.dumps([layer_ids[0]] + ["dataMask"]) 
-
+    # input_array = json.dumps([layer_ids[0]] + ["dataMask"])
     # Create output array with all layer IDs
     output_items = []
     for layer_id in layer_ids:
@@ -148,13 +147,13 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
             band_algebra = band_algebra + f"""
         var {layer_id}_val = samples.{layer_id} * {factor} + {offset};
         var {layer_id}_outputVal = {layer_id}_val;
-        """  # noqa: E501
+        """    # noqa: E501
         else:
-            # pylint: disable=line-too-long    
+            # pylint: disable=line-too-long
             band_algebra = band_algebra + f"""
         var {layer_id}_val = samples.{layer_id} * {factor} + {offset};
         var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : {n_val};
-        """  # noqa: E501
+        """    # noqa: E501
 
         return_items.append(
             f'"{layer_id}_{dt_forName}": [{layer_id}_outputVal]')
@@ -399,8 +398,9 @@ def create_batches(cdse_dataset):
                         }
         layer_ids = list(parsed_map.keys())
     else:
-        print(f"Error {response_layers_stac.status_code}: {response_layers_stac.text}")
-
+        # pylint: disable=line-too-long
+        print(f"Error {response_layers_stac.status_code}: {response_layers_stac.text}")    # noqa: E501
+ 
     all_results = []
     for feature in catalog_data["features"]:
         dt_str = feature["properties"]["datetime"]
