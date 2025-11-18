@@ -144,11 +144,13 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
         factor = 1.0 if f_val is None else f_val
         offset = 0.0 if o_val is None else o_val
         if n_val is None:
+            # pylint: disable=line-too-long
             band_algebra = band_algebra + f"""
         var {layer_id}_val = samples.{layer_id} * {factor} + {offset};
         var {layer_id}_outputVal = {layer_id}_val;
         """  # noqa: E501
         else:
+            # pylint: disable=line-too-long    
             band_algebra = band_algebra + f"""
         var {layer_id}_val = samples.{layer_id} * {factor} + {offset};
         var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : {n_val};
@@ -156,7 +158,7 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
 
         return_items.append(
             f'"{layer_id}_{dt_forName}": [{layer_id}_outputVal]')
-        
+
     return_object = ",\n".join(return_items)
 
     # Generate JavaScript evalscript for Sentinel Hub
@@ -369,9 +371,7 @@ def create_batches(cdse_dataset):
         print(f"Error {response_layers.status_code}: {response_layers.text}")
 
     stac_layers_url = (
-        config['layers_url']
-        + "byoc-"
-        + cdse_dataset["ByocCollection"]
+        config['layers_url'] + "byoc-" + cdse_dataset["ByocCollection"]
     )
     response_layers_stac = requests.get(stac_layers_url, headers=headers)
 
@@ -405,9 +405,14 @@ def create_batches(cdse_dataset):
     for feature in catalog_data["features"]:
         dt_str = feature["properties"]["datetime"]
         dt = datetime.strptime(
-            dt_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
-        start = (dt - timedelta(seconds=10)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        end = (dt + timedelta(seconds=10)).strftime("%Y-%m-%dT%H:%M:%SZ")
+            dt_str, "%Y-%m-%dT%H:%M:%SZ"
+        ).replace(tzinfo=timezone.utc)
+        start = (dt - timedelta(seconds=10)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+        end = (dt + timedelta(seconds=10)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
 
         dt_forName = dt.strftime("%Y%m%dT%H%M%SZ")
 
@@ -457,7 +462,9 @@ def create_batches(cdse_dataset):
                 "type": "raster",
                 "delivery": {
                     "s3": {
-                        "url": f"s3://{config['s3_bucket_name']}/output",
+                        "url": (
+                            f"s3://{config['s3_bucket_name']}/output"
+                        ),
                         "accessKey": config['s3_access_key'],
                         "secretAccessKey": config['s3_secret_key']
                     }
