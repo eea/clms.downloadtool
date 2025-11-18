@@ -400,7 +400,6 @@ def create_batches(cdse_dataset):
     else:
         # pylint: disable=line-too-long
         print(f"Error {response_layers_stac.status_code}: {response_layers_stac.text}")    # noqa: E501
- 
     all_results = []
     for feature in catalog_data["features"]:
         dt_str = feature["properties"]["datetime"]
