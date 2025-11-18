@@ -123,20 +123,20 @@ def get_token():
 def generate_evalscript(layer_ids, extra_parameters, dt_forName):
     """Generate evalscript dynamically based on layer IDs"""
     # Create input array with layer IDs plus dataMask
-    input_array = json.dumps(layer_ids + ["dataMask"])      
+    input_array = json.dumps(layer_ids + ["dataMask"])
     # input_array = json.dumps([layer_ids[0]] + ["dataMask"]) 
 
     # Create output array with all layer IDs
     output_items = []
     for layer_id in layer_ids:
         output_items.append(
-            f'{{id: "{layer_id}_{dt_forName}", bands: 1, sampleType: "FLOAT32" }}')    # noqa: E501        
+            f'{{id: "{layer_id}_{dt_forName}", bands: 1, sampleType: "FLOAT32" }}')  # noqa: E501
     output_array = ",\n".join(output_items)
 
     # Create return object for evaluatePixel
     return_items = []
     band_algebra = ""
-    for layer_id in layer_ids:        
+    for layer_id in layer_ids:
         params = extra_parameters.get(layer_id, {})
         f_val = params.get("factor")
         o_val = params.get("offset")
@@ -147,15 +147,15 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
             band_algebra = band_algebra + f"""
         var {layer_id}_val = samples.{layer_id} * {factor} + {offset};
         var {layer_id}_outputVal = {layer_id}_val;
-        """    # noqa: E501         
+        """  # noqa: E501
         else:
             band_algebra = band_algebra + f"""
         var {layer_id}_val = samples.{layer_id} * {factor} + {offset};
         var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : {n_val};
-        """    # noqa: E501         
-        
+        """  # noqa: E501
+
         return_items.append(
-            f'"{layer_id}_{dt_forName}": [{layer_id}_outputVal]')         
+            f'"{layer_id}_{dt_forName}": [{layer_id}_outputVal]')
         
     return_object = ",\n".join(return_items)
 
@@ -364,11 +364,15 @@ def create_batches(cdse_dataset):
     if response_layers.status_code == 200:
         data = response_layers.json()
         parsed_map = extract_layer_params_map(data)
-        layer_ids = list(parsed_map.keys())  
+        layer_ids = list(parsed_map.keys())
     else:
         print(f"Error {response_layers.status_code}: {response_layers.text}")
 
-    stac_layers_url = config['layers_url'] + "byoc-" + cdse_dataset["ByocCollection"]
+    stac_layers_url = (
+        config['layers_url']
+        + "byoc-"
+        + cdse_dataset["ByocCollection"]
+    )
     response_layers_stac = requests.get(stac_layers_url, headers=headers)
 
     if response_layers_stac.status_code == 200:
@@ -388,7 +392,11 @@ def create_batches(cdse_dataset):
                         if "nodata" not in parsed_map[name]:
                             parsed_map[name]["nodata"] = nodata
                     else:
-                        parsed_map[name] = {"offset": 0.0, "factor": 1.0, "nodata": nodata}
+                        parsed_map[name] = {
+                            "offset": 0.0,
+                            "factor": 1.0,
+                            "nodata": nodata,
+                        }
         layer_ids = list(parsed_map.keys())
     else:
         print(f"Error {response_layers_stac.status_code}: {response_layers_stac.text}")
