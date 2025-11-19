@@ -32,16 +32,12 @@ def get_polygon(nuts_id):
     yields a result. Returns a GeoDataFrame subset (may contain multiple
     rows if identifier is not unique)."""
     gdf = _load_polygons()
-
     if "NUTS_ID" in gdf.columns:
         subset = gdf[gdf["NUTS_ID"] == nuts_id]
         if not subset.empty:
             return subset
-
     if "ISO_2DIGIT" in gdf.columns:
         subset = gdf[gdf["ISO_2DIGIT"] == nuts_id]
         if not subset.empty:
             return subset
-
     raise ValueError(f"Geometry Not Found for identifier '{nuts_id}'")
-            
