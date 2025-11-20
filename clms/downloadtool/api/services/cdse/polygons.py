@@ -25,6 +25,19 @@ def _load_polygons():
 
 
 def get_polygon(nuts_id):
-    """Return polygon by NUTS_ID in O(1) time."""
+    """Return polygon rows matching NUTS_ID or fallback ISO_2DIGIT.
+
+    Attempts exact match on column 'NUTS_ID'. If no rows found, tries
+    'ISO_2DIGIT' (country-level fallback). Raises ValueError if neither
+    yields a result. Returns a GeoDataFrame subset (may contain multiple
+    rows if identifier is not unique)."""
     gdf = _load_polygons()
-    return gdf[gdf["NUTS_ID"] == nuts_id]
+    if "NUTS_ID" in gdf.columns:
+        subset = gdf[gdf["NUTS_ID"] == nuts_id]
+        if not subset.empty:
+            return subset
+    if "ISO_2DIGIT" in gdf.columns:
+        subset = gdf[gdf["ISO_2DIGIT"] == nuts_id]
+        if not subset.empty:
+            return subset
+    raise ValueError(f"Geometry Not Found for identifier '{nuts_id}'")

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+14.2 - (2025-11-19)
+---------------------------
+* Change: Develop
+  [manuelmartinezmarin]
+
 14.1 - (2025-11-18)
 ---------------------------
 * Change: Develop
