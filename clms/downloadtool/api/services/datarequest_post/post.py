@@ -503,7 +503,7 @@ class DataRequestPost(Service):
                 full_dataset_path = get_full_dataset_path(
                     dataset_object, download_information_id
                 )
-                if not full_dataset_path:
+                if not full_dataset_path and not is_cdse_dataset:
                     return self.rsp("NOT_DOWNLOADABLE")
 
                 # Check if we have wekeo_choices
@@ -559,11 +559,17 @@ class DataRequestPost(Service):
                 if error:
                     return error
 
+                dataset_path = None
+                if is_cdse_dataset:
+                    dataset_path = ""  # CDSE datasets do not need dataset path
+                else:
+                    dataset_path = base64_encode_path(full_dataset_path)
+
                 response_json.update(
                     {
                         "DatasetFormat": full_dataset_format,
                         "OutputFormat": dataset_json.get("OutputFormat", ""),
-                        "DatasetPath": base64_encode_path(full_dataset_path),
+                        "DatasetPath": dataset_path,
                         "DatasetSource": full_dataset_source,
                         "WekeoChoices": wekeo_choices,
                     }
