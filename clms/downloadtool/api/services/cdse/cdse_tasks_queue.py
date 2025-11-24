@@ -3,7 +3,11 @@ import copy
 from datetime import datetime, timezone
 from logging import getLogger
 from clms.downloadtool.api.services.cdse.cdse_integration import (
-    create_batches)
+    create_batches,
+    try_start_batch,
+    stop_batch_ids_and_remove_s3_directory,
+    clean_s3_bucket_files,
+)
 from clms.downloadtool.api.services.datarequest_post.utils import (
     generate_task_group_id,
     get_s3_paths_encoded,
@@ -15,6 +19,25 @@ from zope.component import getUtility
 
 
 log = getLogger(__name__)
+
+
+def _start_cdse_batches(batch_ids, gpkg_filenames):
+    """Start every CDSE batch and cleanup on failure."""
+    started_ids = []
+    for batch_id in batch_ids:
+        if not batch_id:
+            continue
+        res_batch_id, start_err = try_start_batch(batch_id)
+        if res_batch_id:
+            started_ids.append(batch_id)
+            continue
+
+        log.info(start_err)
+        stop_batch_ids_and_remove_s3_directory(started_ids)
+        clean_s3_bucket_files(gpkg_filenames)
+        return False
+
+    return True
 
 
 def process_cdse_batches(cdse_datasets, user_id):
@@ -86,6 +109,12 @@ def process_cdse_batches(cdse_datasets, user_id):
         # Assign only the encoded S3 paths belonging to this dataset
         dataset_paths = get_s3_paths_encoded(dataset_batch_ids)
         cdse_dataset["DatasetPath"] = dataset_paths
+
+    # Start batches OR fail and clean
+    if cdse_batch_ids:
+        batches_started = _start_cdse_batches(cdse_batch_ids, gpkg_filenames)
+        if not batches_started:
+            is_failed_in_cdse = True
 
     # After processing all datasets, create the parent task
     if cdse_datasets["Datasets"]:
