@@ -496,19 +496,6 @@ def create_batches(cdse_dataset):
             "gpkg_name": gpkg_name,
         })
 
-    started = []
-    for batch in all_results:
-        res_batch_id, start_err = try_start_batch(batch['batch_id'])
-        if res_batch_id:
-            started.append(batch)
-        else:
-            log.info(start_err)
-            batch_ids = [r['batch_id'] for r in started]
-            stop_batch_ids_and_remove_s3_directory(batch_ids)
-            filenames = [r['gpkg_name'] for r in all_results]
-            clean_s3_bucket_files(filenames)
-            return []
-
     return all_results
 
 
