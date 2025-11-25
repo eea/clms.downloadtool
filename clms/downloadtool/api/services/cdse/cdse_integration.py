@@ -141,7 +141,7 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
         offset = 0.0 if o_val is None else o_val
         # NOTE --- Be aware of the decimals when using UINT
         # Create output array with all layer IDs
-        if offset == 0.0 and factor == 1.0:            
+        if offset == 0.0 and factor == 1.0:
             factor = int(factor)
             offset = int(offset)
             # pylint: disable=line-too-long
