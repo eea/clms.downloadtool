@@ -125,7 +125,6 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
     # Create input array with layer IDs plus dataMask
     input_array = json.dumps(layer_ids + ["dataMask"])
     # input_array = json.dumps([layer_ids[0]] + ["dataMask"])
-      
     # Create return object for evaluatePixel
     responses = []
     return_items = []
@@ -140,20 +139,21 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
         dt_val = params.get("data_type")
         factor = 1.0 if f_val is None else f_val
         offset = 0.0 if o_val is None else o_val
-        
         # NOTE --- Be aware of the decimals when using UINT
         # Create output array with all layer IDs
         if offset == 0.0 and factor == 1.0:
             # It is needed to cast offset, factor and nodata to delete the decimal part to avoid incorrect evalscript
             factor = int(factor)
             offset = int(offset)
+            # pylint: disable=line-too-long
             output_items.append(
                 f'{{id: "{layer_id}_{dt_forName}_{int(n_val)}", bands: 1, sampleType: "{dt_val.upper()}" }}')    # noqa: E501
         else:
             # If offset and factor are different from 0.0 and 1.0 the output need to be FLOAT32  and the nodataValue is set to -9999
             n_val = -99999.0
+            # pylint: disable=line-too-long
             output_items.append(
-                    f'{{id: "{layer_id}_{dt_forName}_{str(99999)}", bands: 1, sampleType: "FLOAT32" }}')    # noqa: E501            
+                    f'{{id: "{layer_id}_{dt_forName}_{str(99999)}", bands: 1, sampleType: "FLOAT32" }}')    # noqa: E501
         # Output/Responses for payload
         responses.append({
             "identifier": f"{layer_id}_{dt_forName}_{str(int(abs(n_val)))}",
@@ -164,9 +164,9 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
     var {layer_id}_val = samples.{layer_id} * {factor} + {offset};
     var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : {n_val};
     """    # noqa: E501
+        # pylint: disable=line-too-long
         return_items.append(
-            f'"{layer_id}_{dt_forName}_{str(int(abs(n_val)))}": [{layer_id}_outputVal]')
-                
+            f'"{layer_id}_{dt_forName}_{str(int(abs(n_val)))}": [{layer_id}_outputVal]')    # noqa: E501
     output_array = ",\n".join(output_items)
     return_object = ",\n".join(return_items)
 
@@ -431,7 +431,8 @@ def create_batches(cdse_dataset):
             "%Y-%m-%dT%H:%M:%SZ"
         )
         dt_forName = dt.strftime("%Y%m%dT%H%M%SZ")
-        evalscript, responses = generate_evalscript(layer_ids, parsed_map, dt_forName)
+        # pylint: disable=line-too-long
+        evalscript, responses = generate_evalscript(layer_ids, parsed_map, dt_forName)    # noqa: E501
 
         token = get_token()
         headers = {
