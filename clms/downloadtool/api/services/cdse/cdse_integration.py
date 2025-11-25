@@ -125,63 +125,70 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
     # Create input array with layer IDs plus dataMask
     input_array = json.dumps(layer_ids + ["dataMask"])
     # input_array = json.dumps([layer_ids[0]] + ["dataMask"])
-    # Create output array with all layer IDs
-    output_items = []
-    for layer_id in layer_ids:
-        output_items.append(
-            f'{{id: "{layer_id}_{dt_forName}", bands: 1, sampleType: "FLOAT32" }}')  # noqa: E501
-    output_array = ",\n".join(output_items)
-
+      
     # Create return object for evaluatePixel
+    responses = []
     return_items = []
+    output_items = []
     band_algebra = ""
     for layer_id in layer_ids:
+        # Params retrieval
         params = extra_parameters.get(layer_id, {})
         f_val = params.get("factor")
         o_val = params.get("offset")
         n_val = params.get("nodata")
+        dt_val = params.get("data_type")
         factor = 1.0 if f_val is None else f_val
         offset = 0.0 if o_val is None else o_val
-        if n_val is None:
-            # pylint: disable=line-too-long
-            band_algebra = band_algebra + f"""
-        var {layer_id}_val = samples.{layer_id} * {factor} + {offset};
-        var {layer_id}_outputVal = {layer_id}_val;
-        """    # noqa: E501
+        
+        # NOTE --- Be aware of the decimals when using UINT
+        # Create output array with all layer IDs
+        if offset == 0.0 and factor == 1.0:
+            # It is needed to cast offset, factor and nodata to delete the decimal part to avoid incorrect evalscript
+            factor = int(factor)
+            offset = int(offset)
+            output_items.append(
+                f'{{id: "{layer_id}_{dt_forName}_{int(n_val)}", bands: 1, sampleType: "{dt_val.upper()}" }}')    # noqa: E501
         else:
-            # pylint: disable=line-too-long
-            band_algebra = band_algebra + f"""
-        var {layer_id}_val = samples.{layer_id} * {factor} + {offset};
-        var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : {n_val};
-        """    # noqa: E501
-
+            # If offset and factor are different from 0.0 and 1.0 the output need to be FLOAT32  and the nodataValue is set to -9999
+            n_val = -99999.0
+            output_items.append(
+                    f'{{id: "{layer_id}_{dt_forName}_{str(99999)}", bands: 1, sampleType: "FLOAT32" }}')    # noqa: E501            
+        # Output/Responses for payload
+        responses.append({
+            "identifier": f"{layer_id}_{dt_forName}_{str(int(abs(n_val)))}",
+            "format": {"type": "image/tiff"}
+        })
+        # pylint: disable=line-too-long
+        band_algebra = band_algebra + f"""
+    var {layer_id}_val = samples.{layer_id} * {factor} + {offset};
+    var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : {n_val};
+    """    # noqa: E501
         return_items.append(
-            f'"{layer_id}_{dt_forName}": [{layer_id}_outputVal]')
-
+            f'"{layer_id}_{dt_forName}_{str(int(abs(n_val)))}": [{layer_id}_outputVal]')
+                
+    output_array = ",\n".join(output_items)
     return_object = ",\n".join(return_items)
 
     # Generate JavaScript evalscript for Sentinel Hub
     evalscript = f"""//VERSION=3
-    const factor = 1;
-    const offset = 0;
+function setup() {{
+  return {{
+    input: {input_array},
+    output: [
+{output_array}
+    ],
+  }};
+}}
 
-    function setup() {{
-    return {{
-        input: {input_array},
-        output: [
-    {output_array}
-        ],
-    }};
+function evaluatePixel(samples) {{
+  {band_algebra}
+  return {{
+    {return_object}
+      }};
     }}
-
-    function evaluatePixel(samples) {{
-    {band_algebra}
-    return {{
-        {return_object}
-        }};
-        }}
-        """
-    return evalscript
+    """
+    return evalscript, responses
 
 
 def try_create_batch(config, headers, payload, dt_str, max_retries=10):
@@ -423,17 +430,8 @@ def create_batches(cdse_dataset):
         end = (dt + timedelta(seconds=10)).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         )
-
         dt_forName = dt.strftime("%Y%m%dT%H%M%SZ")
-
-        evalscript = generate_evalscript(layer_ids, parsed_map, dt_forName)
-        responses = []
-
-        for layer_id in layer_ids:
-            responses.append({
-                "identifier": f"{layer_id}_{dt_forName}",
-                "format": {"type": "image/tiff"}
-            })
+        evalscript, responses = generate_evalscript(layer_ids, parsed_map, dt_forName)
 
         token = get_token()
         headers = {
