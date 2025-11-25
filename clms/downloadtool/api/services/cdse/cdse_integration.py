@@ -146,7 +146,7 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
             offset = int(offset)
             # pylint: disable=line-too-long
             output_items.append(
-                f'{{id: "{layer_id}_{dt_forName}_{int(n_val)}", bands: 1, sampleType: "{dt_val.upper()}" }}')    # noqa: E501
+                f'{{id: "{layer_id}_{dt_forName}_{str(int(abs(n_val)))}", bands: 1, sampleType: "{dt_val.upper()}" }}')    # noqa: E501
         else:
             n_val = -99999.0
             # pylint: disable=line-too-long
