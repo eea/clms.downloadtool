@@ -142,14 +142,16 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
         # NOTE --- Be aware of the decimals when using UINT
         # Create output array with all layer IDs
         if offset == 0.0 and factor == 1.0:
-            # It is needed to cast offset, factor and nodata to delete the decimal part to avoid incorrect evalscript
+            # It is needed to cast offset, factor and nodata to delete the decimal 
+            # part to avoid incorrect evalscript
             factor = int(factor)
             offset = int(offset)
             # pylint: disable=line-too-long
             output_items.append(
                 f'{{id: "{layer_id}_{dt_forName}_{int(n_val)}", bands: 1, sampleType: "{dt_val.upper()}" }}')    # noqa: E501
         else:
-            # If offset and factor are different from 0.0 and 1.0 the output need to be FLOAT32  and the nodataValue is set to -9999
+            # If offset and factor are different from 0.0 and 1.0
+            # the output need to be FLOAT32  and the nodataValue is set to -99999
             n_val = -99999.0
             # pylint: disable=line-too-long
             output_items.append(
