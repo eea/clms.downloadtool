@@ -396,10 +396,8 @@ def create_batches(cdse_dataset):
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
-
     layers_url = config['layers_collection_url'] + service_endpoint + "/layers"
     response_layers = requests.get(layers_url, headers=headers)
-
     parsed_map = {}
     layer_ids = []
 
@@ -409,19 +407,36 @@ def create_batches(cdse_dataset):
         layer_ids = list(parsed_map.keys())
     else:
         print(f"Error {response_layers.status_code}: {response_layers.text}")
-
-    stac_layers_url = (
-        config['layers_url'] + "byoc-" + cdse_dataset["ByocCollection"]
-    )
+    # pylint: disable=line-too-long
+    stac_layers_url = config['layers_url'] + "byoc-" + cdse_dataset["ByocCollection"]    # noqa: E501
     response_layers_stac = requests.get(stac_layers_url, headers=headers)
 
     if response_layers_stac.status_code == 200:
         stac_data = response_layers_stac.json()
-        parsed_map = _populate_parsed_map_from_stac(stac_data, parsed_map)
+        summaries = stac_data.get("summaries", {})
+        eo_bands = summaries.get("eo:bands", [])
+        raster_bands = summaries.get("raster:bands", [])
+        if isinstance(eo_bands, list) and isinstance(raster_bands, list):
+            n = min(len(eo_bands), len(raster_bands))
+            for i in range(n):
+                b = eo_bands[i]
+                rb = raster_bands[i]
+                name = b.get("name") if isinstance(b, dict) else None
+                nodata = rb.get("nodata") if isinstance(rb, dict) else None
+                data_type = rb.get("data_type") if isinstance(rb, dict) else None
+                if name:
+                    if name in parsed_map:
+                        if "nodata" not in parsed_map[name]:
+                            parsed_map[name]["nodata"] = nodata
+                        if "data_type" not in parsed_map[name]:
+                            parsed_map[name]["data_type"] = data_type
+                    else:                
+                        # pylint: disable=line-too-long
+                        parsed_map[name] = {"offset": 0.0, "factor": 1.0, "nodata": nodata, "data_type": data_type}    # noqa: E501
         layer_ids = list(parsed_map.keys())
     else:
-        # pylint: disable=line-too-long
-        print(f"Error {response_layers_stac.status_code}: {response_layers_stac.text}")    # noqa: E501
+        print(f"Error {response_layers_stac.status_code}: {response_layers_stac.text}")
+
     all_results = []
 
     for dt_str in catalog_data:
