@@ -437,10 +437,8 @@ def create_batches(cdse_dataset):
         layer_ids = list(parsed_map.keys())
     else:
         # pylint: disable=line-too-long
-        print(f"Error {response_layers_stac.status_code}: {response_layers_stac.text}")    # noqa: E501
-        
+        print(f"Error {response_layers_stac.status_code}: {response_layers_stac.text}")    # noqa: E501        
     all_results = []
-
     for dt_str in catalog_data:
         dt = datetime.strptime(
             dt_str, "%Y-%m-%dT%H:%M:%SZ"
