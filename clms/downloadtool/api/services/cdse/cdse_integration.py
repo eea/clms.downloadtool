@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=too-many-nested-blocks
 """
 CDSE: CDSE integration scripts
 """
@@ -307,6 +308,7 @@ def _populate_parsed_map_from_stac(stac_data, parsed_map):
     return parsed_map
 
 
+# pylint: disable=too-many-nested-blocks
 def create_batches(cdse_dataset):
     """Create batches"""
     match = re.search(r"raster\s+([\d.]+)\s*(km|m)",
@@ -423,22 +425,22 @@ def create_batches(cdse_dataset):
                 rb = raster_bands[i]
                 name = b.get("name") if isinstance(b, dict) else None
                 nodata = rb.get("nodata") if isinstance(rb, dict) else None
-                data_type = rb.get("data_type") if isinstance(rb, dict) else None
+                # pylint: disable=line-too-long
+                data_type = rb.get("data_type") if isinstance(rb, dict) else None    # noqa: E501
                 if name:
                     if name in parsed_map:
                         if "nodata" not in parsed_map[name]:
                             parsed_map[name]["nodata"] = nodata
                         if "data_type" not in parsed_map[name]:
                             parsed_map[name]["data_type"] = data_type
-                    else:                
+                    else:
                         # pylint: disable=line-too-long
                         parsed_map[name] = {"offset": 0.0, "factor": 1.0, "nodata": nodata, "data_type": data_type}    # noqa: E501
         layer_ids = list(parsed_map.keys())
     else:
-        print(f"Error {response_layers_stac.status_code}: {response_layers_stac.text}")
-
+        # pylint: disable=line-too-long
+        print(f"Error {response_layers_stac.status_code}: {response_layers_stac.text}")    # noqa: E501
     all_results = []
-
     for dt_str in catalog_data:
         dt = datetime.strptime(
             dt_str, "%Y-%m-%dT%H:%M:%SZ"
