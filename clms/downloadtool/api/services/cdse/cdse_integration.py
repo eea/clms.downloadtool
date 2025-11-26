@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=too-many-nested-blocks
 """
 CDSE: CDSE integration scripts
 """
@@ -306,7 +307,7 @@ def _populate_parsed_map_from_stac(stac_data, parsed_map):
 
     return parsed_map
 
-
+# pylint: disable=too-many-nested-blocks
 def create_batches(cdse_dataset):
     """Create batches"""
     match = re.search(r"raster\s+([\d.]+)\s*(km|m)",
