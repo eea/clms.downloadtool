@@ -1,5 +1,6 @@
 """CDSE helpers"""
 import ast
+from datetime import datetime, timezone
 import json
 import math
 import operator
@@ -135,31 +136,128 @@ def to_multipolygon(geom):
     )
 
 
-def request_Catalog_API(token, byoc_id, bbox_array, date_from, date_to,
-                        url_catalog_api, limit=10):
+def request_Catalog_API_dates(token, byoc_id, url_catalog_api, bbox_array=None,
+                              date_from=None, date_to=None, limit=10):
     """Request Catalog API"""
     headers = {
         'Content-type': 'application/json',
         'Authorization': f'Bearer {token}',
         "Accept": "application/geo+json"
     }
-    data = {
-        "bbox": bbox_array,
-        "datetime": "{date_from}/{date_to}".format(
-            date_from=date_from, date_to=date_to),
-        "collections": [byoc_id],
-        "limit": limit
+    response_dates = []
+    now = datetime.now(timezone.utc)
+    now_formatted = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    if not date_from:
+        date_from = "1970-01-01T00:00:00Z"
+    if not date_to:
+        date_to = now_formatted
+    if not bbox_array:
+        bbox_array = [-180, -90, 180, 90]
+
+    if 'byoc' not in byoc_id:
+        byoc_id = 'byoc-' + byoc_id
+
+    next_search = -1
+    while next_search != 0:
+        search_all = {
+            "collections": [f"{byoc_id}"],
+            "datetime": f"{date_from}/{date_to}",
+            "bbox": bbox_array,
+            "distinct": "date",
+            "limit": limit,
+        }
+        # next: 0 is not allowed by API, so we omit it for the first call
+        if next_search != -1:
+            search_all["next"] = next_search
+
+        search_response = requests.post(
+            url_catalog_api, headers=headers, json=search_all
+        )
+
+        # print(search_response)
+        if search_response.status_code == 200:
+            # print(search_response.text)
+            catalog_entries = search_response.json()
+
+            if "features" in catalog_entries:
+                response_dates.extend(catalog_entries["features"])
+
+            if "context" in catalog_entries and "next" in catalog_entries[
+                    "context"]:
+                next_search = catalog_entries["context"]["next"]
+            else:
+                next_search = 0
+        else:
+            print(
+                "Error calling catalog API:",
+                search_response.status_code,
+                search_response.text,
+            )
+            # WIP send error response
+            break
+    return list(set(response_dates))
+
+
+def request_Catalog_API(token, byoc_id, url_catalog_api, bbox_array=None,
+                        date_from=None, date_to=None, limit=10):
+    """Request Catalog API"""
+    headers = {
+        'Content-type': 'application/json',
+        'Authorization': f'Bearer {token}',
+        "Accept": "application/geo+json"
     }
-    response = requests.post(
-        url_catalog_api,
-        headers=headers,
-        json=data,
-    )
-    if response.status_code == 200:
-        print("ok")
-        return response.json()
-    print(f"Error {response.status_code}: {response.text}")
-    return False
+    response_dates = []
+    now = datetime.now(timezone.utc)
+    now_formatted = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    if not date_from:
+        date_from = "1970-01-01T00:00:00Z"
+    if not date_to:
+        date_to = now_formatted
+    if not bbox_array:
+        bbox_array = [-180, -90, 180, 90]
+
+    if 'byoc' not in byoc_id:
+        byoc_id = 'byoc-' + byoc_id
+
+    next_search = -1
+    while next_search != 0:
+        search_all = {
+            "collections": [f"{byoc_id}"],
+            "datetime": f"{date_from}/{date_to}",
+            "bbox": bbox_array,
+            "limit": limit,
+        }
+        # next: 0 is not allowed by API, so we omit it for the first call
+        if next_search != -1:
+            search_all["next"] = next_search
+
+        search_response = requests.post(
+            url_catalog_api, headers=headers, json=search_all
+        )
+
+        # print(search_response)
+        if search_response.status_code == 200:
+            # print(search_response.text)
+            catalog_entries = search_response.json()
+
+            if "features" in catalog_entries:
+                response_dates.extend([f["properties"]["datetime"]
+                                      for f in catalog_entries["features"]])
+
+            if "context" in catalog_entries and "next" in catalog_entries[
+                    "context"]:
+                next_search = catalog_entries["context"]["next"]
+            else:
+                next_search = 0
+        else:
+            print(
+                "Error calling catalog API:",
+                search_response.status_code,
+                search_response.text,
+            )
+            # WIP send error response
+            break
+    return list(set(response_dates))
 
 
 def _safe_eval_expr(expr):

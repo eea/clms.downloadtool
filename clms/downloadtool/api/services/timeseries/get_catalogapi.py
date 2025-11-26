@@ -9,6 +9,9 @@ from clms.downloadtool.api.services.cdse.cdse_integration import (
     get_token,
     CATALOG_API_URL,
 )
+from clms.downloadtool.api.services.cdse.cdse_helpers import (
+    request_Catalog_API_dates
+)
 from plone.restapi.services import Service
 
 # cache the results as it can take a lot of requests to get all data
@@ -19,52 +22,7 @@ def get_dates(byoc, token):
     """
     Get all dates
     """
-    headers = {"Authorization": f"Bearer {token}",
-               "Content-Type": "application/json"}
-
-    response_dates = []
-    now = datetime.now(timezone.utc)
-    now_formatted = now.strftime("%Y-%m-%dT%H:%M:%SZ")
-
-    next_search = -1
-    while next_search != 0:
-        search_all = {
-            "collections": [f"byoc-{byoc}"],
-            "datetime": f"1970-01-01T00:00:00Z/{now_formatted}",
-            "bbox": [-180, -90, 180, 90],
-            "distinct": "date",
-            "limit": 100,
-        }
-        # next: 0 is not allowed by API, so we omit it for the first call
-        if next_search != -1:
-            search_all["next"] = next_search
-
-        search_response = requests.post(
-            CATALOG_API_URL, headers=headers, json=search_all
-        )
-
-        # print(search_response)
-        if search_response.status_code == 200:
-            # print(search_response.text)
-            catalog_entries = search_response.json()
-
-            if "features" in catalog_entries:
-                response_dates.extend(catalog_entries["features"])
-
-            if "context" in catalog_entries and "next" in catalog_entries[
-                    "context"]:
-                next_search = catalog_entries["context"]["next"]
-            else:
-                next_search = 0
-        else:
-            print(
-                "Error calling catalog API:",
-                search_response.status_code,
-                search_response.text,
-            )
-            # WIP send error response
-            break
-    return response_dates
+    return request_Catalog_API_dates(token, byoc, CATALOG_API_URL)
 
 
 def get_geometry(byoc, token):
