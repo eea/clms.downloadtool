@@ -330,13 +330,16 @@ def create_batches(cdse_dataset):
         geom_wgs84 = box(t_bbox[0], t_bbox[1], t_bbox[2], t_bbox[3])
         tiles = plan_tiles(geom_wgs84, 3035, MAX_SIDE_M, resolution_value)
     elif cdse_dataset.get("NUTSID"):
+        print("START get polygon")
         polygon_data = get_polygon(cdse_dataset["NUTSID"])
+        print("END get polygon")
         geom_wgs84 = polygon_data["geometry"].iloc[0]
         tiles = plan_tiles(geom_wgs84, 3035, MAX_SIDE_M,
                            resolution_value, MAX_POINTS)
     else:
         raise ValueError("Dataset must contain either BoundingBox or NUTSID")
 
+    print("Start processing polygon")
     geoms_out = [to_multipolygon(reproject_geom(
         t["clip_geom"], 3035, 4326)) for t in tiles]
 
@@ -355,6 +358,7 @@ def create_batches(cdse_dataset):
     gdf.to_file(buffer, driver="GPKG")
     buffer.seek(0)
 
+    print("Geopack")
     config = get_portal_config()
     datasource = cdse_dataset["ByocCollection"]
 
@@ -370,6 +374,7 @@ def create_batches(cdse_dataset):
         aws_access_key_id=config['s3_access_key'],
         aws_secret_access_key=config['s3_secret_key']
     )
+    print("S3")
 
     unique_geopackage_id = str(uuid.uuid4())
     gpkg_name = f"{unique_geopackage_id}.gpkg"
@@ -381,10 +386,11 @@ def create_batches(cdse_dataset):
     bbox_array = [geom_wgs84.bounds[0], geom_wgs84.bounds[1],
                   geom_wgs84.bounds[2], geom_wgs84.bounds[3]]
 
+    print("Before catalog api request")
     catalog_data = request_Catalog_API(
-        token, "byoc-" + datasource, bbox_array, time_range_start,
-        time_range_end, CATALOG_API_URL, limit=LIMIT)
-    if not catalog_data or "features" not in catalog_data:
+        token, "byoc-" + datasource, CATALOG_API_URL, bbox_array,
+        time_range_start, time_range_end, limit=LIMIT)
+    if not catalog_data:
         raise RuntimeError("No data returned from Catalog API")
     headers = {
         "Authorization": f"Bearer {token}",
@@ -417,8 +423,8 @@ def create_batches(cdse_dataset):
         # pylint: disable=line-too-long
         print(f"Error {response_layers_stac.status_code}: {response_layers_stac.text}")    # noqa: E501
     all_results = []
-    for feature in catalog_data["features"]:
-        dt_str = feature["properties"]["datetime"]
+
+    for dt_str in catalog_data:
         dt = datetime.strptime(
             dt_str, "%Y-%m-%dT%H:%M:%SZ"
         ).replace(tzinfo=timezone.utc)
