@@ -136,7 +136,8 @@ def to_multipolygon(geom):
     )
 
 
-def request_Catalog_API_dates(token, byoc_id, url_catalog_api, bbox_array=None, date_from=None, date_to=None, limit=10):
+def request_Catalog_API_dates(token, byoc_id, url_catalog_api, bbox_array=None,
+                              date_from=None, date_to=None, limit=10):
     """Request Catalog API"""
     headers = {
         'Content-type': 'application/json',
@@ -197,7 +198,8 @@ def request_Catalog_API_dates(token, byoc_id, url_catalog_api, bbox_array=None, 
     return list(set(response_dates))
 
 
-def request_Catalog_API(token, byoc_id, url_catalog_api, bbox_array=None, date_from=None, date_to=None, limit=10):
+def request_Catalog_API(token, byoc_id, url_catalog_api, bbox_array=None,
+                        date_from=None, date_to=None, limit=10):
     """Request Catalog API"""
     headers = {
         'Content-type': 'application/json',
@@ -217,8 +219,6 @@ def request_Catalog_API(token, byoc_id, url_catalog_api, bbox_array=None, date_f
     if 'byoc' not in byoc_id:
         byoc_id = 'byoc-' + byoc_id
 
-    import pdb
-    pdb.set_trace()
     next_search = -1
     while next_search != 0:
         search_all = {
