@@ -388,8 +388,8 @@ def create_batches(cdse_dataset):
 
     print("Before catalog api request")
     catalog_data = request_Catalog_API(
-        token, "byoc-" + datasource, CATALOG_API_URL, bbox_array, time_range_start,
-        time_range_end, limit=LIMIT)
+        token, "byoc-" + datasource, CATALOG_API_URL, bbox_array,
+        time_range_start, time_range_end, limit=LIMIT)
     if not catalog_data:
         raise RuntimeError("No data returned from Catalog API")
     headers = {
