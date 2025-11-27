@@ -9,4 +9,11 @@
       class=".views.StartCDSEBatch"
       permission="zope2.View"
       />
+
+  <browser:page
+      name="downloadtool-updates"
+      for="*"
+      class=".views.DownloadToolUpdates"
+      permission="zope2.View"
+      />
 </configure>

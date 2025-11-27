@@ -296,7 +296,14 @@ class DataRequestPost(Service):
 
         if fme_result:
             data_object["FMETaskId"] = fme_result
-            utility.datarequest_status_patch(data_object, utility_task_id)
+            queue_job("downloadtool_jobs", "downloadtool_updates", {
+                'operation': 'datarequest_status_patch',
+                'updates': {
+                    'data_object': data_object,
+                    'utility_task_id': utility_task_id
+                }
+            })
+
             self.request.response.setStatus(201)
             fme_results["ok"].append({"TaskID": utility_task_id})
         else:

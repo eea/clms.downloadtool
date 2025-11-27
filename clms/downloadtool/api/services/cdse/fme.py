@@ -33,9 +33,9 @@ from logging import getLogger
 
 import requests
 from plone import api
-from zope.component import getUtility
-
+from clms.downloadtool.asyncjobs.queues import queue_job
 from clms.downloadtool.utility import IDownloadToolUtility
+from zope.component import getUtility
 
 
 log = getLogger(__name__)
@@ -116,7 +116,6 @@ def send_task_to_fme(task_id):
         "CDSEBatchIDs": cdse_batch_ids,
         "GpkgFileNames": gpkg_filenames
     }
-    utility = getUtility(IDownloadToolUtility)
 
     params = {
         "publishedParameters": [
@@ -146,8 +145,12 @@ def send_task_to_fme(task_id):
     data_object = task_info
     if fme_result:
         data_object["FMETaskId"] = fme_result
-        utility.datarequest_status_patch(
-            data_object, utility_task_id
-        )
+        queue_job("downloadtool_jobs", "downloadtool_updates", {
+            'operation': 'datarequest_status_patch',
+            'updates': {
+                'data_object': data_object,
+                'utility_task_id': utility_task_id
+            }
+        })
         return "SUCCESS"
     return "ERROR"
