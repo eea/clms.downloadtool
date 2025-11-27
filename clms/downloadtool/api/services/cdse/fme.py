@@ -34,9 +34,8 @@ from logging import getLogger
 import requests
 from plone import api
 from clms.downloadtool.asyncjobs.queues import queue_job
-from zope.component import getUtility
-
 from clms.downloadtool.utility import IDownloadToolUtility
+from zope.component import getUtility
 
 
 log = getLogger(__name__)

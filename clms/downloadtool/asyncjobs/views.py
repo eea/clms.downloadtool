@@ -7,12 +7,12 @@ from Products.Five.browser import BrowserView
 from plone.api.env import adopt_user
 from plone.protect.interfaces import IDisableCSRFProtection
 from zope.interface import alsoProvides
+from zope.component import getUtility
 from zExceptions import Unauthorized
 from clms.downloadtool.api.services.cdse.cdse_tasks_queue import (
     process_cdse_batches,
 )
 from clms.downloadtool.utility import IDownloadToolUtility
-from zope.component import getUtility
 
 logger = logging.getLogger(__name__)
 PLONE_AUTH_TOKEN = os.environ.get("PLONE_AUTH_TOKEN", "hello1234")
