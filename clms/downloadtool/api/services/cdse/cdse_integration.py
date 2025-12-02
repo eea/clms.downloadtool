@@ -161,7 +161,7 @@ def generate_evalscript(layer_ids, extra_parameters, dt_forName):
         # pylint: disable=line-too-long
         band_algebra = band_algebra + f"""
     var {layer_id}_val = samples.{layer_id} * {factor} + {offset};
-    var {layer_id}_outputVal = samples.dataMask === 1 ? {layer_id}_val : {n_val};
+    var {layer_id}_outputVal = {layer_id}_val ? {layer_id}_val : {n_val};
     """    # noqa: E501
         # pylint: disable=line-too-long
         return_items.append(
