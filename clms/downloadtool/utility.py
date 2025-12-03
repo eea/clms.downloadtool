@@ -188,6 +188,8 @@ class DownloadToolUtility:
             registry_item["FinalizationDateTime"] = data_object[
                 "FinalizationDateTime"
             ]
+        if "FMETaskId" in data_object:
+            registry_item["FMETaskId"] = data_object["FMETaskId"]
         if "Message" in data_object:
             registry_item["Message"] = data_object["Message"]
         if "cdse_errors" in data_object:
@@ -230,6 +232,8 @@ class DownloadToolUtility:
                 registry_item["FinalizationDateTime"] = data_object[
                     "FinalizationDateTime"
                 ]
+            if "FMETaskId" in data_object:
+                registry_item["FMETaskId"] = data_object["FMETaskId"]
             if "Message" in data_object:
                 registry_item["Message"] = data_object["Message"]
             if "cdse_errors" in data_object:
