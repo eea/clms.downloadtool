@@ -370,9 +370,13 @@ class DataRequestPost(Service):
             [],
         )
 
+        requested_datasets = (
+            general_download_data_object.get("Datasets", []) +
+            cdse_datasets.get("Datasets", [])
+        )
+
         if duplicated_values_exist(
-            general_download_data_object.get(
-                "Datasets", []) + inprogress_datasets + queued_datasets
+            requested_datasets + inprogress_datasets + queued_datasets
         ):
             return self.rsp("DUPLICATED")
 
