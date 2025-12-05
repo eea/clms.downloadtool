@@ -345,8 +345,11 @@ class DataRequestPost(Service):
         Handle final validations and trigger FME/CDSE requests.
         Returns either a response dict or an error response.
         """
-        # Check for a maximum of 5 items
-        if len(general_download_data_object.get("Datasets", [])) > 5:
+        # Check for a maximum of 5 items across regular and CDSE datasets
+        total_requested = len(
+            general_download_data_object.get("Datasets", [])
+        ) + len(cdse_datasets.get("Datasets", []))
+        if total_requested > 5:
             return self.rsp("DOWNLOAD_LIMIT")
 
         inprogress_requests = utility.datarequest_search(
