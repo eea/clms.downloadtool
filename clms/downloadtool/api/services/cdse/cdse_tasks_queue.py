@@ -53,7 +53,7 @@ def process_cdse_batches(cdse_datasets, user_id):
             cdse_dataset["TemporalFilter"]["StartDate"] = to_iso8601(
                 cdse_dataset["TemporalFilter"]["StartDate"])
             cdse_dataset["TemporalFilter"]["EndDate"] = to_iso8601(
-                cdse_dataset["TemporalFilter"]["EndDate"], end_of_day=True)
+                cdse_dataset["TemporalFilter"]["EndDate"])
         except Exception:
             pass
 
