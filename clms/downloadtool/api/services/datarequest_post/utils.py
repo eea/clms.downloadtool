@@ -79,11 +79,9 @@ def base64_encode_path(path):
     return base64.urlsafe_b64encode(path).decode("utf-8")
 
 
-def to_iso8601(dt_str, end_of_day=False):
+def to_iso8601(dt_str):
     """Convert datetime in format requested by CDSE"""
     dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
-    if end_of_day:
-        dt = dt.replace(hour=23, minute=59, second=59)
     return dt.isoformat() + "Z"   # adding Z for UTC
 
 
