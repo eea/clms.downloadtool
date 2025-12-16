@@ -79,9 +79,11 @@ def base64_encode_path(path):
     return base64.urlsafe_b64encode(path).decode("utf-8")
 
 
-def to_iso8601(dt_str):
+def to_iso8601(dt_str, end_of_day=False):
     """Convert datetime in format requested by CDSE"""
     dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
+    if end_of_day:
+        dt = dt.replace(hour=23, minute=59, second=59)
     return dt.isoformat() + "Z"   # adding Z for UTC
 
 
@@ -105,8 +107,9 @@ def extract_dates_from_temporal_filter(temporal_filter):
         start_date = temporal_filter.get("StartDate")
         end_date = temporal_filter.get("EndDate")
 
-        start_date_obj = datetime.fromtimestamp(start_date / 1000)
-        end_date_obj = datetime.fromtimestamp(end_date / 1000)
+        start_date_obj = datetime.fromtimestamp(
+            start_date / 1000, tz=timezone.utc)
+        end_date_obj = datetime.fromtimestamp(end_date / 1000, tz=timezone.utc)
 
         return (
             start_date_obj.strftime(ISO8601_DATETIME_FORMAT),
