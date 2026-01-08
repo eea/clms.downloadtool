@@ -318,7 +318,8 @@ class DataRequestPost(Service):
         d_l_t = dataset_object.download_limit_temporal_extent
         if d_l_t is not None and d_l_t > 0:
             if start_date is None or end_date is None:
-                if not getattr(dataset_object, "mapviewer_istimeseries", False):
+                if not getattr(
+                        dataset_object, "mapviewer_istimeseries", False):
                     return None
                 return self.rsp("TEMP_MISSING_RANGE")
 
