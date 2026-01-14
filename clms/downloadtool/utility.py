@@ -2,6 +2,7 @@
 """Download tool utility with PostgreSQL-backed storage."""
 import random
 from datetime import datetime, timezone
+import os
 from logging import getLogger
 
 from clms.downloadtool.api.services.cdse.cdse_integration import (
@@ -9,6 +10,7 @@ from clms.downloadtool.api.services.cdse.cdse_integration import (
     stop_batch_ids_and_remove_s3_directory,
 )
 from clms.downloadtool.storage.db import DownloadtoolRepository
+from clms.downloadtool.storage.memory import MemoryDownloadtoolRepository
 from clms.downloadtool.utils import STATUS_LIST
 from plone import api
 from zope.interface import Interface, implementer
@@ -29,7 +31,10 @@ class DownloadToolUtility:
     def _get_repository(self):
         """Lazy-load the database repository."""
         if self._repository is None:
-            self._repository = DownloadtoolRepository()
+            if os.environ.get("CLMS_DOWNLOADTOOL_TESTING") == "1":
+                self._repository = MemoryDownloadtoolRepository()
+            else:
+                self._repository = DownloadtoolRepository()
         return self._repository
 
     def remove_cdse_child_tasks(self, cdse_task_group_id):

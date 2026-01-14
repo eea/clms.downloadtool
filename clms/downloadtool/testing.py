@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Test plone site
-"""
+"""Test plone site."""
+import os
 import clms.downloadtool
 import plone.restapi
 from plone.app.contenttypes.testing import PLONE_APP_CONTENTTYPES_FIXTURE
@@ -19,6 +19,7 @@ class ClmsDownloadtoolLayer(PloneSandboxLayer):
         # Load any other ZCML that is required for your tests.
         # The z3c.autoinclude feature is disabled in the Plone fixture base
         # layer.
+        os.environ.setdefault("CLMS_DOWNLOADTOOL_TESTING", "1")
 
         self.loadZCML(package=plone.restapi)
         self.loadZCML(package=clms.downloadtool)
