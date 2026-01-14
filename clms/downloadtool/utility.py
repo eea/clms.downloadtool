@@ -27,6 +27,7 @@ class DownloadToolUtility:
     _repository = None
 
     def _get_repository(self):
+        """Lazy-load the database repository."""
         if self._repository is None:
             self._repository = DownloadtoolRepository()
         return self._repository
@@ -166,7 +167,9 @@ class DownloadToolUtility:
         if "FileSize" in data_object:
             updates["FileSize"] = data_object["FileSize"]
         if "FinalizationDateTime" in data_object:
-            updates["FinalizationDateTime"] = data_object["FinalizationDateTime"]
+            updates["FinalizationDateTime"] = data_object[
+                "FinalizationDateTime"
+            ]
         if "FMETaskId" in data_object:
             updates["FMETaskId"] = data_object["FMETaskId"]
         if "Message" in data_object:
