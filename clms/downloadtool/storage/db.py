@@ -41,7 +41,8 @@ def _parse_datetime(value):
     if isinstance(value, datetime):
         return value
     if isinstance(value, str):
-        cleaned = value.replace("Z", "+00:00") if value.endswith("Z") else value
+        cleaned = value.replace("Z", "+00:00") if value.endswith(
+            "Z") else value
         try:
             return datetime.fromisoformat(cleaned)
         except ValueError:
@@ -134,12 +135,12 @@ class DownloadtoolRepository:
             params.append(status)
         with self._connect() as conn:
             with conn.cursor() as cursor:
-                cursor.execute(
-                    "SELECT task_id, payload FROM {table} WHERE {where}".format(
-                        table=TABLE_NAME, where=" AND ".join(where)
-                    ),
-                    tuple(params),
+                query = (
+                    "SELECT task_id, payload FROM {table} WHERE {where}"
+                ).format(
+                    table=TABLE_NAME, where=" AND ".join(where)
                 )
+                cursor.execute(query, tuple(params))
                 return cursor.fetchall()
 
     def inspect_tasks(self, query=None):
