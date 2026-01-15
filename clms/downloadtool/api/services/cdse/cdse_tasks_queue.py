@@ -94,6 +94,8 @@ def process_cdse_batches(cdse_datasets, user_id):
                 "cdse_task_role": "child",
                 "cdse_task_group_id": cdse_task_group_id,
             }
+            cdse_data_object["UserID"] = user_id
+            cdse_data_object["cdse_task_group_id"] = cdse_task_group_id
 
             # Post child task to utility
             utility_response_json = utility.datarequest_post(
@@ -129,6 +131,8 @@ def process_cdse_batches(cdse_datasets, user_id):
             "CDSEBatchIDs": cdse_batch_ids,
             "GpkgFileNames": gpkg_filenames,
         })
+        cdse_parent_task["UserID"] = user_id
+        cdse_parent_task["cdse_task_group_id"] = cdse_task_group_id
         now = datetime.now(timezone.utc).isoformat()
         if is_failed_in_cdse:
             cdse_parent_task.update({
