@@ -1,37 +1,19 @@
 # -*- coding: utf-8 -*-
-"""
-The best way to save the download tool registry is to save plain data-types in
-an annotation of the site object.
-
-This way to store information is one of the techniques used in Plone to save
-non-contentish information.
-
-To achieve that we use the IAnnotations interface to abstract saving that
-informations. This technique provides us with a dictionary-like interface
-where we can save, update and retrieve information.
-
-We will also encapsulate all operations with the download tool registry in
-this utility, this way it will be the central point of the all functionality
-involving the said registry.
-
-Wherever we need to interact with it (ex, REST API) we will get the utility
-and call its method.
-
-We have to understand the utility as being a Singleton object.
-
-"""
+"""Download tool utility with PostgreSQL-backed storage."""
 import random
 from datetime import datetime, timezone
+import os
 from logging import getLogger
 
-from clms.downloadtool.utils import ANNOTATION_KEY, STATUS_LIST
 from clms.downloadtool.api.services.cdse.cdse_integration import (
-    stop_batch_ids_and_remove_s3_directory, clean_s3_bucket_files,
+    clean_s3_bucket_files,
+    stop_batch_ids_and_remove_s3_directory,
 )
-from zope.annotation.interfaces import IAnnotations
-from zope.component.hooks import getSite
+from clms.downloadtool.storage.db import DownloadtoolRepository
+from clms.downloadtool.storage.memory import MemoryDownloadtoolRepository
+from clms.downloadtool.utils import STATUS_LIST
+from plone import api
 from zope.interface import Interface, implementer
-from BTrees.OOBTree import OOBTree
 
 log = getLogger(__name__)
 
@@ -43,6 +25,17 @@ class IDownloadToolUtility(Interface):
 @implementer(IDownloadToolUtility)
 class DownloadToolUtility:
     """Downloadtool request methods"""
+
+    _repository = None
+
+    def _get_repository(self):
+        """Lazy-load the database repository."""
+        if self._repository is None:
+            if os.environ.get("CLMS_DOWNLOADTOOL_TESTING") == "1":
+                self._repository = MemoryDownloadtoolRepository()
+            else:
+                self._repository = DownloadtoolRepository()
+        return self._repository
 
     def remove_cdse_child_tasks(self, cdse_task_group_id):
         """Remove child tasks from DownloadTool"""
@@ -66,38 +59,35 @@ class DownloadToolUtility:
 
     def datarequest_post(self, data_request):
         """register new download request"""
-        site = getSite()
-        annotations = IAnnotations(site)
-        task_id = random.randint(0, 99999999999)
-        str_task_id = str(task_id)
+        repository = self._get_repository()
+        if not data_request.get("UserID"):
+            user = api.user.get_current()
+            if user is not None:
+                data_request["UserID"] = user.getId()
+        if "RegistrationDateTime" not in data_request:
+            data_request["RegistrationDateTime"] = datetime.now(
+                timezone.utc
+            ).isoformat()
+        task_id = None
 
-        registry = annotations.get(ANNOTATION_KEY, OOBTree())
-
-        while str_task_id in registry:
-            task_id = random.randint(0, 99999999999)
-            str_task_id = str(task_id)
-
-        registry[str_task_id] = data_request
-        annotations[ANNOTATION_KEY] = registry
+        while task_id is None:
+            candidate = str(random.randint(0, 99999999999))
+            if repository.insert_task(candidate, data_request):
+                task_id = candidate
 
         log.info("DownloadToolUtility: TASK SAVED.")
 
         if "cdse_task_role" in data_request.keys():
             log.info(data_request['cdse_task_role'])
-        return {str_task_id: data_request}
+        return {task_id: data_request}
 
     def datarequest_delete(self, task_id, user_id):
         """cancel the download request"""
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, OOBTree())
-
-        data_object = None
-
-        if task_id not in registry:
+        repository = self._get_repository()
+        data_object = repository.get_task(task_id)
+        if data_object is None:
             return "Error, TaskID not registered"
 
-        data_object = registry.get(str(task_id))
         if user_id not in data_object["UserID"]:
             return "Error, permission denied"
 
@@ -124,95 +114,95 @@ class DownloadToolUtility:
             # Also remove all child tasks for this parent task
             self.remove_cdse_child_tasks(cdse_task_group_id)
 
-        registry[str(task_id)] = data_object
-        annotations[ANNOTATION_KEY] = registry
+        repository.update_task(
+            task_id,
+            {
+                "Status": data_object["Status"],
+                "FinalizationDateTime": data_object["FinalizationDateTime"],
+            },
+            status=data_object["Status"],
+        )
 
         return data_object
 
     def datarequest_search(self, user_id, status):
         """search for download requests"""
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, OOBTree())
         data_object = {}
+        repository = self._get_repository()
 
         if not user_id:
             return "Error, UserID not defined"
 
         if not status:
-            for key in registry.keys():
-                values = registry.get(key)
-                if str(user_id) == values.get("UserID"):
-                    data_object[key] = values
+            rows = repository.search_tasks(user_id)
+            for key, values in rows:
+                data_object[key] = values
             return data_object
 
         if status not in STATUS_LIST:
             return "Error, status not recognized"
 
-        for key in registry.keys():
-            values = registry.get(key)
-            if status == values.get("Status") and str(user_id) == values.get(
-                "UserID"
-            ):
-                data_object[key] = values
+        rows = repository.search_tasks(user_id, status=status)
+        for key, values in rows:
+            data_object[key] = values
 
         return data_object
 
     def datarequest_status_get(self, task_id):
         """get a given download task's information"""
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, OOBTree())
-        if task_id not in registry:
+        repository = self._get_repository()
+        task = repository.get_task(task_id)
+        if task is None:
             return "Error, task not found"
-        return registry.get(task_id)
+        return task
 
     def datarequest_status_patch(self, data_object, task_id):
         """modify a given download task's information"""
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, OOBTree())
-
-        if task_id not in registry:
+        repository = self._get_repository()
+        registry_item = repository.get_task(task_id)
+        if registry_item is None:
             return "Error, task_id not registered"
 
-        registry_item = registry.get(task_id, None)
+        updates = {}
 
         if "Status" in data_object:
-            registry_item["Status"] = data_object["Status"]
+            updates["Status"] = data_object["Status"]
         if "DownloadURL" in data_object:
-            registry_item["DownloadURL"] = data_object["DownloadURL"]
+            updates["DownloadURL"] = data_object["DownloadURL"]
         if "FileSize" in data_object:
-            registry_item["FileSize"] = data_object["FileSize"]
+            updates["FileSize"] = data_object["FileSize"]
         if "FinalizationDateTime" in data_object:
-            registry_item["FinalizationDateTime"] = data_object[
+            updates["FinalizationDateTime"] = data_object[
                 "FinalizationDateTime"
             ]
         if "FMETaskId" in data_object:
-            registry_item["FMETaskId"] = data_object["FMETaskId"]
+            updates["FMETaskId"] = data_object["FMETaskId"]
         if "Message" in data_object:
-            registry_item["Message"] = data_object["Message"]
+            updates["Message"] = data_object["Message"]
         if "cdse_errors" in data_object:
-            registry_item["cdse_errors"] = data_object["cdse_errors"]
-        registry[task_id] = registry_item
-        annotations[ANNOTATION_KEY] = registry
-        return registry_item
+            updates["cdse_errors"] = data_object["cdse_errors"]
+
+        if not updates:
+            return registry_item
+
+        updated_item = repository.update_task(
+            task_id, updates, status=updates.get("Status")
+        )
+        return updated_item if updated_item is not None else registry_item
 
     def datarequest_status_patch_multiple(self, updates):
         """modify multiple download tasks' information"""
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, OOBTree())
-
         if not isinstance(updates, dict):
             return "Error, invalid payload"
 
         updated_items = {}
         errors = {}
+        repository = self._get_repository()
 
         for task_id, data_object in updates.items():
             task_key = str(task_id)
-            if task_key not in registry:
+            registry_item = repository.get_task(task_key)
+            if registry_item is None:
                 errors[task_key] = "Error, task_id not registered"
                 continue
 
@@ -220,29 +210,34 @@ class DownloadToolUtility:
                 errors[task_key] = "Error, invalid data_object"
                 continue
 
-            registry_item = registry.get(task_key, None)
+            task_updates = {}
 
             if "Status" in data_object:
-                registry_item["Status"] = data_object["Status"]
+                task_updates["Status"] = data_object["Status"]
             if "DownloadURL" in data_object:
-                registry_item["DownloadURL"] = data_object["DownloadURL"]
+                task_updates["DownloadURL"] = data_object["DownloadURL"]
             if "FileSize" in data_object:
-                registry_item["FileSize"] = data_object["FileSize"]
+                task_updates["FileSize"] = data_object["FileSize"]
             if "FinalizationDateTime" in data_object:
-                registry_item["FinalizationDateTime"] = data_object[
+                task_updates["FinalizationDateTime"] = data_object[
                     "FinalizationDateTime"
                 ]
             if "FMETaskId" in data_object:
-                registry_item["FMETaskId"] = data_object["FMETaskId"]
+                task_updates["FMETaskId"] = data_object["FMETaskId"]
             if "Message" in data_object:
-                registry_item["Message"] = data_object["Message"]
+                task_updates["Message"] = data_object["Message"]
             if "cdse_errors" in data_object:
-                registry_item["cdse_errors"] = data_object["cdse_errors"]
+                task_updates["cdse_errors"] = data_object["cdse_errors"]
 
-            registry[task_key] = registry_item
-            updated_items[task_key] = registry_item
-
-        annotations[ANNOTATION_KEY] = registry
+            if task_updates:
+                updated_item = repository.update_task(
+                    task_key, task_updates, status=task_updates.get("Status")
+                )
+                updated_items[task_key] = (
+                    updated_item if updated_item is not None else registry_item
+                )
+            else:
+                updated_items[task_key] = registry_item
 
         if errors:
             return {"updated": updated_items, "errors": errors}
@@ -251,60 +246,38 @@ class DownloadToolUtility:
 
     def delete_data(self):
         """a method to delete all data from the registry"""
-        site = getSite()
-        annotations = IAnnotations(site)
-
-        if annotations.get(ANNOTATION_KEY, None) is None:
+        repository = self._get_repository()
+        if not repository.has_tasks():
             return {"status": "Error", "msg": "Registry is empty"}
 
-        annotations[ANNOTATION_KEY] = OOBTree()
+        repository.delete_all()
         return {}
 
     def datarequest_remove_task(self, task_id):
         """Remove all data about the given task"""
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, OOBTree())
-
-        if task_id not in registry:
+        repository = self._get_repository()
+        if not repository.delete_task(task_id):
             return "Error, TaskID not registered"
-
-        del registry[str(task_id)]
-
-        annotations[ANNOTATION_KEY] = registry
 
         return 1
 
     def datarequest_inspect(self, **query):
         """inspect the queries according to the query"""
-
-        site = getSite()
-        annotations = IAnnotations(site)
-        registry = annotations.get(ANNOTATION_KEY, OOBTree())
-        data_objects = []
+        repository = self._get_repository()
 
         if "TaskID" in query:
             task_id = query.get("TaskID")
-            task = registry.get(task_id, None)
+            task = repository.get_task(task_id)
             if task is not None:
-                task.update({'TaskId': task_id})
-
+                task.update({"TaskId": task_id})
                 return [task]
 
             return []
 
-        for key in registry.keys():
-            db_value = registry.get(key)
-
-            if query:
-                for parameter, value in query.items():
-                    if db_value.get(parameter, "") == value:
-                        db_value.update({"TaskId": key})
-                        data_objects.append(db_value)
-                        continue
-            else:
-                db_value.update({"TaskId": key})
-
-                data_objects.append(db_value)
+        rows = repository.inspect_tasks(query if query else None)
+        data_objects = []
+        for key, db_value in rows:
+            db_value.update({"TaskId": key})
+            data_objects.append(db_value)
 
         return data_objects

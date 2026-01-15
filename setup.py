@@ -63,7 +63,8 @@ setup(
         "PyProj",
         "geopandas",
         "boto3",
-        "bullmq"
+        "bullmq",
+        "psycopg2-binary",
     ],
     extras_require={
         "test": [
