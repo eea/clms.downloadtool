@@ -130,7 +130,9 @@ class DataRequestPost(Service):
                 None
             )
 
-            if info_item and info_item.get('full_source') == "CDSE":
+            if info_item and (
+                info_item.get('full_source') == "CDSE" or info_item.get(
+                    'full_source') == "CDSE_CSV"):
                 is_cdse_dataset = True
                 response_json.update({
                     "ByocCollection": info_item.get('byoc_collection'),
