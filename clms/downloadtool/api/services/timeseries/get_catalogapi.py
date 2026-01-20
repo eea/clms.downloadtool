@@ -110,6 +110,7 @@ def _ram_cache_key(method, byoc, cache_key):
 
 @ram.cache(_ram_cache_key)
 def _get_cached_full_response(byoc, cache_key):
+    """ Get cached full response"""
     token = get_token()
     result = get_full_response(byoc, token)
 
