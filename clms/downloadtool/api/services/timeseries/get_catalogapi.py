@@ -130,6 +130,8 @@ class GetCatalogApiDates(Service):
         """endpoint response"""
         byoc = self.request.get("byoc", None)
         force_refresh = self.request.get("force_refresh", False)
+        if isinstance(force_refresh, str):
+            force_refresh = force_refresh.strip().lower() == "true"
         if byoc is None:
             self.request.response.setStatus(400)
             return {
