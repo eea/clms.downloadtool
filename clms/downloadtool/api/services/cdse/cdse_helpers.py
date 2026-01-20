@@ -195,7 +195,8 @@ def request_Catalog_API_dates(token, byoc_id, url_catalog_api, bbox_array=None,
             )
             # WIP send error response
             break
-    return list(set(response_dates))
+
+    return sorted(list(set(response_dates)))
 
 
 def request_Catalog_API(token, byoc_id, url_catalog_api, bbox_array=None,

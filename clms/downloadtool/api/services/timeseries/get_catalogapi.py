@@ -12,10 +12,8 @@ from clms.downloadtool.api.services.cdse.cdse_integration import (
 from clms.downloadtool.api.services.cdse.cdse_helpers import (
     request_Catalog_API_dates
 )
+from plone.memoize import ram
 from plone.restapi.services import Service
-
-# cache the results as it can take a lot of requests to get all data
-_local_dates_cache = {}
 
 
 def get_dates(byoc, token):
@@ -98,15 +96,21 @@ def current_cache_key():
     return period_start.strftime("%Y-%m-%d-%H")
 
 
-def get_cached_response(byoc, force_refresh=False):
+def _ram_cache_key(method, byoc, cache_key):
+    """Cache per BYOC and time bucket.
+
+    Example:
+      - First request for byoc "abc-123" on 2025-02-10 (key 2025-02-10-15)
+        stores under: cdse.catalogapi.dates:abc-123:2025-02-10-15
+      - Subsequent requests for the same BYOC/day return cached data without
+        calling CDSE. Next day uses a new key and refreshes once.
     """
-    Get cached response
-    """
-    cache_key = current_cache_key()
-    if byoc in _local_dates_cache and not force_refresh:
-        if _local_dates_cache[byoc]["cached"] == cache_key:
-            return _local_dates_cache[byoc]
-    # not cached
+    return f"cdse.catalogapi.dates:{byoc}:{cache_key}"
+
+
+@ram.cache(_ram_cache_key)
+def _get_cached_full_response(byoc, cache_key):
+    """ Get cached full response"""
     token = get_token()
     result = get_full_response(byoc, token)
 
@@ -115,8 +119,23 @@ def get_cached_response(byoc, force_refresh=False):
         result["dates"]) > 0 and "metadata" in result and result[
             "metadata"] is not None:
         result["cached"] = cache_key
-        _local_dates_cache[byoc] = result
     return result
+
+
+def get_cached_response(byoc, force_refresh=False):
+    """
+    Get cached response
+    """
+    cache_key = current_cache_key()
+    if force_refresh:
+        token = get_token()
+        result = get_full_response(byoc, token)
+        if "dates" in result and len(
+            result["dates"]) > 0 and "metadata" in result and result[
+                "metadata"] is not None:
+            result["cached"] = cache_key
+        return result
+    return _get_cached_full_response(byoc, cache_key)
 
 
 class GetCatalogApiDates(Service):
@@ -130,6 +149,8 @@ class GetCatalogApiDates(Service):
         """endpoint response"""
         byoc = self.request.get("byoc", None)
         force_refresh = self.request.get("force_refresh", False)
+        if isinstance(force_refresh, str):
+            force_refresh = force_refresh.strip().lower() == "true"
         if byoc is None:
             self.request.response.setStatus(400)
             return {
