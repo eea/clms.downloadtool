@@ -31,6 +31,7 @@ from clms.downloadtool.api.services.datarequest_post.utils import (
     params_for_fme,
     post_request_to_fme,
     save_stats,
+    to_iso8601,
 )
 from clms.downloadtool.api.services.datarequest_post.validation import (
     MESSAGES,
@@ -247,12 +248,28 @@ class DataRequestPost(Service):
         if start_date > end_date:
             return None, None, self.rsp("INCORRECT_DATE_RANGE")
 
-        response_json.update({
-            "TemporalFilter": {
-                "StartDate": start_date,
-                "EndDate": end_date
-            }
-        })
+        info_id = dataset_json.get('DatasetDownloadInformationID')
+
+        info_item = next(
+            (it for it in dataset_object.dataset_download_information.get(
+                "items", []) if it.get("@id") == info_id),
+            None
+        )
+
+        if info_item and (info_item.get('full_source') == "CDSE_CSV"):
+            response_json.update({
+                "TemporalFilter": {
+                    "StartDate": to_iso8601(start_date),
+                    "EndDate": to_iso8601(end_date, end_of_day=True)
+                }
+            })
+        else:
+            response_json.update({
+                "TemporalFilter": {
+                    "StartDate": start_date,
+                    "EndDate": end_date
+                }
+            })
         return start_date, end_date, None
 
     def process_out_gcs(self, dataset_json, response_json):
