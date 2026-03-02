@@ -464,6 +464,11 @@ class DataRequestPost(Service):
                 {
                     "DatasetID": dataset_json["DatasetID"],
                     "DatasetTitle": dataset_object.Title(),
+                    "FileStructure": getattr(
+                        dataset_object,
+                        "characteristics_file_structure",
+                        "",
+                    ) or "",
                 }
             )
 
