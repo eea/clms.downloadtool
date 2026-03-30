@@ -7,7 +7,7 @@ from datetime import datetime
 from clms.downloadtool.api.services.timeseries.utils import (
     get_metadata_from_service,
 )
-from clms.downloadtool.api.services.cdse.utils import is_cdse_dataset
+from clms.downloadtool.api.services.cdse.utils import is_cdse_based_dataset
 from clms.downloadtool.api.services.timeseries.get_catalogapi import (
     get_cached_response
 )
@@ -67,8 +67,8 @@ class GetTimeSeriesMetadata(Service):
                 "msg": "The requested dataset is not valid",
             }
 
-        # CDSE?
-        is_cdse = is_cdse_dataset(dataset)
+        # CDSE or CDSE_CSV?
+        is_cdse = is_cdse_based_dataset(dataset)
         if is_cdse:
             print("CDSE dataset")
             value = self.get_time_series_metadata_cdse(dataset)
