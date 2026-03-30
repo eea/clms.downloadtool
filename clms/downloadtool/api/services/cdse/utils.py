@@ -17,3 +17,13 @@ def is_cdse_dataset(dataset_obj):
         pass
 
     return is_cdse
+
+
+def is_cdse_based_dataset(dataset_obj):
+    """Check if a dataset uses CDSE infrastructure (CDSE or CDSE_CSV sources)"""
+    try:
+        sources = [x for x in dataset_obj.dataset_download_information.get(
+            "items", []) if x.get('full_source', '') in ('CDSE', 'CDSE_CSV')]
+        return len(sources) > 0
+    except Exception:
+        return False
