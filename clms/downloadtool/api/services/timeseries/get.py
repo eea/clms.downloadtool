@@ -25,6 +25,12 @@ class GetTimeSeriesMetadata(Service):
             "items", [])
         for info in download_info_items:
             byoc_collection_id = info.get("byoc_collection", "")
+
+            if not byoc_collection_id:
+                print(
+                    "No BYOC found in download information item, skipping")
+                continue
+
             res = get_cached_response(byoc_collection_id, force_refresh=False)
             dates = res.get("dates", [])
 
@@ -49,6 +55,7 @@ class GetTimeSeriesMetadata(Service):
             value['period'] = 'P1D'
 
             return value
+        return {}
 
     def reply(self):
         """endpoint response"""
