@@ -1,8 +1,4 @@
-"""Queue integration for CDSE async processing.
-
-Schedules heavy CDSE batch jobs to run asynchronously after
-the Plone transaction commits successfully.
-"""
+"""Queue integration for DownloadTool async processing."""
 
 import asyncio
 import os
@@ -22,7 +18,6 @@ redis_opts = dict(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB)
 
 # Define all queues used in CLMS async operations
 QUEUES = {
-    "cdse_jobs": Queue("cdse_jobs", {"connection": redis_opts}),
     "downloadtool_jobs": Queue(
         "downloadtool_jobs", {"connection": redis_opts}),
 }

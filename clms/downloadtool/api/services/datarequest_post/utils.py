@@ -1,5 +1,4 @@
 """Utils"""
-import random
 import json
 import base64
 from logging import getLogger
@@ -13,7 +12,6 @@ from clms.downloadtool.api.services.cdse.cdse_integration import (
     get_portal_config)
 from clms.downloadtool.api.services.utils import get_extra_data
 from clms.statstool.utility import IDownloadStatsUtility
-from clms.downloadtool.utility import IDownloadToolUtility
 
 
 ISO8601_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -87,17 +85,6 @@ def to_iso8601(dt_str, end_of_day=False):
     return dt.isoformat() + "Z"   # adding Z for UTC
 
 
-def generate_task_group_id():
-    """A CDSE parent task and its childs have the same group ID.
-       Example: 4823-9501-3746-1835
-    """
-    groups = []
-    for _ in range(4):
-        group = ''.join(str(random.randint(0, 9)) for _ in range(4))
-        groups.append(group)
-    return '-'.join(groups)
-
-
 def extract_dates_from_temporal_filter(temporal_filter):
     """StartDate and EndDate are mandatory and come in miliseconds since
     epoch, so we need to convert them to datetime objects first and to
@@ -136,30 +123,6 @@ def save_stats(stats_json):
         log.info(
             "There was an error saving the stats: %s", json.dumps(stats_json)
         )  # noqa
-
-
-def save_stats_for_download_task(download_task_id):
-    """Used by CDSE Status Monitor"""
-
-    utility = getUtility(IDownloadToolUtility)
-    tasks = utility.datarequest_inspect(TaskID=download_task_id)
-    if len(tasks) > 0:
-        download_task = tasks[0]
-        data_object = {}
-        data_object["Status"] = "Queued"
-        user_id = download_task.get("UserID", "")
-        data_object["UserID"] = user_id
-        now_datetime = datetime.now(timezone.utc).isoformat()
-        data_object["RegistrationDateTime"] = download_task.get(
-            "RegistrationDateTime", now_datetime)
-        datasets = {"Datasets": download_task.get("Datasets", [])}
-
-        # WIP data object contains unused values. When FME will be deprecated
-        # I expect RegistrationDateTime to be used as defined here
-        save_stats(build_stats_params(
-            user_id, data_object, datasets, download_task_id
-        ))
-        log.info("Stats saved for download task: %s", download_task_id)
 
 
 def get_dataset_file_path_from_file_id(dataset_object, file_id):

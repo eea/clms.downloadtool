@@ -116,35 +116,6 @@ class DataRequestPost(Service):
             return None, self.rsp("INVALID_DATASET_ID")
         return dataset_object, None
 
-    def process_cdse_dataset(self, dataset_json, dataset_obj, response_json):
-        """
-        Checks if dataset is CDSE and updates response_json accordingly.
-        Returns True if dataset is CDSE, False otherwise.
-        """
-        is_cdse_dataset = False
-        try:
-            info_id = dataset_json.get('DatasetDownloadInformationID')
-
-            info_item = next(
-                (it for it in dataset_obj.dataset_download_information.get(
-                    "items", []) if it.get("@id") == info_id),
-                None
-            )
-
-            if info_item and (info_item.get('full_source') == "CDSE"):
-                is_cdse_dataset = True
-                response_json.update({
-                    "ByocCollection": info_item.get('byoc_collection'),
-                    "SpatialResolution": getattr(
-                        dataset_obj, 'qualitySpatialResolution_line', None)
-                })
-
-        except Exception:
-            log.exception("Error processing CDSE dataset")
-
-        log.info("is_cdse_dataset: %s", is_cdse_dataset)
-        return is_cdse_dataset
-
     def process_file_id(self, dataset_json, dataset_object, response_json,
                         prepacked_download_data_object):
         """
@@ -358,18 +329,13 @@ class DataRequestPost(Service):
         return None
 
     def finalize_request(self, general_download_data_object,
-                         prepacked_download_data_object, cdse_datasets,
-                         user_id, mail, utility
+                         prepacked_download_data_object, user_id, mail, utility
                          ):
         """
-        Handle final validations and trigger FME/CDSE requests.
+        Handle final validations and trigger FME requests.
         Returns either a response dict or an error response.
         """
-        # Check for a maximum of 5 items across regular and CDSE datasets
-        total_requested = len(
-            general_download_data_object.get("Datasets", [])
-        ) + len(cdse_datasets.get("Datasets", []))
-        if total_requested > 5:
+        if len(general_download_data_object.get("Datasets", [])) > 5:
             return self.rsp("DOWNLOAD_LIMIT")
 
         inprogress_requests = utility.datarequest_search(
@@ -390,10 +356,7 @@ class DataRequestPost(Service):
             [],
         )
 
-        requested_datasets = (
-            general_download_data_object.get("Datasets", []) +
-            cdse_datasets.get("Datasets", [])
-        )
+        requested_datasets = general_download_data_object.get("Datasets", [])
 
         if duplicated_values_exist(
             requested_datasets + inprogress_datasets + queued_datasets
@@ -401,13 +364,6 @@ class DataRequestPost(Service):
             return self.rsp("DUPLICATED")
 
         fme_results = {"ok": [], "error": []}
-
-        data = {
-            "user_id": user_id,
-            "cdse_datasets": cdse_datasets,
-        }
-        queue_job("cdse_jobs", "create_cdse_batches", data)
-        log.info("CDSE batch job queued for async processing.")
 
         for data_object, is_prepackaged in [
             (prepacked_download_data_object, True),
@@ -441,7 +397,6 @@ class DataRequestPost(Service):
         datasets_json = json_body(self.request).get("Datasets")
         general_download_data_object = {"Datasets": []}
         prepacked_download_data_object = {"Datasets": []}
-        cdse_datasets = {"Datasets": []}
         found_special = []
 
         utility = getUtility(IDownloadToolUtility)
@@ -471,10 +426,6 @@ class DataRequestPost(Service):
                     ) or "",
                 }
             )
-
-            # CDSE check
-            is_cdse_dataset = self.process_cdse_dataset(
-                dataset_json, dataset_object, response_json)
 
             # Request by FileID
             if "FileID" in dataset_json:
@@ -542,7 +493,7 @@ class DataRequestPost(Service):
                 full_dataset_path = get_full_dataset_path(
                     dataset_object, download_information_id
                 )
-                if not full_dataset_path and not is_cdse_dataset:
+                if not full_dataset_path:
                     return self.rsp("NOT_DOWNLOADABLE")
 
                 # Check if we have wekeo_choices
@@ -599,10 +550,7 @@ class DataRequestPost(Service):
                     return error
 
                 dataset_path = None
-                if is_cdse_dataset:
-                    dataset_path = ""  # CDSE datasets do not need dataset path
-                else:
-                    dataset_path = base64_encode_path(full_dataset_path)
+                dataset_path = base64_encode_path(full_dataset_path)
 
                 response_json.update(
                     {
@@ -615,16 +563,11 @@ class DataRequestPost(Service):
                 )
                 response_json["Metadata"] = build_metadata_urls(dataset_object)
 
-                if is_cdse_dataset:
-                    cdse_datasets["Datasets"].append(response_json)
-                else:
-                    general_download_data_object["Datasets"].append(
-                        response_json)
+                general_download_data_object["Datasets"].append(response_json)
 
         return self.finalize_request(
             general_download_data_object,
             prepacked_download_data_object,
-            cdse_datasets,
             user_id,
             mail,
             utility

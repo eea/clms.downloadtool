@@ -1,4 +1,4 @@
-"""Views used by async workers to process CDSE background jobs."""
+"""Views used by async workers to update DownloadTool tasks."""
 
 import json
 import logging
@@ -9,9 +9,6 @@ from plone.protect.interfaces import IDisableCSRFProtection
 from zope.interface import alsoProvides
 from zope.component import getUtility
 from zExceptions import Unauthorized
-from clms.downloadtool.api.services.cdse.cdse_tasks_queue import (
-    process_cdse_batches,
-)
 from clms.downloadtool.utility import IDownloadToolUtility
 
 logger = logging.getLogger(__name__)
@@ -23,30 +20,6 @@ def check_token_security(request):
     token = request.getHeader("Authentication")
     if token != PLONE_AUTH_TOKEN:
         raise Unauthorized("Invalid or missing authentication token")
-
-
-class StartCDSEBatch(BrowserView):
-    """Called by the async worker to create CDSE batches in the background."""
-
-    def __call__(self):
-        alsoProvides(self.request, IDisableCSRFProtection)
-        check_token_security(self.request)
-
-        with adopt_user(username="admin"):
-            try:
-                data = json.loads(self.request.get("BODY", "{}"))
-                user_id = data.get("user_id")
-                cdse_datasets = data.get("cdse_datasets")
-
-                parent_task, _ = process_cdse_batches(cdse_datasets, user_id)
-                result = {"status": "ok", "parent_task": parent_task}
-
-            except Exception as e:
-                logger.exception("Error while processing CDSE batches")
-                result = {"error": str(e)}
-
-        self.request.response.setHeader("Content-Type", "application/json")
-        return json.dumps(result)
 
 
 class DownloadToolUpdates(BrowserView):
