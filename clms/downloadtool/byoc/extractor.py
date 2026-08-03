@@ -1,17 +1,28 @@
-"""Extract frontend BYOC metadata from a Copernicus Browser checkout."""
+"""Extract frontend BYOC metadata from Copernicus Browser sources."""
 
 import ast
 from copy import deepcopy
 import json
 from pathlib import Path
 import re
-import subprocess
 
 
 HANDLER = Path(
     "src/Tools/SearchPanel/dataSourceHandlers/CLMSDataSourceHandler.jsx"
 )
+DATA_SOURCE_CONSTANTS = HANDLER.parent / "dataSourceConstants.ts"
+VLCC_CONSTANTS = HANDLER.parent / "CLMSVLCCSpecificConst.ts"
+LOW_RESOLUTION_COLLECTION_IDS = (
+    HANDLER.parent / "CLMSLowResolutionCollectionIds.ts"
+)
 CONFIGURATION = Path("src/assets/cache/configuration.json")
+BROWSER_SOURCE_FILES = (
+    DATA_SOURCE_CONSTANTS,
+    VLCC_CONSTANTS,
+    LOW_RESOLUTION_COLLECTION_IDS,
+    HANDLER,
+)
+BROWSER_FILES = BROWSER_SOURCE_FILES + (CONFIGURATION,)
 UUID = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-"
     r"[0-9a-f]{4}-[0-9a-f]{12}$",
@@ -254,20 +265,6 @@ class _LiteralResolver:
         return value
 
 
-def _browser_root(path):
-    """Locate a Copernicus Browser checkout from a configured path."""
-    path = Path(path).expanduser().resolve()
-    if path.name == HANDLER.name and path.is_file():
-        root = path
-        for _part in HANDLER.parts:
-            root = root.parent
-        return root
-    for root in (path, path / "src/addons/copernicus-browser"):
-        if (root / HANDLER).is_file():
-            return root
-    raise BYOCExtractionError("CLMSDataSourceHandler.jsx was not found")
-
-
 def _assignment(source, name):
     match = re.search(
         r"(?:^|\n)\s*(?:this\.)?" + re.escape(name) + r"\s*=",
@@ -279,27 +276,19 @@ def _assignment(source, name):
     return _read_expression(source, match.end())
 
 
-def _source_collections(root):
-    """Read known collections and low-resolution relationships."""
-    handler_path = root / HANDLER
-    source_dir = handler_path.parent
-    source_paths = (
-        source_dir / "dataSourceConstants.ts",
-        source_dir / "CLMSVLCCSpecificConst.ts",
-        handler_path,
-    )
-
+def _source_collections_from_sources(sources):
+    """Read collection relationships from Browser source text."""
     resolver = _LiteralResolver()
-    handler_source = handler_path.read_text(encoding="utf-8")
-    for path in source_paths:
-        if not path.is_file():
+    for source_path in BROWSER_SOURCE_FILES:
+        source = sources.get(source_path)
+        if source is None:
             raise BYOCExtractionError(
                 "Required Copernicus Browser source was not found: "
-                + path.name
+                + source_path.name
             )
-        source = path.read_text(encoding="utf-8")
         resolver.add_source(source)
 
+    handler_source = sources[HANDLER]
     known = resolver.resolve(_assignment(handler_source, "KNOWN_COLLECTIONS"))
     alternatives = resolver.resolve_name(
         "LOW_RESOLUTION_ALTERNATIVE_COLLECTIONS"
@@ -414,38 +403,14 @@ def _scale(meters_per_pixel):
     return int(round(scale / 10000) * 10000)
 
 
-def _source_commit(root):
-    """Return the source checkout commit when it is a Git checkout."""
-    try:
-        result = subprocess.run(
-            ("git", "-C", str(root), "rev-parse", "HEAD"),
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return None
-    return result.stdout.strip() or None
-
-
 # pylint: disable=too-many-locals
-def extract_browser_configuration(path):
-    """Extract Browser collection pairs and their visualization layers."""
-    root = _browser_root(path)
-    datasets, alternatives = _source_collections(root)
-    configuration_path = root / CONFIGURATION
-    if not configuration_path.is_file():
-        raise BYOCExtractionError("configuration.json was not found")
-    try:
-        configuration = json.loads(
-            configuration_path.read_text(encoding="utf-8")
-        )
-    except (OSError, ValueError) as error:
-        raise BYOCExtractionError(
-            "configuration.json could not be read: " + str(error)
-        )
-
+def _build_browser_configuration(
+    datasets,
+    alternatives,
+    configuration,
+    source_commit,
+):
+    """Build the normalized Browser configuration snapshot."""
     selected = {}
     for layer in _iter_configured_layers(configuration):
         collection_id = _match_collection(layer.get("collectionId"), datasets)
@@ -514,10 +479,30 @@ def extract_browser_configuration(path):
         "version": 1,
         "source": {
             "repository": "eu-cdse/copernicus-browser",
-            "commit": _source_commit(root),
+            "commit": source_commit,
         },
         "collections": collections,
     }
+
+
+def extract_browser_configuration_from_sources(sources, source_commit):
+    """Extract Browser configuration from downloaded source text."""
+    datasets, alternatives = _source_collections_from_sources(sources)
+    configuration_source = sources.get(CONFIGURATION)
+    if configuration_source is None:
+        raise BYOCExtractionError("configuration.json was not found")
+    try:
+        configuration = json.loads(configuration_source)
+    except ValueError as error:
+        raise BYOCExtractionError(
+            "configuration.json could not be read: " + str(error)
+        ) from error
+    return _build_browser_configuration(
+        datasets,
+        alternatives,
+        configuration,
+        source_commit,
+    )
 
 
 def load_collection_mapping(path):
@@ -559,9 +544,12 @@ def load_collection_mapping(path):
     return mapping
 
 
-def build_resolved_snapshot(browser_path, mapping_path):
+def build_resolved_snapshot(sources, source_commit, mapping_path):
     """Build a validated snapshot keyed by local/proxy collection UUID."""
-    extracted = extract_browser_configuration(browser_path)
+    extracted = extract_browser_configuration_from_sources(
+        sources,
+        source_commit,
+    )
     mapping = load_collection_mapping(mapping_path)
     resolved = {}
     for local_id, browser_id in mapping.items():
