@@ -1,5 +1,6 @@
 """Manager-only view for generating CLMS BYOC metadata."""
 
+from copy import deepcopy
 import json
 import logging
 import os
@@ -7,11 +8,9 @@ import re
 from urllib.parse import quote
 
 from Products.Five.browser import BrowserView
+from plone import api
 import requests
-
-from clms.types.restapi.mapviewer_service.byoc import BYOC_SNAPSHOT_KEY
-from clms.types.restapi.mapviewer_service.byoc import get_byoc_snapshot
-from clms.types.restapi.mapviewer_service.byoc import set_byoc_snapshot
+from zope.annotation.interfaces import IAnnotations
 
 from .extractor import BROWSER_FILES
 from .extractor import BYOCExtractionError
@@ -23,7 +22,20 @@ DEFAULT_BROWSER_REF = "main"
 GITHUB_API = "https://api.github.com/repos"
 GITHUB_RAW = "https://raw.githubusercontent.com"
 COMMIT_SHA = re.compile(r"^[0-9a-f]{40}$", re.I)
+BYOC_SNAPSHOT_KEY = "clms.types.mapviewer_byoc_snapshot"
 logger = logging.getLogger(__name__)
+
+
+def get_byoc_snapshot():
+    """Return the BYOC snapshot stored on the Plone portal."""
+    portal = api.portal.get()
+    return IAnnotations(portal).get(BYOC_SNAPSHOT_KEY, {})
+
+
+def set_byoc_snapshot(snapshot):
+    """Replace the BYOC snapshot stored on the Plone portal."""
+    portal = api.portal.get()
+    IAnnotations(portal)[BYOC_SNAPSHOT_KEY] = deepcopy(snapshot)
 
 
 def _download_browser_sources(reference):
