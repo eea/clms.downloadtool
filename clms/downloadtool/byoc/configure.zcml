@@ -4,7 +4,7 @@
     i18n_domain="clms.downloadtool">
 
   <browser:page
-      name="update-clms-byoc"
+      name="clms-zoom-import"
       for="Products.CMFPlone.interfaces.IPloneSiteRoot"
       class=".views.UpdateCLMSBYOCView"
       layer="clms.downloadtool.interfaces.IClmsDownloadtoolLayer"
