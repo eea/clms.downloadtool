@@ -1,12 +1,17 @@
 """Manager-only view for generating CLMS BYOC metadata."""
 
 import json
+import logging
 import os
 import re
 from urllib.parse import quote
 
 from Products.Five.browser import BrowserView
 import requests
+
+from clms.types.restapi.mapviewer_service.byoc import BYOC_SNAPSHOT_KEY
+from clms.types.restapi.mapviewer_service.byoc import get_byoc_snapshot
+from clms.types.restapi.mapviewer_service.byoc import set_byoc_snapshot
 
 from .extractor import BROWSER_FILES
 from .extractor import BYOCExtractionError
@@ -18,6 +23,7 @@ DEFAULT_BROWSER_REF = "main"
 GITHUB_API = "https://api.github.com/repos"
 GITHUB_RAW = "https://raw.githubusercontent.com"
 COMMIT_SHA = re.compile(r"^[0-9a-f]{40}$", re.I)
+logger = logging.getLogger(__name__)
 
 
 def _download_browser_sources(reference):
@@ -107,6 +113,10 @@ class UpdateCLMSBYOCView(BrowserView):
                 reference
             )
         except BYOCExtractionError as error:
+            logger.error(
+                "Copernicus Browser source download failed: %s",
+                error,
+            )
             response.setStatus(500)
             return json.dumps(
                 {
@@ -116,13 +126,39 @@ class UpdateCLMSBYOCView(BrowserView):
                 }
             )
 
+        logger.info(
+            "Copernicus Browser source download succeeded: "
+            "reference=%s commit=%s files=%s",
+            reference,
+            commit,
+            len(download_report["files"]),
+        )
+
         try:
             snapshot = extract_browser_configuration_from_sources(
                 sources,
                 commit,
             )
             snapshot["source"]["download"] = download_report
+            set_byoc_snapshot(snapshot)
+            stored_snapshot = get_byoc_snapshot()
+            stored_source = stored_snapshot.get("source", {})
+            stored_collections = stored_snapshot.get("collections", {})
+            if (
+                stored_source.get("commit") != commit
+                or len(stored_collections) != len(snapshot["collections"])
+            ):
+                raise BYOCExtractionError(
+                    "The BYOC snapshot could not be read back from "
+                    "portal annotations"
+                )
         except BYOCExtractionError as error:
+            logger.error(
+                "Copernicus Browser BYOC extraction failed: "
+                "commit=%s error=%s",
+                commit,
+                error,
+            )
             response.setStatus(500)
             return json.dumps(
                 {
@@ -132,6 +168,28 @@ class UpdateCLMSBYOCView(BrowserView):
                     "error": str(error),
                 }
             )
+
+        collections = snapshot["collections"].values()
+        layers = [
+            layer
+            for collection in collections
+            for layer in collection.get("layers", [])
+        ]
+        logger.info(
+            "Copernicus Browser BYOC snapshot stored: "
+            "key=%s commit=%s collections=%s layers=%s dual_layers=%s",
+            BYOC_SNAPSHOT_KEY,
+            commit,
+            len(snapshot["collections"]),
+            len(layers),
+            sum(layer.get("hasLowRes", False) for layer in layers),
+        )
+        snapshot["storage"] = {
+            "status": "success",
+            "backend": "portal_annotations",
+            "key": BYOC_SNAPSHOT_KEY,
+            "verified": True,
+        }
 
         return json.dumps(
             snapshot,
