@@ -84,8 +84,9 @@ def _download_browser_sources(reference):
                 )
     except requests.RequestException as error:
         raise BYOCExtractionError(
-            "Copernicus Browser sources could not be downloaded: "
-            + str(error)
+            "Copernicus Browser sources could not be downloaded: {}".format(
+                error
+            )
         ) from error
     except (UnicodeDecodeError, ValueError) as error:
         raise BYOCExtractionError(
@@ -102,11 +103,9 @@ class UpdateCLMSBYOCView(BrowserView):
         """Return the validated extraction as formatted JSON."""
         response = self.request.response
         response.setHeader("Content-Type", "application/json")
-        reference = (
-            os.environ.get("COPERNICUS_BROWSER_REF", DEFAULT_BROWSER_REF)
-            .strip()
-            or DEFAULT_BROWSER_REF
-        )
+        reference = os.environ.get(
+            "COPERNICUS_BROWSER_REF", DEFAULT_BROWSER_REF
+        ).strip() or DEFAULT_BROWSER_REF
 
         try:
             sources, commit, download_report = _download_browser_sources(
@@ -144,10 +143,11 @@ class UpdateCLMSBYOCView(BrowserView):
             stored_snapshot = get_byoc_snapshot()
             stored_source = stored_snapshot.get("source", {})
             stored_collections = stored_snapshot.get("collections", {})
-            if (
-                stored_source.get("commit") != commit
-                or len(stored_collections) != len(snapshot["collections"])
-            ):
+            commit_matches = stored_source.get("commit") == commit
+            collection_count_matches = len(stored_collections) == len(
+                snapshot["collections"]
+            )
+            if not commit_matches or not collection_count_matches:
                 raise BYOCExtractionError(
                     "The BYOC snapshot could not be read back from "
                     "portal annotations"

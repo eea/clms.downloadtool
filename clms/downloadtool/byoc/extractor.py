@@ -100,7 +100,7 @@ def _code_characters(text):
         if char in "([{":
             yield index, char, depth
             depth += 1
-        elif char in ")]}" :
+        elif char in ")]}":
             depth -= 1
             yield index, char, depth
         else:
@@ -109,6 +109,7 @@ def _code_characters(text):
 
 
 def _read_expression(text, start, terminators=(";",)):
+    """Read a JavaScript expression up to a top-level terminator."""
     fragment = text[start:]
     for index, char, depth in _code_characters(fragment):
         if depth == 0 and char in terminators:
@@ -117,6 +118,7 @@ def _read_expression(text, start, terminators=(";",)):
 
 
 def _split_top_level(text, delimiter=","):
+    """Split text on delimiters outside nested structures."""
     parts = []
     start = 0
     for index, char, depth in _code_characters(text):
@@ -128,6 +130,7 @@ def _split_top_level(text, delimiter=","):
 
 
 def _split_property(text):
+    """Split a JavaScript object property into its key and value."""
     for index, char, depth in _code_characters(text):
         if depth == 0 and char == ":":
             return text[:index].strip(), text[index + 1:].strip()
@@ -135,6 +138,7 @@ def _split_property(text):
 
 
 def _is_wrapped(text, opener, closer):
+    """Check whether one balanced delimiter pair wraps all text."""
     if not text.startswith(opener) or not text.endswith(closer):
         return False
     depth = 0
@@ -149,6 +153,7 @@ def _is_wrapped(text, opener, closer):
 
 
 def _without_leading_comments(text):
+    """Remove JavaScript comments that appear before a value."""
     text = text.lstrip()
     while text.startswith(("//", "/*")):
         if text.startswith("//"):
@@ -198,10 +203,8 @@ class _LiteralResolver:
         )
         while _is_wrapped(expression, "(", ")"):
             expression = expression[1:-1].strip()
-        if (
-            expression.startswith("Object.freeze(")
-            and expression.endswith(")")
-        ):
+        is_frozen = expression.startswith("Object.freeze(")
+        if is_frozen and expression.endswith(")"):
             expression = expression[len("Object.freeze("):-1].strip()
         if not expression:
             return UNKNOWN
@@ -266,6 +269,7 @@ class _LiteralResolver:
 
 
 def _assignment(source, name):
+    """Read the expression assigned to a named JavaScript variable."""
     match = re.search(
         r"(?:^|\n)\s*(?:this\.)?" + re.escape(name) + r"\s*=",
         source,
@@ -283,8 +287,9 @@ def _source_collections_from_sources(sources):
         source = sources.get(source_path)
         if source is None:
             raise BYOCExtractionError(
-                "Required Copernicus Browser source was not found: "
-                + source_path.name
+                "Required Copernicus Browser source was not found: {}".format(
+                    source_path.name
+                )
             )
         resolver.add_source(source)
 
@@ -330,7 +335,7 @@ def _source_collections_from_sources(sources):
         if high_id not in datasets:
             raise BYOCExtractionError(
                 "Low-resolution mapping references an unknown collection: "
-                + high_id
+                "{}".format(high_id)
             )
         low_resolution[high_id] = {
             "collectionId": low_id,
@@ -513,7 +518,7 @@ def load_collection_mapping(path):
     except (OSError, ValueError) as error:
         raise BYOCExtractionError(
             "BYOC collection mapping could not be read: " + str(error)
-        )
+        ) from error
     entries = payload.get("collections") if isinstance(payload, dict) else None
     if not isinstance(entries, list):
         raise BYOCExtractionError(
