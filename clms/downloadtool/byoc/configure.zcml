@@ -1,0 +1,14 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    i18n_domain="clms.downloadtool">
+
+  <browser:page
+      name="clms-zoom-import"
+      for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+      class=".views.UpdateCLMSBYOCView"
+      layer="clms.downloadtool.interfaces.IClmsDownloadtoolLayer"
+      permission="cmf.ManagePortal"
+      />
+
+</configure>
