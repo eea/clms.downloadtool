@@ -392,6 +392,44 @@ def _default_evalscript(layer):
     return None
 
 
+def _evalscript_bands(evalscript):
+    """Return the CDSE band identifiers read by an evalscript setup."""
+    evalscript = evalscript or ""
+    setup = re.search(r"\bfunction\s+setup\s*\([^)]*\)\s*\{", evalscript)
+    if not setup:
+        return []
+    body = evalscript[setup.end():]
+    start = None
+    for index, _char, depth in _code_characters(body):
+        # Keys of the object returned by setup() are one level deep.
+        match = depth == 1 and re.match(r"\binput\s*:", body[index:])
+        if match:
+            start = index + match.end()
+            break
+    if start is None:
+        return []
+    expression = body[start:]
+    for index, char, depth in _code_characters(expression):
+        # Stop at the next key or at the end of the returned object.
+        if (depth == 0 and char == ",") or depth < 0:
+            expression = expression[:index]
+            break
+    value = _LiteralResolver().resolve(expression)
+    if not isinstance(value, list):
+        return []
+
+    bands = []
+    for item in value:
+        names = item.get("bands", []) if isinstance(item, dict) else [item]
+        if not isinstance(names, list):
+            names = [names]
+        for name in names:
+            if isinstance(name, str) and name != "dataMask":
+                if name not in bands:
+                    bands.append(name)
+    return bands
+
+
 def _scale(meters_per_pixel):
     """Convert a Web Mercator resolution threshold to map scale."""
     if meters_per_pixel is None:
@@ -426,6 +464,7 @@ def _build_browser_configuration(
         key = (collection_id, str(layer_id))
         candidate = deepcopy(layer)
         candidate["evalscript"] = evalscript
+        candidate["bands"] = _evalscript_bands(evalscript)
         current = selected.get(key)
         rank = (layer.get("lastUpdated") or "", layer.get("title") or "")
         current_rank = (
@@ -465,6 +504,7 @@ def _build_browser_configuration(
                     "layerId": layer_id,
                     "title": layer.get("title") or layer_id,
                     "description": layer.get("description"),
+                    "bands": layer["bands"],
                     "type": "dual" if alternative else "single",
                     "hasLowRes": bool(alternative),
                     "thresholdMetersPerPixel": threshold,
