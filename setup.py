@@ -76,6 +76,8 @@ setup(
             "plone.app.contenttypes",
             "plone.app.robotframework",
             "plone.restapi[test]",
+            # keep in sync with eea.docker.plone.clms constraints.txt
+            "collective.taxonomy==3.1.7",
         ],
     },
     entry_points="""
